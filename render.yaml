@@ -1,24 +1,15 @@
-# Render blueprint — deploy the whole platform as one web service + a managed Postgres.
-# 1) Push this repo to GitHub.  2) Render → New → Blueprint → pick the repo.
-# 3) Add the secret env vars (ANTHROPIC_API_KEY, ZOHO_*).  Done — one public URL.
+# Render blueprint — free-tier deploy (single web service, no card needed).
+# The app boots without a database; shared state is stored on the container's
+# filesystem (ephemeral on free — resets when the service sleeps/redeploys).
+# For always-on + persistent data later, add `plan: starter` + a disk + a database.
 services:
   - type: web
     name: ntbf-platform
     runtime: docker
+    plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/dashboard/health
-    # Persistent disk so the shared app-state survives restarts/redeploys.
-    disk:
-      name: ntbf-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
-      - key: STATE_DIR
-        value: "/data"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ntbf-db
-          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
@@ -33,10 +24,10 @@ services:
         value: "https://www.zohoapis.ae"
       - key: ANTHROPIC_MODEL
         value: "claude-sonnet-4-6"
-      # Zoho stays read-only until you set this to true (safety).
+      # Zoho stays read-only until you set this to true.
       - key: ZOHO_WRITES_ENABLED
         value: "false"
-      # Secrets — set these in the Render dashboard (never in the repo):
+      # Secrets — enter in the Render dashboard (never in the repo):
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ZOHO_CLIENT_ID
@@ -45,14 +36,7 @@ services:
         sync: false
       - key: ZOHO_REFRESH_TOKEN
         sync: false
-      # Shared access token — protects the API on the public internet.
       - key: PUBLIC_API_TOKEN
         sync: false
-      # Lock CORS to your domains once DNS is set (comma-separated):
       - key: CORS_ORIGIN
         sync: false
-
-databases:
-  - name: ntbf-db
-    databaseName: foodstuffs
-    plan: free
