@@ -68,15 +68,26 @@ export class AnthropicService {
   async createMessage(body: Record<string, unknown>): Promise<any> {
     if (!this.configured) throw new ServiceUnavailableException('ANTHROPIC_API_KEY not set');
     const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': this.config.get<string>('ANTHROPIC_API_KEY')!,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ model, max_tokens: 1500, ...body }),
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    let res: Response;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': this.config.get<string>('ANTHROPIC_API_KEY')!,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ model, max_tokens: 1024, ...body }),
+        signal: controller.signal,
+      });
+    } catch (e) {
+      this.logger.error(`Anthropic request failed: ${(e as Error).message}`);
+      throw new ServiceUnavailableException('Claude request timed out or failed');
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) {
       const t = await res.text();
       this.logger.error(`Anthropic API error ${res.status}: ${t}`);
