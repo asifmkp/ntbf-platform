@@ -1,0 +1,26 @@
+{
+  "organization": {
+    "id": "170000198188",
+    "name": "NTBFLLC",
+    "country": "United Arab Emirates",
+    "state": "Ajman",
+    "currency": "AED",
+    "vat_rate": 5,
+    "apps": ["books", "inventory", "subscriptions", "checkout"],
+    "snapshot_taken": "2026-06-30"
+  },
+  "counts": { "products": 10, "customers": 0, "vendors": 0, "sales_orders": 0, "purchase_orders": 0, "invoices": 0, "payments": 0, "expenses": 0 },
+  "totals": { "revenue_mtd": 0, "outstanding_receivable": 0, "stock_on_hand_units": 0, "inventory_value": 0 },
+  "items": [
+    { "item_id": "2532000000014022", "name": "7Up Carbonated Drink 1.5 Litre", "sku": "C000949", "unit": "Ctn of 6 Pieces", "rate": 25.71, "purchase_rate": 24.76, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000014032", "name": "7Up Carbonated Drink 1.5 Litre-Zero", "sku": "", "unit": "Ctn of 6 Pieces", "rate": 17.62, "purchase_rate": 16.19, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000018001", "name": "7Up Carbonated Drink 2.28 Litre", "sku": "", "unit": "Ctn of 6 Pieces", "rate": 39, "purchase_rate": 41, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000014012", "name": "Barbican Apple Non Alcoholic Malt Beverage 330 ml", "sku": "C000960", "unit": "Ctn of 24 Pieces", "rate": 72.38, "purchase_rate": 70.48, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000005152", "name": "Capri Sun Mango No Added Sugar 200ml", "sku": "C001052", "unit": "Ctn of 40 Pieces", "rate": 0, "purchase_rate": 29.05, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000005141", "name": "Coca Cola Carbonated Soft Drink Pet Bottle 2litre", "sku": "C001122", "unit": "Ctn of 6 Pieces", "rate": 32.38, "purchase_rate": 28.57, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000017002", "name": "Fanta Orange Carbonated Drink Pet 300ml", "sku": "", "unit": "Ctn of 30 Pieces", "rate": 0.56, "purchase_rate": 40.01, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000018011", "name": "Lipton Non-Carbonated Zero Sugar Peach Iced Tea 290ml", "sku": "", "unit": "", "rate": 53.33, "purchase_rate": 0, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000018021", "name": "Mirinda Orange Carbonated Drink 1.5 Litre", "sku": "", "unit": "", "rate": 24.76, "purchase_rate": 0, "tax_percentage": 5, "stock_on_hand": 0 },
+    { "item_id": "2532000000017012", "name": "Mirinda Orange Carbonated Soft Drink Cans 245ml", "sku": "", "unit": "", "rate": 33.81, "purchase_rate": 36.4, "tax_percentage": 5, "stock_on_hand": 0 }
+  ]
+}

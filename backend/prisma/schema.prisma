@@ -1,0 +1,1002 @@
+// Foodstuffs Trading Application — full data model (TRD §3)
+// Database: PostgreSQL.  Money fields use Decimal(14,2).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================================================
+// ENUMS
+// ===========================================================================
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+  DRIVER
+}
+
+enum AccessLevel {
+  STAFF // submit-level
+  DEPARTMENT_ADMIN // approve within own department
+  SUPER_ADMIN // cross-department override (Management)
+}
+
+enum Department {
+  SALES
+  CUSTOMER_SERVICE
+  FINANCE
+  PURCHASE
+  WAREHOUSE
+  DELIVERY
+  HR
+  MANAGEMENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CustomerCategory {
+  SUPERMARKET_GROCERY
+  RESTAURANT
+  VAN_SALE
+  WAREHOUSE_SALE
+  RETAIL
+  WHOLESALE
+}
+
+enum AccountStatus {
+  ACTIVE
+  ON_HOLD // auto on bounce, auto-released on recovery
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PACKED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  CHEQUE_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  COLLECTED
+  CLEARED
+  BOUNCED
+  RECOVERED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DispatchStatus {
+  PICKING
+  PACKED
+  READY_FOR_PICKUP
+}
+
+enum StockTransferStatus {
+  IN_TRANSIT
+  RECEIVED
+}
+
+enum StockAdjustmentReason {
+  DAMAGE
+  EXPIRY
+  STOCKTAKE_CORRECTION
+}
+
+enum DeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+enum DeliveryFailureReason {
+  CUSTOMER_UNAVAILABLE
+  PREMISES_CLOSED
+  ORDER_REFUSED
+  ADDRESS_ISSUE
+  OTHER
+}
+
+enum ProofType {
+  SIGNATURE
+  PHOTO
+  OTP
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_ROUTE
+  OFFLINE
+}
+
+enum SupplierStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum POSelectionMethod {
+  DIRECT_SELECTION
+  QUOTATION_COMPARISON
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  CONFIRMED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum RequisitionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CONVERTED_TO_PO
+}
+
+enum QuotationStatus {
+  RECEIVED
+  SELECTED
+  REJECTED
+}
+
+enum GrnComparisonResult {
+  MATCHED
+  SHORT
+  EXCESS
+  DAMAGED
+}
+
+enum SupplierInvoiceStatus {
+  PENDING
+  VERIFIED
+  APPROVED
+  PAID
+}
+
+enum MatchedStatus {
+  MATCHED
+  MISMATCHED
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+  EQUITY
+}
+
+enum LedgerRefType {
+  INVOICE
+  PAYMENT
+  PURCHASE
+  PAYROLL
+  EXPENSE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  EXITED
+}
+
+enum CandidateStatus {
+  APPLIED
+  SHORTLISTED
+  INTERVIEWED
+  OFFERED
+  REJECTED
+}
+
+enum OfferStatus {
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum PassportStatus {
+  HELD
+  RELEASED
+}
+
+enum ExitType {
+  RESIGNATION
+  TERMINATION
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+}
+
+enum PayrollStatus {
+  DRAFT
+  PROCESSED
+  PAID
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  UNPAID
+}
+
+enum SalesReturnStatus {
+  PENDING
+  PROCESSED
+}
+
+enum SalaryAdvanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MemoAudience {
+  ALL_STAFF
+  DEPARTMENT
+}
+
+// ===========================================================================
+// IDENTITY & PEOPLE
+// ===========================================================================
+
+model User {
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  phone        String?
+  passwordHash String
+  role         UserRole
+  // Staff-only attributes (null for customers/drivers)
+  department   Department?
+  accessLevel  AccessLevel @default(STAFF)
+  status       UserStatus  @default(ACTIVE)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  customerProfile CustomerProfile?
+  driver          Driver?
+  employee        Employee?
+
+  @@index([role])
+  @@index([department])
+}
+
+model CustomerProfile {
+  id           String           @id @default(uuid())
+  userId       String           @unique
+  user         User             @relation(fields: [userId], references: [id])
+  businessName String
+  category     CustomerCategory
+  creditLimit  Decimal          @default(0) @db.Decimal(14, 2)
+  // Location captured by salesman's GPS at customer site
+  locationCapturedById String?
+  locationCapturedAt   DateTime?
+  approved             Boolean   @default(false)
+  approvedById         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  addresses  CustomerAddress[]
+  orders     Order[]
+  creditTerm CreditTerm?
+  visits     CustomerVisit[]
+  specialPrices SpecialPriceRequest[]
+
+  @@index([category])
+}
+
+model CustomerAddress {
+  id         String          @id @default(uuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id])
+  label      String?
+  line       String
+  lat        Float?
+  lng        Float?
+  zoneId     String?
+  zone       DeliveryZone?   @relation(fields: [zoneId], references: [id])
+  isDefault  Boolean         @default(false)
+
+  orders Order[]
+}
+
+model Driver {
+  id               String       @id @default(uuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id])
+  assignedVehicleId String?     @unique
+  assignedVehicle  Vehicle?     @relation(fields: [assignedVehicleId], references: [id])
+  assignedZoneId   String?
+  assignedZone     DeliveryZone? @relation(fields: [assignedZoneId], references: [id])
+  currentLat       Float?
+  currentLng       Float?
+  status           DriverStatus @default(OFFLINE)
+  // Driver-specific HR records
+  licenseNo        String?
+  licenseExpiry    DateTime?
+
+  deliveries     Delivery[]
+  eodReports     EndOfDayReport[]
+  salesReturns   SalesReturn[]
+  customerVisits CustomerVisit[] @relation("SalesmanVisits")
+}
+
+// ===========================================================================
+// CATALOG & PRICING
+// ===========================================================================
+
+model Product {
+  id         String        @id @default(uuid())
+  name       String
+  category   String
+  unit       String // kg / case / box
+  imageUrl   String?
+  stockQty   Int           @default(0)
+  batchNo    String?
+  expiryDate DateTime?
+  status     ProductStatus @default(ACTIVE)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  prices     ProductPrice[]
+  orderItems OrderItem[]
+  inventory  Inventory[]
+
+  @@index([category])
+  @@index([status])
+}
+
+// Separate price per customer category
+model ProductPrice {
+  id        String           @id @default(uuid())
+  productId String
+  product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category  CustomerCategory
+  price     Decimal          @db.Decimal(14, 2)
+
+  @@unique([productId, category])
+}
+
+// ===========================================================================
+// ORDERS, INVOICING & PAYMENTS
+// ===========================================================================
+
+model Order {
+  id                   String      @id @default(uuid())
+  customerId           String
+  customer             CustomerProfile @relation(fields: [customerId], references: [id])
+  addressId            String?
+  address              CustomerAddress? @relation(fields: [addressId], references: [id])
+  totalAmount          Decimal     @default(0) @db.Decimal(14, 2)
+  status               OrderStatus @default(PLACED)
+  expectedDeliveryDate DateTime?
+  assignedDriverId     String?
+  paymentMethod        PaymentMethod
+  paymentStatus        PaymentStatus @default(PENDING)
+  deliveredNotificationSent Boolean @default(false)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  items        OrderItem[]
+  invoice      Invoice?
+  delivery     Delivery?
+  dispatch     DispatchRecord?
+  salesReturns SalesReturn[]
+  payments     Payment[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(14, 2)
+  subtotal  Decimal @db.Decimal(14, 2)
+}
+
+model Invoice {
+  id           String        @id @default(uuid())
+  orderId      String        @unique
+  order        Order         @relation(fields: [orderId], references: [id])
+  invoiceNo    String        @unique
+  taxAmount    Decimal       @default(0) @db.Decimal(14, 2)
+  totalAmount  Decimal       @db.Decimal(14, 2)
+  dueDate      DateTime?
+  paymentTerms String?
+  status       InvoiceStatus @default(ISSUED)
+  createdAt    DateTime      @default(now())
+
+  payments Payment[]
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  invoiceId   String?
+  invoice     Invoice?      @relation(fields: [invoiceId], references: [id])
+  orderId     String?
+  order       Order?        @relation(fields: [orderId], references: [id])
+  method      PaymentMethod
+  amount      Decimal       @db.Decimal(14, 2)
+  chequeNo    String?
+  chequeDate  DateTime?
+  status      PaymentStatus @default(COLLECTED)
+  bounceCharge Decimal      @default(0) @db.Decimal(14, 2) // fixed 250 auto-applied on bounce
+  recoveryOwner String? // Sales
+  collectedById String?
+  collectedAt   DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@index([status])
+}
+
+model CreditTerm {
+  id              String        @id @default(uuid())
+  customerId      String        @unique
+  customer        CustomerProfile @relation(fields: [customerId], references: [id])
+  creditPeriodDays Int          @default(0)
+  creditLimit     Decimal       @default(0) @db.Decimal(14, 2)
+  agreedDate      DateTime?
+  approvedById    String? // Finance Admin role only
+  accountStatus   AccountStatus @default(ACTIVE)
+}
+
+// ===========================================================================
+// WAREHOUSE & INVENTORY
+// ===========================================================================
+
+model Warehouse {
+  id        String   @id @default(uuid())
+  name      String
+  location  String?
+  createdAt DateTime @default(now())
+
+  inventory        Inventory[]
+  stockTransfersFrom StockTransfer[] @relation("FromWarehouse")
+  stockTransfersTo   StockTransfer[] @relation("ToWarehouse")
+  stockAdjustments StockAdjustment[]
+}
+
+model Inventory {
+  id              String    @id @default(uuid())
+  warehouseId     String
+  warehouse       Warehouse @relation(fields: [warehouseId], references: [id])
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id])
+  locationZone    String?
+  quantityOnHand  Int       @default(0)
+  reorderPoint    Int       @default(0)
+  lastStocktakeDate DateTime?
+
+  @@unique([warehouseId, productId])
+}
+
+model StockTransfer {
+  id              String              @id @default(uuid())
+  productId       String
+  quantity        Int
+  fromWarehouseId String
+  fromWarehouse   Warehouse           @relation("FromWarehouse", fields: [fromWarehouseId], references: [id])
+  toWarehouseId   String
+  toWarehouse     Warehouse           @relation("ToWarehouse", fields: [toWarehouseId], references: [id])
+  status          StockTransferStatus @default(IN_TRANSIT)
+  initiatedById   String?
+  receivedById    String?
+  createdAt       DateTime            @default(now())
+}
+
+model StockAdjustment {
+  id            String                @id @default(uuid())
+  productId     String
+  warehouseId   String
+  warehouse     Warehouse             @relation(fields: [warehouseId], references: [id])
+  quantityChange Int
+  reason        StockAdjustmentReason
+  adjustedById  String?
+  approvedById  String? // Warehouse Admin
+  createdAt     DateTime              @default(now())
+}
+
+model DispatchRecord {
+  id            String         @id @default(uuid())
+  orderId       String         @unique
+  order         Order          @relation(fields: [orderId], references: [id])
+  pickedById    String?
+  packedById    String?
+  dispatchStatus DispatchStatus @default(PICKING)
+  dispatchedAt  DateTime?
+}
+
+// ===========================================================================
+// DELIVERY, ROUTES & FLEET
+// ===========================================================================
+
+model DeliveryZone {
+  id              String  @id @default(uuid())
+  name            String
+  areaBoundary    String? // postcodes / boundary description
+  assignedDriverId String? // one fixed driver per zone
+
+  drivers   Driver[]
+  addresses CustomerAddress[]
+}
+
+model Delivery {
+  id              String                 @id @default(uuid())
+  orderId         String                 @unique
+  order           Order                  @relation(fields: [orderId], references: [id])
+  driverId        String?
+  driver          Driver?                @relation(fields: [driverId], references: [id])
+  vehicleId       String?
+  routeId         String?
+  route           Route?                 @relation(fields: [routeId], references: [id])
+  stopSequence    Int? // auto-calculated nearest-km-first
+  distanceToStopKm Float?
+  status          DeliveryStatus         @default(PENDING)
+  failureReason   DeliveryFailureReason?
+  failureNotes    String?
+  eta             DateTime?
+  proofType       ProofType?
+  proofUrl        String?
+  deliveredAt     DateTime?
+
+  @@index([status])
+}
+
+model Route {
+  id        String     @id @default(uuid())
+  driverId  String?
+  date      DateTime?
+  createdAt DateTime   @default(now())
+
+  deliveries Delivery[]
+}
+
+model Vehicle {
+  id                  String        @id @default(uuid())
+  registrationNo      String        @unique
+  makeModel           String?
+  type                String?
+  capacity            String?
+  status              VehicleStatus @default(AVAILABLE)
+  insurancePolicyNo   String?
+  insuranceProvider   String?
+  insuranceExpiryDate DateTime?
+  registrationExpiryDate DateTime?
+  lastServiceDate     DateTime?
+  nextServiceDueDate  DateTime?
+  nextServiceDueMileage Int?
+  currentMileage      Int?
+
+  driver         Driver?
+  serviceRecords VehicleServiceRecord[]
+}
+
+model VehicleServiceRecord {
+  id              String   @id @default(uuid())
+  vehicleId       String
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id])
+  serviceDate     DateTime
+  serviceType     String?
+  cost            Decimal  @default(0) @db.Decimal(14, 2)
+  mileageAtService Int?
+  performedBy     String?
+  notes           String?
+}
+
+model SalesReturn {
+  id           String            @id @default(uuid())
+  orderId      String
+  order        Order             @relation(fields: [orderId], references: [id])
+  driverId     String?
+  driver       Driver?           @relation(fields: [driverId], references: [id])
+  itemsReturned Json // [{ productId, quantity, reason }]
+  creditNoteId String?
+  status       SalesReturnStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+}
+
+model EndOfDayReport {
+  id                String   @id @default(uuid())
+  driverId          String
+  driver            Driver   @relation(fields: [driverId], references: [id])
+  date              DateTime
+  totalDelivered    Int      @default(0)
+  totalCashCollected Decimal @default(0) @db.Decimal(14, 2)
+  totalChequeCollected Decimal @default(0) @db.Decimal(14, 2)
+  totalReturns      Int      @default(0)
+  undeliveredStops  Json? // [orderId,...]
+  submittedToFinance Boolean @default(false)
+  varianceFlag      Boolean  @default(false)
+  createdAt         DateTime @default(now())
+}
+
+// ===========================================================================
+// SALES
+// ===========================================================================
+
+model SpecialPriceRequest {
+  id            String         @id @default(uuid())
+  customerId    String
+  customer      CustomerProfile @relation(fields: [customerId], references: [id])
+  productId     String
+  requestedPrice Decimal       @db.Decimal(14, 2)
+  standardPrice Decimal        @db.Decimal(14, 2)
+  reason        String?
+  requestedById String?
+  status        ApprovalStatus @default(PENDING)
+  approvedById  String? // Sales Admin only
+  validFrom     DateTime?
+  validUntil    DateTime?
+  createdAt     DateTime       @default(now())
+}
+
+model CustomerVisit {
+  id           String          @id @default(uuid())
+  customerId   String
+  customer     CustomerProfile @relation(fields: [customerId], references: [id])
+  salesmanId   String
+  salesman     Driver?         @relation("SalesmanVisits", fields: [salesmanId], references: [id])
+  visitDate    DateTime        @default(now())
+  checkInTime  DateTime?
+  gpsLat       Float?
+  gpsLng       Float?
+  notes        String?
+}
+
+// ===========================================================================
+// PROCUREMENT
+// ===========================================================================
+
+model Supplier {
+  id              String         @id @default(uuid())
+  name            String
+  contactInfo     String?
+  productsSupplied Json? // [productId|name,...]
+  paymentTerms    String?
+  rating          Float?
+  status          SupplierStatus @default(ACTIVE)
+
+  purchaseOrders   PurchaseOrder[]
+  quotations       Quotation[]
+  supplierInvoices SupplierInvoice[]
+}
+
+model PurchaseRequisition {
+  id               String            @id @default(uuid())
+  requestedById    String?
+  sourceDepartment Department?
+  items            Json // [{ product, quantity }]
+  status           RequisitionStatus @default(PENDING)
+  approvedById     String? // Purchase Admin only
+  createdAt        DateTime          @default(now())
+
+  quotations     Quotation[]
+  purchaseOrders PurchaseOrder[]
+}
+
+model Quotation {
+  id             String          @id @default(uuid())
+  requisitionId  String
+  requisition    PurchaseRequisition @relation(fields: [requisitionId], references: [id])
+  supplierId     String
+  supplier       Supplier        @relation(fields: [supplierId], references: [id])
+  quotedPrice    Decimal         @db.Decimal(14, 2)
+  paymentTerms   String?
+  deliveryLeadTime String?
+  validityDate   DateTime?
+  status         QuotationStatus @default(RECEIVED)
+}
+
+model PurchaseOrder {
+  id              String              @id @default(uuid())
+  poNumber        String              @unique
+  supplierId      String
+  supplier        Supplier            @relation(fields: [supplierId], references: [id])
+  requisitionId   String?
+  requisition     PurchaseRequisition? @relation(fields: [requisitionId], references: [id])
+  selectionMethod POSelectionMethod   @default(DIRECT_SELECTION)
+  items           Json // [{ product, quantity, unitPrice, subtotal }]
+  totalAmount     Decimal             @default(0) @db.Decimal(14, 2)
+  paymentTerms    String?
+  expectedDate    DateTime?
+  createdById     String?
+  status          PurchaseOrderStatus @default(DRAFT)
+  createdAt       DateTime            @default(now())
+
+  grns             GoodsReceivedNote[]
+  supplierInvoices SupplierInvoice[]
+}
+
+model GoodsReceivedNote {
+  id              String              @id @default(uuid())
+  poId            String
+  po              PurchaseOrder       @relation(fields: [poId], references: [id])
+  recordedById    String? // Warehouse staff
+  itemsReceived   Json // [{ product, qtyOrdered, qtyReceived, batchNo, expiryDate }]
+  comparisonResult GrnComparisonResult @default(MATCHED)
+  accepted        Boolean             @default(false)
+  notes           String?
+  createdAt       DateTime            @default(now())
+
+  supplierInvoices SupplierInvoice[]
+}
+
+model SupplierInvoice {
+  id                  String                @id @default(uuid())
+  poId                String
+  po                  PurchaseOrder         @relation(fields: [poId], references: [id])
+  grnId               String?
+  grn                 GoodsReceivedNote?    @relation(fields: [grnId], references: [id])
+  supplierId          String
+  supplier            Supplier              @relation(fields: [supplierId], references: [id])
+  invoiceNo           String
+  amount              Decimal               @db.Decimal(14, 2)
+  matchedStatus       MatchedStatus         @default(MATCHED)
+  verifiedById        String?
+  approvedForPaymentById String? // Super Admin only
+  status              SupplierInvoiceStatus @default(PENDING)
+  createdAt           DateTime              @default(now())
+}
+
+// ===========================================================================
+// ACCOUNTING / FINANCE
+// ===========================================================================
+
+model ChartOfAccounts {
+  accountCode String      @id
+  accountName String
+  accountType AccountType
+
+  ledgerEntries LedgerEntry[]
+}
+
+model LedgerEntry {
+  id            String        @id @default(uuid())
+  accountCode   String
+  account       ChartOfAccounts @relation(fields: [accountCode], references: [accountCode])
+  debit         Decimal       @default(0) @db.Decimal(14, 2)
+  credit        Decimal       @default(0) @db.Decimal(14, 2)
+  referenceType LedgerRefType
+  referenceId   String?
+  date          DateTime      @default(now())
+  createdById   String?
+
+  @@index([accountCode])
+  @@index([referenceType])
+}
+
+model ExpensePayment {
+  id                  String        @id @default(uuid())
+  expenseType         String
+  amount              Decimal       @db.Decimal(14, 2)
+  description         String?
+  preparedById        String? // Finance
+  approvedForPaymentById String? // Super Admin only
+  status              ExpenseStatus @default(PENDING)
+  createdAt           DateTime      @default(now())
+}
+
+// ===========================================================================
+// HR & PAYROLL
+// ===========================================================================
+
+model Employee {
+  id            String         @id @default(uuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id])
+  department    Department
+  designation   String?
+  salary        Decimal        @default(0) @db.Decimal(14, 2)
+  joiningDate   DateTime?
+  status        EmployeeStatus @default(ACTIVE)
+  exitDate      DateTime?
+  retentionUntil DateTime?
+  archivedFlag  Boolean        @default(false)
+
+  attendance     Attendance[]
+  leaveRequests  LeaveRequest[]
+  salaryAdvances SalaryAdvanceRequest[]
+  payrolls       Payroll[]
+  passportRecords PassportRecord[]
+  exitRecords    ExitRecord[]
+}
+
+model Candidate {
+  id             String          @id @default(uuid())
+  name           String
+  contactInfo    String?
+  positionApplied String?
+  resumeUrl      String?
+  status         CandidateStatus @default(APPLIED)
+  interviewNotes String?
+  createdAt      DateTime        @default(now())
+
+  offerLetters OfferLetter[]
+}
+
+model OfferLetter {
+  id           String      @id @default(uuid())
+  candidateId  String
+  candidate    Candidate   @relation(fields: [candidateId], references: [id])
+  position     String?
+  salaryOffered Decimal    @default(0) @db.Decimal(14, 2)
+  joiningDate  DateTime?
+  sentDate     DateTime?
+  status       OfferStatus @default(SENT)
+  responseDate DateTime?
+}
+
+model PassportRecord {
+  id             String         @id @default(uuid())
+  employeeId     String
+  employee       Employee       @relation(fields: [employeeId], references: [id])
+  passportNo     String
+  submissionDate DateTime?
+  submittedTo    String?
+  releaseDate    DateTime?
+  releasedBy     String?
+  status         PassportStatus @default(HELD)
+  reason         String?
+}
+
+model ExitRecord {
+  id                   String   @id @default(uuid())
+  employeeId           String
+  employee             Employee @relation(fields: [employeeId], references: [id])
+  exitType             ExitType
+  reason               String?
+  noticeDate           DateTime?
+  effectiveDate        DateTime?
+  finalSettlementStatus String?
+  approvedById         String?
+}
+
+model Memo {
+  id         String       @id @default(uuid())
+  title      String
+  content    String
+  postedById String?
+  postedDate DateTime     @default(now())
+  audience   MemoAudience @default(ALL_STAFF)
+  department Department?
+  readBy     Json? // [userId,...]
+}
+
+model Attendance {
+  id            String           @id @default(uuid())
+  employeeId    String
+  employee      Employee         @relation(fields: [employeeId], references: [id])
+  department    Department?
+  date          DateTime
+  checkIn       DateTime?
+  checkOut      DateTime?
+  checkInMethod String           @default("self_app")
+  status        AttendanceStatus @default(PRESENT)
+  editedByHr    Boolean          @default(false)
+
+  @@unique([employeeId, date])
+}
+
+model Payroll {
+  id         String        @id @default(uuid())
+  employeeId String
+  employee   Employee      @relation(fields: [employeeId], references: [id])
+  period     String // e.g. 2026-06
+  grossPay   Decimal       @default(0) @db.Decimal(14, 2)
+  deductions Decimal       @default(0) @db.Decimal(14, 2)
+  netPay     Decimal       @default(0) @db.Decimal(14, 2)
+  status     PayrollStatus @default(DRAFT)
+
+  @@unique([employeeId, period])
+}
+
+model LeaveRequest {
+  id           String         @id @default(uuid())
+  employeeId   String
+  employee     Employee       @relation(fields: [employeeId], references: [id])
+  department   Department?
+  leaveType    LeaveType
+  startDate    DateTime
+  endDate      DateTime
+  reason       String?
+  status       ApprovalStatus @default(PENDING)
+  approvedById String? // employee's Department Admin
+  createdAt    DateTime       @default(now())
+}
+
+model SalaryAdvanceRequest {
+  id              String              @id @default(uuid())
+  employeeId      String
+  employee        Employee            @relation(fields: [employeeId], references: [id])
+  department      Department?
+  amountRequested Decimal             @db.Decimal(14, 2)
+  reason          String?
+  status          SalaryAdvanceStatus @default(PENDING)
+  approvedById    String? // employee's Department Admin
+  deductionPeriod String?
+  deducted        Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+}
+
+// ===========================================================================
+// SUPPORT & AUDIT
+// ===========================================================================
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  customerId  String?
+  subject     String
+  body        String?
+  type        String   @default("query") // query / return / refund
+  status      String   @default("open") // open / answered / resolved
+  response    String?
+  handledById String?
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  department  Department?
+  action      String
+  entity      String?
+  entityId    String?
+  detail      Json?
+  createdAt   DateTime @default(now())
+
+  @@index([entity])
+  @@index([userId])
+}

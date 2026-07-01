@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NTBFLLC — Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#11181c; --ink2:#5b6770; --muted:#8a949c;
+    --line:#e6e9ec; --accent:#1f6feb; --accent-bg:#e8f1ff;
+    --green:#1a9e75; --green-bg:#e3f5ee; --red:#e24b4a; --red-bg:#fdeaea;
+    --amber:#c98500; --amber-bg:#fbf0d8; --radius:10px;
+    --sidebar:#0f1b2d; --sidebar-ink:#c7d2dd; --sidebar-active:#1f6feb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0c1116; --panel:#151b22; --ink:#e8edf2; --ink2:#9aa7b2; --muted:#6b7680;
+      --line:#222b34; --accent:#4d8ef0; --accent-bg:#16243a;
+      --green:#3cc79a; --green-bg:#10271f; --red:#f06b6a; --red-bg:#2a1718;
+      --amber:#e0a52e; --amber-bg:#2a2110; --sidebar:#0a0f15; --sidebar-ink:#9aa7b2; }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .app{display:flex;min-height:100vh}
+
+  .sidebar{width:230px;background:var(--sidebar);color:var(--sidebar-ink);padding:20px 14px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+  .brand .logo{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .brand h1{font-size:15px;color:#fff;font-weight:600;letter-spacing:.2px}
+  .brand span{font-size:11px;color:#7e8b99;display:block;font-weight:400}
+  .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#5e6b78;padding:14px 10px 6px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--sidebar-ink);font-size:13.5px;transition:background .12s}
+  .nav-item:hover{background:rgba(255,255,255,.05)}
+  .nav-item.active{background:var(--sidebar-active);color:#fff}
+  .nav-item .ic{width:18px;text-align:center;opacity:.9}
+  .nav-item .badge{margin-left:auto;background:var(--amber);color:#1b1300;font-size:10px;font-weight:700;border-radius:20px;padding:1px 7px}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:60px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:16px}
+  .topbar .title{font-size:16px;font-weight:600}
+  .topbar .sub{font-size:12px;color:var(--muted)}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .pill{font-size:11.5px;background:var(--accent-bg);color:var(--accent);padding:4px 10px;border-radius:20px;font-weight:600}
+  .live{font-size:11.5px;color:var(--green);display:flex;align-items:center;gap:6px}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .content{padding:24px;max-width:1180px;width:100%}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .kpi .l{font-size:12.5px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .kpi .v{font-size:25px;font-weight:650;letter-spacing:-.5px}
+  .kpi .u{font-size:12px;color:var(--muted);font-weight:400}
+  .kpi.warn{background:var(--amber-bg);border-color:transparent}
+  .kpi.warn .l,.kpi.warn .v{color:var(--amber)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
+  .card h3{font-size:14.5px;font-weight:600;margin-bottom:4px}
+  .card .desc{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+  .chart-wrap{position:relative;width:100%;height:430px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  .tag{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+  .tag.ok{background:var(--green-bg);color:var(--green)}
+  .tag.loss{background:var(--red-bg);color:var(--red)}
+  .tag.missing{background:var(--amber-bg);color:var(--amber)}
+  .search{width:240px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:13px}
+
+  .alerts{display:flex;flex-direction:column;gap:10px}
+  .alert{display:flex;gap:11px;align-items:flex-start;font-size:13px}
+  .alert .ai{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+  .alert .ai.loss{background:var(--red-bg);color:var(--red)}
+  .alert .ai.missing{background:var(--amber-bg);color:var(--amber)}
+  .alert b{font-weight:600}
+
+  .empty{text-align:center;padding:46px 20px;color:var(--muted)}
+  .empty .e-ic{font-size:30px;margin-bottom:10px;opacity:.5}
+  .empty h4{font-size:15px;color:var(--ink);font-weight:600;margin-bottom:6px}
+  .empty p{font-size:13px;max-width:380px;margin:0 auto}
+
+  .view{display:none}
+  .view.active{display:block}
+  .note{font-size:12px;color:var(--muted);margin-top:6px;display:flex;gap:7px;align-items:center}
+  @media(max-width:760px){.sidebar{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">NB</div>
+      <div><h1>NTBFLLC<span>Trading &amp; Distribution</span></h1></div>
+    </div>
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" data-view="dashboard"><span class="ic">▦</span> Dashboard</div>
+    <div class="nav-item" data-view="catalog"><span class="ic">▤</span> Catalog</div>
+    <div class="nav-item" data-view="pricing"><span class="ic">⚑</span> Pricing health <span class="badge" id="navBadge">6</span></div>
+    <div class="nav-label">Operations</div>
+    <div class="nav-item" data-view="customers"><span class="ic">◍</span> Customers</div>
+    <div class="nav-item" data-view="orders"><span class="ic">▣</span> Orders</div>
+    <div class="nav-item" data-view="procurement"><span class="ic">⇄</span> Procurement</div>
+    <div class="nav-label">Finance</div>
+    <div class="nav-item" data-view="finance"><span class="ic">▰</span> Accounting</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="title" id="viewTitle">Dashboard</div>
+        <div class="sub" id="viewSub">Live overview · Ajman, UAE</div>
+      </div>
+      <div class="right">
+        <span class="pill">AED · VAT 5%</span>
+        <span class="live"><span class="dot"></span> Zoho Books</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div class="kpis" id="kpis"></div>
+        <div class="card">
+          <h3>Gross margin per carton</h3>
+          <div class="desc">Sale price minus purchase cost, by product (AED). Red = below cost · amber = price missing.</div>
+          <div class="chart-wrap"><canvas id="marginChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Pricing issues to fix</h3>
+          <div class="desc">Flagged automatically from the current Zoho catalog.</div>
+          <div class="alerts" id="dashAlerts"></div>
+          <div class="note">↺ Updates as you finish uploading the full product list.</div>
+        </div>
+      </section>
+
+      <!-- CATALOG -->
+      <section class="view" id="view-catalog">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+            <div><h3>Product catalog</h3><div class="desc" style="margin:0">Currently <b id="catCount"></b> products synced from Zoho Inventory.</div></div>
+            <input class="search" id="catSearch" placeholder="Search products…" />
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Product</th><th>SKU</th><th>Unit</th>
+                <th class="num">Sale (AED)</th><th class="num">Cost (AED)</th>
+                <th class="num">Margin</th><th class="num">Margin %</th><th>Status</th>
+              </tr></thead>
+              <tbody id="catBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRICING -->
+      <section class="view" id="view-pricing">
+        <div class="kpis" id="pricingKpis"></div>
+        <div class="card">
+          <h3>Pricing health</h3>
+          <div class="desc">Products that need a corrected sale or purchase price before they go live.</div>
+          <div class="alerts" id="pricingAlerts"></div>
+        </div>
+      </section>
+
+      <!-- EMPTY MODULES -->
+      <section class="view" id="view-customers"></section>
+      <section class="view" id="view-orders"></section>
+      <section class="view" id="view-procurement"></section>
+      <section class="view" id="view-finance"></section>
+    </div>
+  </div>
+</div>
+
+<script src="../role-dashboards/assets/data.js"></script>
+<script src="../role-dashboards/assets/snapshot.js"></script>
+<script>
+(async () => {
+const _s = await NTBF.loadSummary(window.NTBF_SNAPSHOT);
+const _badge = document.querySelector(".live");
+if(_badge) _badge.innerHTML = _s.live
+  ? '<span class="dot"></span> Live · Zoho Books'
+  : '<span class="dot" style="background:var(--muted)"></span> Sample snapshot';
+const DATA = {
+  org:{name:(_s.org&&_s.org.name)||"NTBFLLC",currency:"AED",vat:5,state:(_s.org&&_s.org.state)||"Ajman, UAE"},
+  counts:{products:_s.counts.products,customers:_s.counts.customers,orders:_s.counts.salesOrders||0,invoices:_s.counts.invoices,purchaseOrders:_s.counts.purchaseOrders},
+  totals:_s.totals,
+  items:(_s.items||[]).map(it=>({name:it.name,sku:it.sku||"—",unit:it.unit||"—",rate:Number(it.rate)||0,cost:Number(it.cost!=null?it.cost:it.purchase_rate)||0}))
+};
+
+const aed = n => "AED " + n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function classify(it){
+  if(it.rate===0) return {status:"missing",note:"no sale price set (cost "+aed(it.cost)+")",margin:null};
+  if(it.cost===0) return {status:"missing",note:"no purchase cost set — margin overstated",margin:null};
+  const m = it.rate - it.cost;
+  if(m < 0) return {status:"loss",note:"sells "+aed(it.rate)+" below cost "+aed(it.cost),margin:m};
+  return {status:"ok",note:"",margin:m};
+}
+const enriched = DATA.items.map(it=>({...it,...classify(it)}));
+const issues = enriched.filter(e=>e.status!=="ok");
+
+// KPIs
+const kpiDefs = [
+  {l:"Active products",v:DATA.counts.products},
+  {l:"Stock on hand",v:DATA.totals.stockUnits,u:"units"},
+  {l:"Inventory value",v:aed(DATA.totals.inventoryValue)},
+  {l:"Customers",v:DATA.counts.customers},
+  {l:"Revenue this month",v:aed(DATA.totals.revenueMtd)},
+  {l:"Open orders",v:DATA.counts.orders},
+  {l:"Outstanding A/R",v:aed(DATA.totals.outstanding)},
+  {l:"Pricing alerts",v:issues.length,warn:true},
+];
+document.getElementById("kpis").innerHTML = kpiDefs.map(k=>
+  `<div class="kpi ${k.warn?'warn':''}"><div class="l">${k.l}</div><div class="v">${k.v}${k.u?` <span class="u">${k.u}</span>`:""}</div></div>`).join("");
+document.getElementById("navBadge").textContent = issues.length;
+
+// Margin chart
+const sorted = enriched.slice().sort((a,b)=>(a.margin??(a.rate-a.cost))-(b.margin??(b.rate-b.cost)));
+const css = getComputedStyle(document.documentElement);
+const colMissing="#c98500", colLoss="#e24b4a", colOk="#1a9e75";
+const barColor = e => e.status==="missing"?colMissing : e.status==="loss"?colLoss : colOk;
+new Chart(document.getElementById("marginChart"),{
+  type:"bar",
+  data:{labels:sorted.map(e=>e.name.length>30?e.name.slice(0,28)+"…":e.name),
+    datasets:[{data:sorted.map(e=>Math.round((e.rate-e.cost)*100)/100),backgroundColor:sorted.map(barColor),borderRadius:4,borderSkipped:false}]},
+  options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const e=sorted[c.dataIndex];return "AED "+(e.rate-e.cost).toFixed(2)+(e.note?" · "+e.note:"")}}}},
+    scales:{x:{grid:{color:css.getPropertyValue('--line')},ticks:{color:css.getPropertyValue('--muted'),callback:v=>(v<0?'-':'')+'AED '+Math.abs(v)}},
+      y:{grid:{display:false},ticks:{color:css.getPropertyValue('--muted'),font:{size:11}}}}}
+});
+
+// Alerts
+function alertRow(e){
+  const sym = e.status==="loss"?"↓":"?";
+  return `<div class="alert"><div class="ai ${e.status}">${sym}</div><div><b>${e.name}</b> — ${e.note}</div></div>`;
+}
+const alertsHtml = issues.slice().sort((a,b)=>(a.rate-a.cost)-(b.rate-b.cost)).map(alertRow).join("");
+document.getElementById("dashAlerts").innerHTML = alertsHtml;
+document.getElementById("pricingAlerts").innerHTML = alertsHtml;
+document.getElementById("pricingKpis").innerHTML = [
+  {l:"Below cost",v:enriched.filter(e=>e.status==="loss").length},
+  {l:"Missing a price",v:enriched.filter(e=>e.status==="missing").length},
+  {l:"Healthy",v:enriched.filter(e=>e.status==="ok").length},
+  {l:"Avg healthy margin",v:(()=>{const ok=enriched.filter(e=>e.status==="ok");return (ok.reduce((s,e)=>s+(e.rate-e.cost)/e.rate,0)/ok.length*100).toFixed(1)+"%"})()},
+].map(k=>`<div class="kpi"><div class="l">${k.l}</div><div class="v">${k.v}</div></div>`).join("");
+
+// Catalog table
+document.getElementById("catCount").textContent = DATA.counts.products;
+function renderCatalog(filter=""){
+  const rows = enriched.filter(e=>e.name.toLowerCase().includes(filter.toLowerCase())).map(e=>{
+    const m = e.rate-e.cost, pct = e.rate>0&&e.cost>0?((m/e.rate)*100).toFixed(1)+"%":"—";
+    const mTxt = (e.rate>0&&e.cost>0)?(m>=0?"+":"")+m.toFixed(2):"—";
+    const label = {ok:"Healthy",loss:"Below cost",missing:"Missing price"}[e.status];
+    return `<tr><td>${e.name}</td><td>${e.sku}</td><td>${e.unit}</td>
+      <td class="num">${e.rate?e.rate.toFixed(2):"—"}</td><td class="num">${e.cost?e.cost.toFixed(2):"—"}</td>
+      <td class="num">${mTxt}</td><td class="num">${pct}</td><td><span class="tag ${e.status}">${label}</span></td></tr>`;
+  }).join("");
+  document.getElementById("catBody").innerHTML = rows || `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No products match.</td></tr>`;
+}
+renderCatalog();
+document.getElementById("catSearch").addEventListener("input",e=>renderCatalog(e.target.value));
+
+// Empty module views
+const emptyDefs = {
+  customers:{ic:"◍",h:"No customers yet",p:"Add customers in Zoho or via the Sales module. Once created, A/R, credit terms, and per-customer sales appear here."},
+  orders:{ic:"▣",h:"No orders yet",p:"Sales orders placed by customers will list here with status, assigned driver, and delivery zone."},
+  procurement:{ic:"⇄",h:"No purchase activity yet",p:"Suppliers, requisitions, quotations, purchase orders, and goods-received notes will surface here."},
+  finance:{ic:"▰",h:"No transactions yet",p:"Invoices, payments, and the ledger flow from Zoho Books. P&L, A/R and A/P aging populate once you start trading."},
+};
+Object.entries(emptyDefs).forEach(([k,d])=>{
+  document.getElementById("view-"+k).innerHTML =
+    `<div class="card"><div class="empty"><div class="e-ic">${d.ic}</div><h4>${d.h}</h4><p>${d.p}</p></div></div>`;
+});
+
+// Nav
+const titles = {dashboard:["Dashboard","Live overview · Ajman, UAE"],catalog:["Catalog","Products synced from Zoho Inventory"],
+  pricing:["Pricing health","Issues to fix before going live"],customers:["Customers","Accounts & credit terms"],
+  orders:["Orders","Sales orders & delivery status"],procurement:["Procurement","Suppliers, POs & receiving"],finance:["Accounting","Invoices, payments & ledger"]};
+document.querySelectorAll(".nav-item").forEach(item=>{
+  item.addEventListener("click",()=>{
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    item.classList.add("active");
+    const v = item.dataset.view;
+    document.querySelectorAll(".view").forEach(s=>s.classList.remove("active"));
+    document.getElementById("view-"+v).classList.add("active");
+    document.getElementById("viewTitle").textContent = titles[v][0];
+    document.getElementById("viewSub").textContent = titles[v][1];
+  });
+});
+})();
+</script>
+</body>
+</html>

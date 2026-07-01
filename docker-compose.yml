@@ -1,0 +1,42 @@
+# Full local stack: app (API + front-end) + PostgreSQL.
+# Usage:  docker compose up --build   →   http://localhost:3000
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: foodstuffs
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/foodstuffs?schema=public"
+      JWT_SECRET: "change-me-in-prod"
+      PORT: "3000"
+      CHEQUE_BOUNCE_CHARGE: "250"
+      ZOHO_ORG_ID: "170000198188"
+      ZOHO_ACCOUNTS_HOST: "https://accounts.zoho.ae"
+      ZOHO_API_HOST: "https://www.zohoapis.ae"
+      ANTHROPIC_MODEL: "claude-sonnet-4-6"
+      # Set these to go fully live:
+      ZOHO_CLIENT_ID: "${ZOHO_CLIENT_ID:-}"
+      ZOHO_CLIENT_SECRET: "${ZOHO_CLIENT_SECRET:-}"
+      ZOHO_REFRESH_TOKEN: "${ZOHO_REFRESH_TOKEN:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dbdata:

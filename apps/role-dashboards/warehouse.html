@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Warehouse · NTBFLLC</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">NB</div><div><h1>NTBFLLC<span>Warehouse</span></h1></div></div>
+    <div class="nav-label">Stock</div>
+    <div class="nav-item active"><span>▦</span> Dashboard</div>
+    <div class="nav-item"><span>▤</span> Stock levels</div>
+    <div class="nav-item"><span>⬇</span> Receiving / GRN <span class="badge">2</span></div>
+    <div class="nav-item"><span>⬆</span> Dispatch <span class="badge">3</span></div>
+    <div class="nav-item"><span>⇄</span> Stock transfer</div>
+    <div class="nav-item"><span>✎</span> Adjustments</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><div class="title">Warehouse dashboard</div><div class="sub">Bilal Ahmed · Warehouse incharge</div></div>
+      <div class="right"><span class="pill" id="src">…</span><button class="btn sm primary">Raise purchase request</button></div>
+    </div>
+
+    <div class="content">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="card">
+        <h3>Stock levels by product</h3>
+        <div class="desc" id="stockDesc">From Zoho Inventory · items at/below reorder need replenishment.</div>
+        <table>
+          <thead><tr><th>Product</th><th>SKU</th><th class="num">On hand</th><th class="num">Reorder pt</th><th>Status</th><th></th></tr></thead>
+          <tbody id="stockBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Goods received — pending check (GRN)</h3>
+        <div class="desc">Compare delivered goods against the PO before accepting into stock.</div>
+        <table>
+          <thead><tr><th>GRN</th><th>PO #</th><th>Supplier</th><th class="num">Lines</th><th>Result</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>GRN-0188</td><td>PO-2042</td><td>Emirates Cola Distributors</td><td class="num">4</td><td><span class="tag amber">Short 1 line</span></td><td><button class="btn sm">Review</button></td></tr>
+            <tr><td>GRN-0189</td><td>PO-2043</td><td>Al Ain Drinks Supply</td><td class="num">3</td><td><span class="tag green">Matched</span></td><td><button class="btn sm primary">Accept</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Dispatch queue</h3>
+        <div class="desc">Pick / pack confirmation for outgoing orders — marks ready for Delivery to collect.</div>
+        <table>
+          <thead><tr><th>Order</th><th>Customer</th><th class="num">Cartons</th><th>Stage</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>SO-1042</td><td>Al Madina Supermarket</td><td class="num">9</td><td><span class="tag blue">Packed</span></td><td><button class="btn sm primary">Ready for pickup</button></td></tr>
+            <tr><td>SO-1043</td><td>Green Grocers LLC</td><td class="num">6</td><td><span class="tag amber">Picking</span></td><td><button class="btn sm">Confirm pack</button></td></tr>
+            <tr><td>SO-1044</td><td>Fresh Mart</td><td class="num">14</td><td><span class="tag pending">Queued</span></td><td><button class="btn sm">Start pick</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="muted" id="foot" style="font-size:11.5px"></p>
+    </div>
+  </div>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/snapshot.js"></script>
+<script>
+const REORDER = { default: 40 };
+(async () => {
+  const s = await NTBF.loadSummary(window.NTBF_SNAPSHOT);
+  NTBF.renderSource(document.getElementById('src'), s.live);
+  const items = NTBF.deriveItems(s).map(it => ({ ...it, reorder: REORDER.default, low: (it.stockOnHand || 0) <= REORDER.default }));
+
+  const lowCount = items.filter(i => i.low).length;
+  const kpis = [
+    { l: 'Active products', v: s.counts.products },
+    { l: 'Total stock on hand', v: (s.totals.stockUnits || 0).toLocaleString() + ' units' },
+    { l: 'Inventory value', v: NTBF.aed(s.totals.inventoryValue) },
+    { l: 'Below reorder', v: lowCount, cls: lowCount ? 'amber' : 'green' },
+    { l: 'Pending GRN', v: 2 },
+    { l: 'Dispatch queue', v: 3, cls: 'accent' },
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k =>
+    `<div class="kpi ${k.cls || ''}"><div class="l">${k.l}</div><div class="v">${k.v}</div></div>`).join('');
+
+  document.getElementById('stockBody').innerHTML = items.map(i =>
+    `<tr><td>${i.name}</td><td>${i.sku}</td><td class="num tabnum">${i.stockOnHand}</td><td class="num tabnum">${i.reorder}</td>
+      <td>${i.low ? '<span class="tag amber">Low</span>' : '<span class="tag green">OK</span>'}</td>
+      <td>${i.low ? '<button class="btn sm primary">Replenish</button>' : ''}</td></tr>`).join('');
+
+  document.getElementById('foot').textContent = s.live
+    ? 'Stock levels are live from Zoho. GRN & dispatch shown as sample until procurement/orders run through the system.'
+    : 'Backend offline — showing the embedded Zoho snapshot. Start the API (npm run start:dev) to go live.';
+})();
+</script>
+</body>
+</html>

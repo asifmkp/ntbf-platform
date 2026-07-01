@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Delivery · NTBFLLC</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="phone">
+  <div class="p-head">
+    <div class="who">
+      <div class="pic">RA</div>
+      <div>
+        <b>Rashid Ali</b>
+        <span>Driver · Van DXB-4471 · Central zone</span>
+      </div>
+      <div class="status"><span class="dot"></span> On route</div>
+    </div>
+  </div>
+
+  <div class="p-body">
+    <div class="mkpis">
+      <div class="kpi accent"><div class="l">Stops</div><div class="v">4 <span class="u">/ 9</span></div></div>
+      <div class="kpi green"><div class="l">Cash collected</div><div class="v tabnum">AED 2,310</div></div>
+      <div class="kpi"><div class="l">Cheques</div><div class="v">2 <span class="u">· 1,840</span></div></div>
+      <div class="kpi amber"><div class="l">Returns</div><div class="v">1</div></div>
+    </div>
+
+    <div class="card" style="background:var(--green-bg);border-color:transparent">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px;color:var(--green)">✓</span>
+        <div><b style="font-size:13.5px;color:var(--green)">Load verified</b>
+        <div style="font-size:12px;color:var(--green)">38 cartons checked against dispatch list · no shortage</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Route progress</h3>
+      <div class="desc">Nearest-stop-first from your live GPS · 44% complete</div>
+      <div class="progress"><i style="width:44%;background:var(--green)"></i></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px" class="muted">
+        <span>4 of 9 delivered</span><span>~2.3 km to next stop</span>
+      </div>
+    </div>
+
+    <div class="p-title">Next stop</div>
+    <div class="card">
+      <div class="row" style="padding-top:0">
+        <div class="av green" style="background:var(--green-bg);color:var(--green)">5</div>
+        <div class="meta"><b>Al Madina Supermarket</b><span>Shop 12, Al Nuaimiya · 2.3 km</span></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin:10px 2px">
+        <span class="muted">Order #SO-1042 · 9 cartons</span>
+        <b class="tabnum">AED 612.50</b>
+      </div>
+      <div style="display:flex;gap:8px;font-size:12px;margin-bottom:12px">
+        <span class="tag blue">Cash on delivery</span><span class="tag amber">Credit 0 days</span>
+      </div>
+      <div style="display:flex;gap:9px">
+        <button class="btn primary" style="flex:1">Navigate</button>
+        <button class="btn" style="flex:1">Mark delivered</button>
+      </div>
+      <button class="btn full" style="margin-top:9px;color:var(--red);border-color:var(--red-bg)">Mark failed (reason required)</button>
+    </div>
+
+    <div class="p-title">Today's stops</div>
+    <div class="card" style="padding:8px 18px">
+      <div class="stop done"><div class="seq">✓</div><div class="info"><b>Corniche Bakery</b><span>Delivered 09:40 · cash AED 410</span></div></div>
+      <div class="stop done"><div class="seq">✓</div><div class="info"><b>Rashid Stores</b><span>Delivered 10:15 · cheque AED 1,200</span></div></div>
+      <div class="stop done"><div class="seq">✓</div><div class="info"><b>Ajman Mini Mart</b><span>Delivered 10:52 · cash AED 690 · 1 return</span></div></div>
+      <div class="stop done"><div class="seq">✓</div><div class="info"><b>City Kiosk</b><span>Delivered 11:30 · cash AED 1,210</span></div></div>
+      <div class="stop"><div class="seq">5</div><div class="info"><b>Al Madina Supermarket</b><span>Next · 2.3 km · AED 612.50</span></div></div>
+      <div class="stop"><div class="seq">6</div><div class="info"><b>Green Grocers LLC</b><span>3.1 km · AED 388</span></div></div>
+      <div class="stop"><div class="seq">7</div><div class="info"><b>Fresh Mart</b><span>4.0 km · AED 1,050</span></div></div>
+    </div>
+
+    <button class="btn primary full">Submit end-of-day report to Finance</button>
+    <p class="muted" style="font-size:11px;text-align:center;margin-top:14px">Sample route · live stops auto-sequence from GPS once orders flow in</p>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bn-item active"><span class="bi">▦</span>Route</div>
+    <div class="bn-item"><span class="bi">◎</span>Map</div>
+    <div class="bn-item"><span class="bi">＄</span>Collect</div>
+    <div class="bn-item"><span class="bi">↩</span>Returns</div>
+    <div class="bn-item"><span class="bi">▰</span>EOD</div>
+  </div>
+</div>
+</body>
+</html>

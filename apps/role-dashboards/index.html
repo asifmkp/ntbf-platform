@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NTBFLLC — Choose your view</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="launch">
+  <h2>NTBFLLC — Foodstuffs Trading</h2>
+  <p>One platform, role-based views. Pick a dashboard to open.</p>
+  <div class="launch-grid">
+    <a class="lc" href="../admin-dashboard/index.html">
+      <div class="ic" style="background:var(--accent-bg);color:var(--accent)">▦</div>
+      <h3>Management / Admin</h3>
+      <p>Company-wide KPIs, full catalog, margins and pricing health across all departments.</p>
+      <div class="plat">Web · tablet</div>
+    </a>
+    <a class="lc" href="salesman.html">
+      <div class="ic" style="background:var(--green-bg);color:var(--green)">◍</div>
+      <h3>Salesman</h3>
+      <p>Daily sales, GPS customer visits, new-customer creation and special-price requests.</p>
+      <div class="plat">Phone-first</div>
+    </a>
+    <a class="lc" href="purchase.html">
+      <div class="ic" style="background:var(--purple-bg);color:var(--purple)">⇄</div>
+      <h3>Purchase officer</h3>
+      <p>Pending POs, stock checking, quotation comparison, supplier selection, payables.</p>
+      <div class="plat">Web · tablet</div>
+    </a>
+    <a class="lc" href="delivery.html">
+      <div class="ic" style="background:var(--amber-bg);color:var(--amber)">▣</div>
+      <h3>Delivery driver</h3>
+      <p>Shift &amp; load check, nearest-km route, deliveries, COD/cheque collection, end-of-day.</p>
+      <div class="plat">Phone-first</div>
+    </a>
+    <a class="lc" href="warehouse.html">
+      <div class="ic" style="background:var(--accent-bg);color:var(--accent)">▤</div>
+      <h3>Warehouse incharge</h3>
+      <p>Live stock levels, low-stock alerts, goods-received checks, dispatch queue, transfers.</p>
+      <div class="plat">Web · tablet · live</div>
+    </a>
+    <a class="lc" href="finance.html">
+      <div class="ic" style="background:var(--green-bg);color:var(--green)">＄</div>
+      <h3>Finance admin</h3>
+      <p>Receivables, payables, supplier/expense approvals, cheque control, VAT and cash flow.</p>
+      <div class="plat">Web · tablet · live</div>
+    </a>
+  </div>
+  <p class="muted" style="font-size:12px;margin-top:26px">Seven role-based views over one platform. Warehouse and Finance pull <b>live data</b> from Zoho Books via the backend (<code>/api/dashboard/summary</code>) and fall back to the embedded snapshot when the API is offline. Operational figures (visits, routes, suppliers) are sample data until those flows run through the system.</p>
+</div>
+</body>
+</html>

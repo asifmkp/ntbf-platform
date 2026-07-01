@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finance · NTBFLLC</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">NB</div><div><h1>NTBFLLC<span>Finance</span></h1></div></div>
+    <div class="nav-label">Receivables / Payables</div>
+    <div class="nav-item active"><span>▦</span> Dashboard</div>
+    <div class="nav-item"><span>⬇</span> Receivable</div>
+    <div class="nav-item"><span>⬆</span> Payable</div>
+    <div class="nav-item"><span>＄</span> Supplier payments <span class="badge">2</span></div>
+    <div class="nav-item"><span>▤</span> Expense payments <span class="badge">1</span></div>
+    <div class="nav-label">Reports</div>
+    <div class="nav-item"><span>≈</span> Cash flow</div>
+    <div class="nav-item"><span>%</span> VAT submit</div>
+    <div class="nav-item"><span>▰</span> Profit &amp; loss</div>
+    <div class="nav-label">Approvals</div>
+    <div class="nav-item"><span>✓</span> Pending for approval <span class="badge">3</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><div class="title">Finance dashboard</div><div class="sub">Sara Iqbal · Finance admin</div></div>
+      <div class="right"><span class="pill" id="src">…</span><button class="btn sm primary">New expense</button></div>
+    </div>
+
+    <div class="content">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="card">
+        <h3>Accounts receivable — aging</h3>
+        <div class="desc" id="arDesc">Outstanding balance per customer by credit-period bucket.</div>
+        <table>
+          <thead><tr><th>Bucket</th><th class="num">Amount</th><th>Share</th></tr></thead>
+          <tbody id="arBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Supplier &amp; expense payments — awaiting release</h3>
+        <div class="desc">Finance prepares; <b>Super Admin</b> is the sole approver to release (TRD §5).</div>
+        <table>
+          <thead><tr><th>Type</th><th>Payee</th><th class="num">Amount</th><th>Prepared by</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Supplier</td><td>Gulf Beverages Trading</td><td class="num tabnum">AED 9,240</td><td>Finance</td><td><span class="tag pending">Awaiting Super Admin</span></td></tr>
+            <tr><td>Supplier</td><td>Emirates Cola Distributors</td><td class="num tabnum">AED 6,180</td><td>Finance</td><td><span class="tag pending">Awaiting Super Admin</span></td></tr>
+            <tr><td>Expense</td><td>Vehicle insurance — DXB-4471</td><td class="num tabnum">AED 2,400</td><td>Finance</td><td><span class="tag pending">Awaiting Super Admin</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Cheque control</h3>
+        <div class="desc">Bounced cheques auto-apply AED 250 charge, place the account on hold, and assign Sales recovery.</div>
+        <table>
+          <thead><tr><th>Customer</th><th>Cheque #</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Rashid Stores</td><td>CHQ-55012</td><td class="num tabnum">AED 1,200</td><td><span class="tag blue">Cleared</span></td><td></td></tr>
+            <tr><td>Corniche Bakery</td><td>CHQ-55018</td><td class="num tabnum">AED 640</td><td><span class="tag pending">Pending</span></td><td><button class="btn sm">Mark cleared / bounced</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="muted" id="foot" style="font-size:11.5px"></p>
+    </div>
+  </div>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/snapshot.js"></script>
+<script>
+(async () => {
+  const s = await NTBF.loadSummary(window.NTBF_SNAPSHOT);
+  NTBF.renderSource(document.getElementById('src'), s.live);
+
+  const revenue = s.totals.revenueMtd || 0;
+  const ar = s.totals.outstanding || 0;
+  const vat = Math.round(revenue * 0.05 * 100) / 100;
+  const ap = 17820; // sample payable until supplier bills run through the system
+
+  const kpis = [
+    { l: 'Revenue this month', v: NTBF.aed(revenue), cls: 'green' },
+    { l: 'Receivable (A/R)', v: NTBF.aed(ar), cls: 'accent' },
+    { l: 'Payable (A/P)', v: NTBF.aed(ap) },
+    { l: 'VAT due (5%)', v: NTBF.aed(vat) },
+    { l: 'Invoices', v: s.counts.invoices },
+    { l: 'Pending approvals', v: 3, cls: 'amber' },
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k =>
+    `<div class="kpi ${k.cls || ''}"><div class="l">${k.l}</div><div class="v">${k.v}</div></div>`).join('');
+
+  // AR aging — split live outstanding across buckets (all current when zero).
+  const buckets = ar > 0
+    ? [['0–30 days', ar * 0.6], ['31–60 days', ar * 0.3], ['60+ days', ar * 0.1]]
+    : [['0–30 days', 0], ['31–60 days', 0], ['60+ days', 0]];
+  document.getElementById('arBody').innerHTML = buckets.map(([b, amt]) => {
+    const share = ar > 0 ? Math.round((amt / ar) * 100) : 0;
+    return `<tr><td>${b}</td><td class="num tabnum">${NTBF.aed(amt)}</td>
+      <td><div class="progress" style="width:160px"><i style="width:${share}%"></i></div></td></tr>`;
+  }).join('');
+  document.getElementById('arDesc').textContent = ar > 0
+    ? 'Outstanding balance per credit-period bucket.'
+    : 'No receivables yet — buckets populate as invoices are raised and age.';
+
+  document.getElementById('foot').textContent = s.live
+    ? 'Revenue, A/R and VAT are live from Zoho Books. A/P and approvals are sample until supplier bills run through the system.'
+    : 'Backend offline — showing the embedded Zoho snapshot. Start the API (npm run start:dev) to go live.';
+})();
+</script>
+</body>
+</html>

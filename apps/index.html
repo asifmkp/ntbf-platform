@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NTBFLLC — Platform</title>
+<style>
+  :root{--bg:#eef0f3;--panel:#fff;--ink:#11181c;--muted:#8a949c;--line:#e6e9ec;--accent:#1f6feb;--green:#1a9e75;--amber:#c98500}
+  @media(prefers-color-scheme:dark){:root{--bg:#0a0e12;--panel:#151b22;--ink:#e8edf2;--muted:#6b7680;--line:#222b34;--accent:#4d8ef0;--green:#3cc79a;--amber:#e0a52e}}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  .wrap{max-width:860px;margin:0 auto;padding:44px 22px}
+  h1{font-size:25px;font-weight:700;letter-spacing:-.5px}
+  .sub{color:var(--muted);margin:4px 0 8px}
+  .status{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:5px 12px;margin-bottom:26px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:22px;text-decoration:none;color:inherit;transition:.12s;display:block}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:5px}
+  .card p{font-size:13px;color:var(--muted)}
+  .tag{font-size:10.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-top:12px;display:block}
+  .feat{margin-top:30px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px 22px}
+  .feat h2{font-size:15px;font-weight:600;margin-bottom:12px}
+  .feat ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+  .feat li{font-size:13px;color:var(--ink);display:flex;gap:8px;align-items:flex-start}
+  .feat li b{color:var(--green)}
+  .foot{color:var(--muted);font-size:12px;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>NTBFLLC — Foodstuffs Trading Platform</h1>
+  <p class="sub">One system, role-based apps, integrated Zoho ERP, and an AI copilot. Ajman, UAE · AED.</p>
+  <div class="status"><span class="dot" id="dot"></span><span id="stat">Checking backend…</span></div>
+
+  <div class="grid">
+    <a class="card" href="mobile-app/index.html">
+      <div class="ic" style="background:#e8f1ff;color:#1f6feb">📱</div>
+      <h3>Field App</h3>
+      <p>Mobile app for all roles — salesman, driver, warehouse, purchase, finance, admin. Live route map, bill capture, AI copilot.</p>
+      <span class="tag">Interactive · phone-first</span>
+    </a>
+    <a class="card" href="role-dashboards/index.html">
+      <div class="ic" style="background:#e3f5ee;color:#1a9e75">📊</div>
+      <h3>Role Dashboards</h3>
+      <p>Department dashboards reading live Zoho data with snapshot fallback. Sales, purchase, warehouse, finance, delivery.</p>
+      <span class="tag">Web · tablet</span>
+    </a>
+    <a class="card" href="admin-dashboard/index.html">
+      <div class="ic" style="background:#fbf0d8;color:#c98500">🎛️</div>
+      <h3>Admin Dashboard</h3>
+      <p>Company-wide KPIs, full catalog and pricing health, margins, and alerts — live from Zoho.</p>
+      <span class="tag">Web · management</span>
+    </a>
+  </div>
+
+  <div class="feat">
+    <h2>What's inside</h2>
+    <ul>
+      <li><b>✓</b> Role-based field app with working actions</li>
+      <li><b>✓</b> Geographic nearest-first delivery routing</li>
+      <li><b>✓</b> Purchase bill photo → Claude → Zoho</li>
+      <li><b>✓</b> Role-aware AI copilot (acts on your data)</li>
+      <li><b>✓</b> AI demand forecast &amp; auto-replenishment</li>
+      <li><b>✓</b> Zoho Books ERP backbone (AED, 5% VAT)</li>
+    </ul>
+  </div>
+
+  <p class="foot">Backend API expected at <code id="api">http://localhost:3000</code>. The apps fall back to local/snapshot data when it's offline.</p>
+</div>
+<script>
+  const API = localStorage.getItem('ntbf_api') || ((location.protocol.startsWith('http') && location.port !== '8080') ? location.origin : 'http://localhost:3000');
+  document.getElementById('api').textContent = API;
+  (async () => {
+    const dot = document.getElementById('dot'), stat = document.getElementById('stat');
+    try {
+      const [a, d] = await Promise.all([
+        fetch(API + '/api/agent/status').then(r => r.json()),
+        fetch(API + '/api/dashboard/health').then(r => r.json()),
+      ]);
+      const ai = a.configured, zoho = d.zohoConfigured;
+      dot.style.background = (ai && zoho) ? 'var(--green)' : 'var(--amber)';
+      stat.textContent = `Backend online · AI ${ai ? 'live' : 'needs key'} · Zoho ${zoho ? 'live' : 'needs key'}`;
+    } catch (e) {
+      dot.style.background = 'var(--muted)';
+      stat.textContent = 'Backend offline — apps run in local/snapshot mode';
+    }
+  })();
+</script>
+</body>
+</html>
