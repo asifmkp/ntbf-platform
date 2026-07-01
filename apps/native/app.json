@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "National Trading",
+    "slug": "ntbf-order",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "ntbforder",
+    "splash": {
+      "backgroundColor": "#0a66c2"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ntbfllc.order"
+    },
+    "android": {
+      "package": "com.ntbfllc.order"
+    }
+  }
+}
