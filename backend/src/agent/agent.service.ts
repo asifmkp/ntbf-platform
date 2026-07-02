@@ -62,6 +62,11 @@ export class AgentService {
     return { configured: this.ai.configured };
   }
 
+  /** Live self-test — verifies the configured key/model actually work. */
+  ping() {
+    return this.ai.ping();
+  }
+
   toolsForRole(role: string) {
     return TOOLS.filter((t) => t.roles.includes('all') || t.roles.includes(role)).map(({ name, description, input_schema }) => ({ name, description, input_schema }));
   }

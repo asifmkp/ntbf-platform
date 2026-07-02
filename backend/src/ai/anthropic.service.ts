@@ -64,6 +64,46 @@ export class AnthropicService {
     return Boolean(this.config.get('ANTHROPIC_API_KEY'));
   }
 
+  /**
+   * Lightweight live self-test. Sends a 1-token request to Claude and reports
+   * whether the configured key/model actually work, WITHOUT leaking the key.
+   * Used by /api/agent/status?ping=1 to verify a deployment remotely.
+   */
+  async ping(): Promise<{ ok: boolean; status?: number; error?: string; model?: string }> {
+    if (!this.configured) return { ok: false, error: 'ANTHROPIC_API_KEY not set' };
+    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': this.config.get<string>('ANTHROPIC_API_KEY')!,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] }),
+        signal: controller.signal,
+      });
+      if (res.ok) return { ok: true, model };
+      const body = await res.text();
+      this.logger.error(`Anthropic ping error ${res.status}: ${body}`);
+      // Surface a short, safe reason (e.g. authentication_error) — never the key.
+      let reason = `HTTP ${res.status}`;
+      try {
+        const j = JSON.parse(body);
+        reason = j?.error?.type || j?.error?.message || reason;
+      } catch {
+        /* keep HTTP status */
+      }
+      return { ok: false, status: res.status, error: reason, model };
+    } catch (e) {
+      return { ok: false, error: `request failed: ${(e as Error).message}`, model };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   /** Generic Claude Messages API passthrough (used by the copilot agent). */
   async createMessage(body: Record<string, unknown>): Promise<any> {
     if (!this.configured) throw new ServiceUnavailableException('ANTHROPIC_API_KEY not set');

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsString } from 'class-validator';
 import { Public } from '../common/decorators/public.decorator';
@@ -27,7 +27,10 @@ export class AgentController {
 
   @Public()
   @Get('status')
-  status() {
+  status(@Query('ping') ping?: string) {
+    // ?ping=1 runs a live 1-token self-test so a deployment can be verified
+    // remotely (returns the real upstream error, e.g. authentication_error).
+    if (ping === '1' || ping === 'true') return this.agent.ping();
     return this.agent.status();
   }
 
