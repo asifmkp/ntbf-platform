@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+  /* Subdomain routing: order.ntbfllc.com -> customer portal, app.ntbfllc.com -> staff app.
+     Runs before render so there is no flash of the hub. Bare onrender.com host stays on the hub. */
+  (function () {
+    var h = location.hostname;
+    if (location.pathname === '/' || location.pathname === '') {
+      if (h.indexOf('order.') === 0) location.replace('/order/');
+      else if (h.indexOf('app.') === 0) location.replace('/mobile-app/');
+    }
+  })();
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>NTBFLLC — Platform</title>
