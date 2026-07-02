@@ -15,6 +15,12 @@
     },
     "android": {
       "package": "com.ntbfllc.order"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2b9acf61-88f3-460d-b4ca-64c311f65a5b"
+      }
+    },
+    "owner": "asifmkp"
   }
 }
