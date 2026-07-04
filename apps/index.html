@@ -15,6 +15,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>NTBFLLC — Platform</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#1478c6" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="National" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){});});}</script>
 <style>
   :root{--bg:#eef0f3;--panel:#fff;--ink:#11181c;--muted:#8a949c;--line:#e6e9ec;--accent:#1f6feb;--green:#1a9e75;--amber:#c98500}
   @media(prefers-color-scheme:dark){:root{--bg:#0a0e12;--panel:#151b22;--ink:#e8edf2;--muted:#6b7680;--line:#222b34;--accent:#4d8ef0;--green:#3cc79a;--amber:#e0a52e}}
