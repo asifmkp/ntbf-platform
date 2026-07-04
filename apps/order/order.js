@@ -4,18 +4,25 @@
   const products = (window.NTBF_CATALOG || []).filter((p) => p.price > 0);
   const byId = {}; products.forEach((p) => { byId[p.id] = p; });
 
-  // Category presentation (emoji + accent colour).
+  // Category presentation (emoji + accent + hero gradient).
   const CATS = {
-    'Carbonated Drinks': { e: '🥤', c: '#1478c6' },
-    'Juice': { e: '🧃', c: '#e0872e' },
-    'Energy Drinks': { e: '⚡', c: '#8b3fd6' },
-    'Chips': { e: '🍟', c: '#c9a227' },
-    'confectionery': { e: '🍬', c: '#d6478f' },
-    'Food': { e: '🍽️', c: '#1a9e75' },
+    'Carbonated Drinks': { e: '🥤', c: '#1478c6', g: 'linear-gradient(140deg,#2b8fd8 0%,#14538f 100%)' },
+    'Juice': { e: '🧃', c: '#d97a1e', g: 'linear-gradient(140deg,#efa03c 0%,#b05a10 100%)' },
+    'Energy Drinks': { e: '⚡', c: '#7b3fd6', g: 'linear-gradient(140deg,#8f55e8 0%,#4c2492 100%)' },
+    'Chips': { e: '🍟', c: '#c9a227', g: 'linear-gradient(140deg,#d9b23a 0%,#8f6d12 100%)' },
+    'confectionery': { e: '🍬', c: '#d6478f', g: 'linear-gradient(140deg,#e2609f 0%,#96275e 100%)' },
+    'Food': { e: '🍽️', c: '#1a9e75', g: 'linear-gradient(140deg,#25b487 0%,#0e6047 100%)' },
   };
-  const catInfo = (cat) => CATS[cat] || { e: '📦', c: '#8592a0' };
+  const catInfo = (cat) => CATS[cat] || { e: '📦', c: '#8592a0', g: 'linear-gradient(140deg,#5b6b7d 0%,#2c3947 100%)' };
   const catLabel = (cat) => (cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Other');
   const CAT_LIST = ['All'].concat(products.reduce((a, p) => (p.category && a.indexOf(p.category) < 0 ? a.concat(p.category) : a), []));
+
+  // Featured spotlight: best seller (highest velocity) per category, top 6.
+  const FEATURED = (() => {
+    const best = {};
+    products.forEach((p) => { const k = p.category || 'Other'; if (!best[k] || (p.velocity || 0) > (best[k].velocity || 0)) best[k] = p; });
+    return Object.values(best).sort((a, b) => (b.velocity || 0) - (a.velocity || 0)).slice(0, 6);
+  })();
 
   let view = 'shop';
   let authMode = 'login';
@@ -44,15 +51,11 @@
 
   function render() {
     if (!token()) { renderAuth(); return; }
-    const c = customer();
-    const first = c ? String(c.name).split(' ')[0] : '';
     app().innerHTML = `
-      <div class="top">
-        <div class="row">
-          <img class="logo" src="/icons/icon-192.png" alt="" />
-          <div class="ttl"><h1>Hi, ${esc(first) || 'there'} 👋</h1><p>National Trading · Ajman</p></div>
-          <span class="u" data-act="logout">Sign out</span>
-        </div>
+      <div class="hd">
+        <img src="/icons/icon-192.png" alt="" />
+        <div class="nm"><b>National Trading</b><span>Ajman · Wholesale</span></div>
+        <span class="u" data-act="logout">Sign out</span>
       </div>
       <div id="view"></div>
       ${view === 'shop' ? cartBar() : ''}
@@ -71,7 +74,7 @@
         <div class="brand">
           <img src="/icons/icon-192.png" alt="National Trading" />
           <h1>National Trading</h1>
-          <p>Wholesale beverages &amp; foodstuff · Ajman, UAE</p>
+          <p>Beverage &amp; Foodstuff · Ajman</p>
         </div>
         <div class="card">
           <h3>${isLogin ? 'Welcome back' : 'Create your account'}</h3>
@@ -94,6 +97,23 @@
     </div></div>`;
   }
 
+  function heroHtml() {
+    const cards = FEATURED.map((p) => {
+      const info = catInfo(p.category);
+      return `<div class="hcard" style="background:${info.g}">
+        <div class="eyebrow">${esc(catLabel(p.category))} · Best seller</div>
+        <h2>${esc(p.name)}</h2>
+        <div class="hemoji">${info.e}</div>
+        <div class="hrow">
+          <div class="pricepill">${aed(p.price)}<small>${esc(p.unit || '')}</small></div>
+          <button class="hadd" style="color:${info.c}" data-act="inc" data-n="${esc(p.name)}" data-p="${p.price}" data-u="${esc(p.unit || '')}" data-i="${p.id}">Add +</button>
+        </div>
+      </div>`;
+    }).join('');
+    const dots = FEATURED.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('');
+    return `<div class="hero"><div class="htrack" id="htrack">${cards}</div><div class="hdots" id="hdots">${dots}</div></div>`;
+  }
+
   function qtcHtml(p) {
     const qv = cart[p.name] ? cart[p.name].qty : 0;
     if (qv <= 0) return `<button class="add" data-act="inc" data-n="${esc(p.name)}" data-p="${p.price}" data-u="${esc(p.unit || '')}" data-i="${p.id}">+</button>`;
@@ -103,7 +123,7 @@
   function prodHtml(p) {
     const info = catInfo(p.category);
     return `<div class="prod">
-      <div class="tile" style="background:${info.c}1a;color:${info.c}">${info.e}</div>
+      <div class="tile" style="background:${info.c}14;color:${info.c}">${info.e}</div>
       <div class="m">
         <b>${esc(p.name)}</b>
         <div class="meta">${esc(p.unit || '')}</div>
@@ -115,6 +135,7 @@
 
   function renderShop() {
     const q = searchQ.toLowerCase();
+    const browsing = activeCat === 'All' && !q;
     const list = products.filter((p) =>
       (activeCat === 'All' || p.category === activeCat) && p.name.toLowerCase().includes(q)
     ).slice(0, 80);
@@ -123,27 +144,37 @@
       return `<div class="chip ${c === activeCat ? 'on' : ''}" data-act="cat" data-c="${esc(c)}"><span class="e">${info.e}</span>${c === 'All' ? 'All' : esc(catLabel(c))}</div>`;
     }).join('');
     $('#view').innerHTML = `
+      ${browsing ? heroHtml() : ''}
+      <div class="shead"><div class="eyebrow">${browsing ? 'The full range' : esc(activeCat === 'All' ? 'Search' : catLabel(activeCat))}</div>
+      <h2>${browsing ? 'Shop the catalogue' : (q ? 'Results' : catLabel(activeCat))}</h2></div>
       <div class="cats">${chips}</div>
       <div class="search"><span class="ic">🔍</span><input id="q" placeholder="Search ${products.length} products…" value="${esc(searchQ)}" /></div>
       <div class="plist">${list.length ? list.map(prodHtml).join('') :
-        '<div class="empty"><div class="big">🔎</div><p>No products match. Try another search or category.</p></div>'}</div>`;
+        '<div class="empty"><div class="big">🔎</div><p>No products match.<br/>Try another search or category.</p></div>'}</div>`;
     const qi = $('#q');
     if (qi) qi.addEventListener('input', (e) => { searchQ = e.target.value; const pos = e.target.selectionStart; renderShop(); const n = $('#q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (_) {} } });
+    const tr = $('#htrack');
+    if (tr) tr.addEventListener('scroll', () => {
+      const i = Math.round(tr.scrollLeft / (tr.scrollWidth / FEATURED.length));
+      const dots = document.querySelectorAll('#hdots i');
+      dots.forEach((d, k) => d.classList.toggle('on', k === Math.min(i, dots.length - 1)));
+    }, { passive: true });
   }
 
   async function renderOrders() {
-    $('#view').innerHTML = `<div class="body"><div class="sect">My orders</div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
+    $('#view').innerHTML = `<div class="shead"><div class="eyebrow">Your history</div><h2>My orders</h2></div>
+      <div class="obody"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
     try { orders = await api('/api/portal/orders', 'GET', null, true); } catch (e) { orders = []; }
     const track = { PLACED: 'Order received', CONFIRMED: 'Confirmed', PACKED: 'Preparing', OUT_FOR_DELIVERY: 'Out for delivery', DELIVERED: 'Delivered' };
     const cls = (s) => (s === 'DELIVERED' ? 'done' : (s === 'OUT_FOR_DELIVERY' ? 'way' : ''));
     const icon = (s) => (s === 'DELIVERED' ? '✓ ' : (s === 'OUT_FOR_DELIVERY' ? '🚚 ' : ''));
-    $('#view').innerHTML = `<div class="body">
-      <div class="sect">My orders ${orders.length ? '(' + orders.length + ')' : ''}</div>
+    $('#view').innerHTML = `<div class="shead"><div class="eyebrow">Your history</div><h2>My orders ${orders.length ? '(' + orders.length + ')' : ''}</h2></div>
+      <div class="obody">
       ${orders.length ? orders.map((o) => `<div class="ord">
         <div class="h"><b>${esc(o.id)}</b><span class="tag ${cls(o.status)}">${icon(o.status)}${track[o.status] || esc(o.status)}</span></div>
-        <div class="s">${o.items.length} item${o.items.length === 1 ? '' : 's'} · <b style="color:var(--ink)">${aed(o.total)}</b> · ${new Date(o.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
+        <div class="s">${o.items.length} item${o.items.length === 1 ? '' : 's'} · <b style="color:var(--ink);font-family:var(--serif)">${aed(o.total)}</b> · ${new Date(o.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
       </div>`).join('') : '<div class="empty"><div class="big">🧾</div><p>No orders yet.<br/>Head to Shop to place your first order.</p></div>'}
-    </div>`;
+      </div>`;
   }
 
   function refreshProd(id) {
@@ -182,7 +213,7 @@
     },
     logout: () => { localStorage.removeItem('ntbf_ctoken'); localStorage.removeItem('ntbf_cust'); cart = {}; render(); },
     view: (d) => { view = d.v; render(); },
-    inc: (d) => { const n = d.n; cart[n] = cart[n] || { qty: 0, price: +d.p, unit: d.u }; cart[n].qty++; refreshProd(d.i); },
+    inc: (d) => { const n = d.n; cart[n] = cart[n] || { qty: 0, price: +d.p, unit: d.u }; cart[n].qty++; refreshProd(d.i); toast(n.length > 34 ? n.slice(0, 34) + '… added' : n + ' added'); },
     dec: (d) => { const n = d.n; if (cart[n]) { cart[n].qty--; if (cart[n].qty <= 0) delete cart[n]; } refreshProd(d.i); },
     placeOrder: async () => {
       const items = Object.entries(cart).map(([name, v]) => ({ name, qty: v.qty, price: v.price }));
