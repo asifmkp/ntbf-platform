@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.ntbfllc.app.twa",
+        "sha256_cert_fingerprints": ["9B:99:60:53:D8:08:FA:0A:09:29:06:8F:17:54:30:01:42:94:6D:D3:22:F9:0E:5C:03:8C:65:8B:1B:63:A0:CE"]
+      }
+    }]

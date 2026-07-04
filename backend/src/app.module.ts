@@ -34,6 +34,8 @@ import { SupportModule } from './support/support.module';
     ServeStaticModule.forRoot({
       rootPath: process.env.STATIC_DIR || join(process.cwd(), '..', 'apps'),
       exclude: ['/api/(.*)'],
+      // Serve /.well-known/* (Digital Asset Links for the Android TWA); dotfiles are ignored by default.
+      serveStaticOptions: { dotfiles: 'allow' },
     }),
     PrismaModule,
     NotificationsModule,
