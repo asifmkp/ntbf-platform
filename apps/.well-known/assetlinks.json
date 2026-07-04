@@ -1,8 +1,18 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.ntbfllc.app.twa",
-        "sha256_cert_fingerprints": ["9B:99:60:53:D8:08:FA:0A:09:29:06:8F:17:54:30:01:42:94:6D:D3:22:F9:0E:5C:03:8C:65:8B:1B:63:A0:CE"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ntbfllc.order",
+      "sha256_cert_fingerprints": ["01:81:FA:A2:23:3E:9B:83:E0:B9:E2:6C:DE:3D:62:EF:67:13:8A:6D:07:16:88:BB:F8:09:42:3D:3F:22:C2:BC"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ntbfllc.staff",
+      "sha256_cert_fingerprints": ["B7:DD:88:AC:F1:4F:56:CC:F9:2E:60:23:36:75:75:70:5B:9D:8F:A7:CB:BD:B8:CC:7D:70:A3:AD:5B:BC:10:6D"]
+    }
+  }
+]
