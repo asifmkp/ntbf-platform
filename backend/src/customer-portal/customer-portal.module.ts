@@ -1,5 +1,5 @@
 import {
-  Body, CanActivate, Controller, ExecutionContext, Get, Injectable, Module, Post,
+  BadRequestException, Body, CanActivate, Controller, ExecutionContext, Get, Injectable, Module, Post,
   Req, UnauthorizedException, UseGuards,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -11,6 +11,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Public } from '../common/decorators/public.decorator';
 import { ApiGateGuard } from '../common/guards/api-gate.guard';
+import { CATALOG } from '../catalog.data';
+
+// Reverse lookup by exact product name (fallback for older clients that send name, not id).
+const NAME_TO_ID: Record<string, string> = {};
+for (const k of Object.keys(CATALOG)) NAME_TO_ID[CATALOG[k].name] = k;
 
 class RegisterDto {
   @IsString() name: string;
@@ -20,8 +25,13 @@ class RegisterDto {
   @IsOptional() @IsString() category?: string;
 }
 class LoginDto { @IsString() phone: string; @IsString() password: string; }
-class OrderLineDto { @IsString() name: string; qty: number; price: number; }
-class PlaceOrderDto { @IsArray() items: OrderLineDto[]; @IsOptional() @IsString() method?: string; }
+class OrderLineDto { @IsOptional() @IsString() id?: string; @IsOptional() @IsString() name?: string; qty: number; }
+class PlaceOrderDto {
+  @IsArray() items: OrderLineDto[];
+  @IsOptional() @IsString() method?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() note?: string;
+}
 
 /** File-backed store for customer accounts + their orders — isolated from the staff data. */
 @Injectable()
@@ -33,15 +43,23 @@ export class CustomerStore {
     try { if (fs.existsSync(this.file)) this.data = JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch (e) { /* empty */ }
   }
   private save() {
-    try { fs.mkdirSync(path.dirname(this.file), { recursive: true }); fs.writeFileSync(this.file, JSON.stringify(this.data)); } catch (e) { /* ignore */ }
+    // Atomic write: serialise to a temp file then rename, so an interrupted write
+    // can never truncate/corrupt the live store (write + rename is atomic on same fs).
+    try {
+      fs.mkdirSync(path.dirname(this.file), { recursive: true });
+      const tmp = this.file + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(this.data));
+      fs.renameSync(tmp, this.file);
+    } catch (e) { /* ignore */ }
   }
   private id(p: string) { this.data.seq += 1; return p + '-' + this.data.seq; }
 
   findByPhone(phone: string) { return this.data.customers.find((c) => c.phone === phone); }
   createCustomer(c: any) { const rec = { id: this.id('cust'), createdAt: new Date().toISOString(), ...c }; this.data.customers.push(rec); this.save(); return rec; }
-  addOrder(customerId: string, items: any[], method: string) {
+  /** items are already server-priced & validated by the service. Total is recomputed from those. */
+  addOrder(customerId: string, items: any[], method: string, address?: string, note?: string) {
     const total = items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
-    const o = { id: this.id('ORD'), customerId, items, total: Math.round(total * 100) / 100, method: method || 'CASH_ON_DELIVERY', status: 'PLACED', createdAt: new Date().toISOString() };
+    const o = { id: this.id('ORD'), customerId, items, total: Math.round(total * 100) / 100, method: method || 'CASH_ON_DELIVERY', address: address || '', note: note || '', status: 'PLACED', createdAt: new Date().toISOString() };
     this.data.orders.unshift(o); this.save(); return o;
   }
   ordersFor(customerId: string) { return this.data.orders.filter((o) => o.customerId === customerId); }
@@ -89,9 +107,19 @@ export class CustomerPortalService {
     return { token, customer: { id: c.id, name: c.name, phone: c.phone, category: c.category } };
   }
   placeOrder(customerId: string, dto: PlaceOrderDto) {
-    const items = (dto.items || []).filter((i) => i.qty > 0);
-    if (!items.length) throw new UnauthorizedException('Your cart is empty');
-    return this.store.addOrder(customerId, items, dto.method || 'CASH_ON_DELIVERY');
+    // SECURITY: never trust client-sent prices. Resolve each line to the canonical
+    // product (by id, or exact name for older clients) and price it server-side.
+    const resolved: any[] = [];
+    for (const line of dto.items || []) {
+      const qty = Math.floor(Number(line.qty) || 0);
+      if (qty <= 0 || qty > 100000) continue;
+      const key = line.id && CATALOG[line.id] ? line.id : (line.name ? NAME_TO_ID[line.name] : undefined);
+      if (!key) continue;
+      const p = CATALOG[key];
+      resolved.push({ id: key, name: p.name, unit: p.unit, qty, price: p.price });
+    }
+    if (!resolved.length) throw new BadRequestException('No valid items in your order');
+    return this.store.addOrder(customerId, resolved, dto.method || 'CASH_ON_DELIVERY', dto.address, dto.note);
   }
   myOrders(customerId: string) { return this.store.ordersFor(customerId); }
   allOrders() { return this.store.allOrders(); }

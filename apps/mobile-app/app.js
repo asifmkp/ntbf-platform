@@ -215,7 +215,7 @@ const views = {
     return `
       <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">🌐 Online orders</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders customers placed on the website portal (order.ntbfllc.com).</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
       <div class="sect">Incoming (${onlineOrders.length})</div>
-      <div class="card" id="online-list">${onlineOrders.length ? onlineOrders.map((o) => row('🌐', 'a', (o.customerName || '—') + ' · ' + aed(o.total), o.id + ' · ' + o.items.length + ' item(s) · ' + (o.customerPhone || '') + ' · ' + new Date(o.createdAt).toLocaleString(), '<span class="tag blue">' + o.status + '</span>')).join('') : (onlineLoaded ? emptyRow('No online orders yet.') : emptyRow('Loading…'))}</div>`;
+      <div class="card" id="online-list">${onlineOrders.length ? onlineOrders.map((o) => row('🌐', 'a', esc(o.customerName || '—') + ' · ' + aed(o.total), esc(o.id) + ' · ' + o.items.length + ' item(s) · ' + esc(o.customerPhone || '') + ' · ' + new Date(o.createdAt).toLocaleString(), '<span class="tag blue">' + esc(o.status) + '</span>')).join('') : (onlineLoaded ? emptyRow('No online orders yet.') : emptyRow('Loading…'))}</div>`;
   },
   visits() {
     return `<div class="sect">Visit log</div>
@@ -604,11 +604,11 @@ const views = {
     return `
       <div class="mkpis">${kpi('Open tickets', open.length, open.length ? 'amber' : 'green')}${kpi('Resolved', (S.state.tickets || []).filter((t) => t.status === 'resolved').length, 'green')}</div>
       <div class="sect">Open tickets</div>
-      <div class="card">${open.length ? open.map((t) => `<div class="li"><div class="ic ${t.type === 'refund' ? 'r' : 'a'}">🎧</div><div class="m"><b>${t.customerName} — ${t.subject}</b><span>${t.id} · ${t.type} · ${t.status}</span><div class="muted" style="font-size:12px;margin-top:3px">${esc(t.body)}</div>${t.replies.length ? `<div class="muted" style="font-size:12px;margin-top:3px">↳ ${esc(t.replies[t.replies.length - 1].text)}</div>` : ''}<div class="btn-row"><button class="btn primary sm" data-act="reply" data-id="${t.id}">Reply</button><button class="btn green sm" data-act="closeTicket" data-id="${t.id}">Resolve</button></div></div></div>`).join('') : emptyRow('No open tickets — all clear.')}</div>`;
+      <div class="card">${open.length ? open.map((t) => `<div class="li"><div class="ic ${t.type === 'refund' ? 'r' : 'a'}">🎧</div><div class="m"><b>${esc(t.customerName)} — ${esc(t.subject)}</b><span>${esc(t.id)} · ${esc(t.type)} · ${esc(t.status)}</span><div class="muted" style="font-size:12px;margin-top:3px">${esc(t.body)}</div>${t.replies.length ? `<div class="muted" style="font-size:12px;margin-top:3px">↳ ${esc(t.replies[t.replies.length - 1].text)}</div>` : ''}<div class="btn-row"><button class="btn primary sm" data-act="reply" data-id="${t.id}">Reply</button><button class="btn green sm" data-act="closeTicket" data-id="${t.id}">Resolve</button></div></div></div>`).join('') : emptyRow('No open tickets — all clear.')}</div>`;
   },
   resolved() {
     const r = (S.state.tickets || []).filter((t) => t.status === 'resolved');
-    return `<div class="sect">Resolved (${r.length})</div><div class="card">${r.length ? r.map((t) => row('✓', 'g', t.customerName + ' — ' + t.subject, t.id, '')).join('') : emptyRow('Nothing resolved yet.')}</div>`;
+    return `<div class="sect">Resolved (${r.length})</div><div class="card">${r.length ? r.map((t) => row('✓', 'g', esc(t.customerName) + ' — ' + esc(t.subject), esc(t.id), '')).join('') : emptyRow('Nothing resolved yet.')}</div>`;
   },
 
   // ---------------- ADMIN / SUPER ADMIN ----------------

@@ -11,3 +11,6 @@ coverage/
 .vscode/
 *.tsbuildinfo
 prisma/*.db
+
+# runtime data (written to the mounted disk in prod; not source)
+backend/data/

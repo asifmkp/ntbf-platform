@@ -36,7 +36,12 @@ export class StaffStore {
     if (!this.data.staff || !this.data.staff.length) this.seed();
   }
   private save() {
-    try { fs.mkdirSync(path.dirname(this.file), { recursive: true }); fs.writeFileSync(this.file, JSON.stringify(this.data)); } catch (e) { /* ignore */ }
+    try {
+      fs.mkdirSync(path.dirname(this.file), { recursive: true });
+      const tmp = this.file + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(this.data));
+      fs.renameSync(tmp, this.file);
+    } catch (e) { /* ignore */ }
   }
   private id() { this.data.seq += 1; return 'stf-' + this.data.seq; }
 

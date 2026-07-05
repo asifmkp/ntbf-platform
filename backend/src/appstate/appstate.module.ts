@@ -35,7 +35,9 @@ export class AppStateService {
     this.mem = { rev: this.mem.rev + 1, state };
     try {
       fs.mkdirSync(path.dirname(this.file), { recursive: true });
-      fs.writeFileSync(this.file, JSON.stringify(this.mem));
+      const tmp = this.file + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(this.mem));
+      fs.renameSync(tmp, this.file);
     } catch (e) { /* memory-only fallback */ }
     return { rev: this.mem.rev };
   }
