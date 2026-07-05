@@ -213,9 +213,24 @@ const views = {
   },
   online() {
     return `
-      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">🌐 Online orders</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders customers placed on the website portal (order.ntbfllc.com).</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">🌐 Online orders</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders customers placed on the website (app.ntbfllc.com/order). Advance each order — customers see the status live.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
       <div class="sect">Incoming (${onlineOrders.length})</div>
-      <div class="card" id="online-list">${onlineOrders.length ? onlineOrders.map((o) => row('🌐', 'a', esc(o.customerName || '—') + ' · ' + aed(o.total), esc(o.id) + ' · ' + o.items.length + ' item(s) · ' + esc(o.customerPhone || '') + ' · ' + new Date(o.createdAt).toLocaleString(), '<span class="tag blue">' + esc(o.status) + '</span>')).join('') : (onlineLoaded ? emptyRow('No online orders yet.') : emptyRow('Loading…'))}</div>`;
+      <div id="online-list">${onlineOrders.length ? onlineOrders.map((o) => {
+        const ns = nextOrderStatus(o.status);
+        const lines = (o.items || []).map((l) => esc((l.qty || 1) + '× ' + l.name)).join(', ');
+        return `<div class="card pad" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+            <div style="min-width:0"><b style="font-size:14px">${esc(o.customerName || '—')}</b>
+              <div class="muted" style="font-size:12px;margin-top:2px">${esc(o.id)} · <b style="color:var(--ink)">${aed(o.total)}</b> · ${(o.items || []).length} item(s)</div></div>
+            ${statusTag(o.status)}
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:7px;line-height:1.5">${lines}</div>
+          ${o.address ? `<div class="muted" style="font-size:12px;margin-top:4px">📍 ${esc(o.address)}</div>` : ''}
+          ${o.customerPhone ? `<div class="muted" style="font-size:12px;margin-top:2px">📞 ${esc(o.customerPhone)}</div>` : ''}
+          ${ns ? `<button class="btn primary sm full" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="${ns}" style="margin-top:10px">${ORDER_NEXT_ACTION[o.status] || 'Advance'} →</button>`
+               : `<div style="margin-top:9px;font-size:12.5px;color:var(--green);font-weight:700">✓ Delivered</div>`}
+        </div>`;
+      }).join('') : (onlineLoaded ? emptyRow('No online orders yet.') : emptyRow('Loading…'))}</div>`;
   },
   visits() {
     return `<div class="sect">Visit log</div>
@@ -700,14 +715,23 @@ function authHeaders(extra) {
   const tok = localStorage.getItem('ntbf_token');
   return Object.assign({ 'content-type': 'application/json' }, tok ? { 'x-api-key': tok } : {}, extra || {});
 }
+// Logged-in-staff headers (used for reading customer online orders + updating their status).
+function staffHeaders(extra) {
+  const t = localStorage.getItem('ntbf_stafftoken');
+  return Object.assign({ 'content-type': 'application/json' }, t ? { 'authorization': 'Bearer ' + t } : {}, extra || {});
+}
 async function apiPost(path, body) {
   const r = await fetch(API + path, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
   if (!r.ok) throw new Error('http ' + r.status);
   return r.json();
 }
+// Order status workflow (shared with the customer portal).
+const ORDER_FLOW = ['PLACED', 'CONFIRMED', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+const ORDER_NEXT_ACTION = { PLACED: 'Confirm order', CONFIRMED: 'Mark preparing', PACKED: 'Out for delivery', OUT_FOR_DELIVERY: 'Mark delivered' };
+function nextOrderStatus(s) { const i = ORDER_FLOW.indexOf(s); return i >= 0 && i < ORDER_FLOW.length - 1 ? ORDER_FLOW[i + 1] : null; }
 async function loadOnlineOrders() {
   try {
-    const r = await fetch(API + '/api/portal/orders/all', { headers: authHeaders(), cache: 'no-store' });
+    const r = await fetch(API + '/api/portal/orders/all', { headers: staffHeaders(), cache: 'no-store' });
     onlineOrders = r.ok ? await r.json() : [];
   } catch (e) { onlineOrders = []; }
   onlineLoaded = true;
@@ -1180,6 +1204,15 @@ const ACT = {
     catch (e) { toast(e.message); }
   },
   refreshOnline: () => { onlineLoaded = false; loadOnlineOrders(); toast('Refreshing…'); },
+  setOrderStatus: async (d) => {
+    try {
+      const r = await fetch(API + '/api/portal/orders/status', { method: 'POST', headers: staffHeaders(), body: JSON.stringify({ id: d.id, status: d.status }) });
+      if (!r.ok) throw new Error('http ' + r.status);
+      const o = onlineOrders.find((x) => x.id === d.id); if (o) o.status = d.status;
+      toast('Order ' + d.id + ' updated');
+      render();
+    } catch (e) { toast('Could not update — check you are signed in'); }
+  },
   checkin: () => checkinForm(),
   saveVisit: () => { const gps = $('#v_gps'); S.checkInVisit($('#v_cust').value, $('#v_note').value.trim()); closeSheet(); render(); toast('Checked in'); },
   specialPrice: () => specialPriceForm(),

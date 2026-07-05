@@ -10,8 +10,8 @@ import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Public } from '../common/decorators/public.decorator';
-import { ApiGateGuard } from '../common/guards/api-gate.guard';
 import { CATALOG } from '../catalog.data';
+import { StaffAuthGuard } from '../staff-auth/staff-auth.module';
 
 // Reverse lookup by exact product name (fallback for older clients that send name, not id).
 const NAME_TO_ID: Record<string, string> = {};
@@ -32,6 +32,8 @@ class PlaceOrderDto {
   @IsOptional() @IsString() address?: string;
   @IsOptional() @IsString() note?: string;
 }
+export const ORDER_STATUSES = ['PLACED', 'CONFIRMED', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
+class StatusDto { @IsString() id: string; @IsString() status: string; }
 
 /** File-backed store for customer accounts + their orders — isolated from the staff data. */
 @Injectable()
@@ -63,6 +65,12 @@ export class CustomerStore {
     this.data.orders.unshift(o); this.save(); return o;
   }
   ordersFor(customerId: string) { return this.data.orders.filter((o) => o.customerId === customerId); }
+  updateStatus(id: string, status: string) {
+    const o = this.data.orders.find((x) => x.id === id);
+    if (!o) return null;
+    o.status = status; o.updatedAt = new Date().toISOString();
+    this.save(); return o;
+  }
   allOrders() {
     return this.data.orders.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : '—', customerPhone: c ? c.phone : '' }; });
   }
@@ -123,6 +131,12 @@ export class CustomerPortalService {
   }
   myOrders(customerId: string) { return this.store.ordersFor(customerId); }
   allOrders() { return this.store.allOrders(); }
+  updateStatus(id: string, status: string) {
+    if (ORDER_STATUSES.indexOf(status) < 0) throw new BadRequestException('Invalid status');
+    const o = this.store.updateStatus(id, status);
+    if (!o) throw new BadRequestException('Order not found');
+    return { id: o.id, status: o.status };
+  }
 }
 
 @ApiTags('Customer portal')
@@ -142,9 +156,12 @@ export class CustomerPortalController {
   @Public() @UseGuards(CustomerAuthGuard) @Get('orders')
   mine(@Req() req: any) { return this.svc.myOrders(req.customerId); }
 
-  // Staff-only (behind the shared API token): incoming customer orders.
-  @Public() @UseGuards(ApiGateGuard) @Get('orders/all')
+  // Staff-only (logged-in staff): incoming customer orders + status updates.
+  @Public() @UseGuards(StaffAuthGuard) @Get('orders/all')
   all() { return this.svc.allOrders(); }
+
+  @Public() @UseGuards(StaffAuthGuard) @Post('orders/status')
+  setStatus(@Body() dto: StatusDto) { return this.svc.updateStatus(dto.id, dto.status); }
 }
 
 @Module({
@@ -159,6 +176,6 @@ export class CustomerPortalController {
     }),
   ],
   controllers: [CustomerPortalController],
-  providers: [CustomerStore, CustomerPortalService, CustomerAuthGuard],
+  providers: [CustomerStore, CustomerPortalService, CustomerAuthGuard, StaffAuthGuard],
 })
 export class CustomerPortalModule {}
