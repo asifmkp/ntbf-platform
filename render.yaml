@@ -1,15 +1,20 @@
-# Render blueprint — free-tier deploy (single web service, no card needed).
-# The app boots without a database; shared state is stored on the container's
-# filesystem (ephemeral on free — resets when the service sleeps/redeploys).
-# For always-on + persistent data later, add `plan: starter` + a disk + a database.
+# Render blueprint — Starter (always-on) + a persistent disk so data survives
+# restarts/redeploys. STATE_DIR points the app's JSON stores (staff accounts,
+# customer orders, shared app state) at the mounted disk.
 services:
   - type: web
     name: ntbf-platform
     runtime: docker
-    plan: free
+    plan: starter
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/dashboard/health
+    disk:
+      name: ntbf-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      - key: STATE_DIR
+        value: "/var/data"
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
