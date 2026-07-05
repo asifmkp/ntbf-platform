@@ -167,7 +167,8 @@
   .nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--panel);border-top:1px solid var(--line);display:flex;z-index:6;padding-bottom:var(--safe-b);box-shadow:0 -4px 16px rgba(20,35,60,.06)}
   .nav button{flex:1;border:none;background:none;padding:9px 0 10px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:center;position:relative;min-height:56px}
   .nav button.on{color:var(--brand)}
-  .nav button .i{font-size:20px}
+  .nav button .i{font-size:20px;transition:transform .24s cubic-bezier(.3,1.4,.5,1)}
+  .nav button.on .i{transform:translateY(-3px) scale(1.15)}
   .nav .ncount{position:absolute;top:5px;left:50%;margin-left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
 
   /* auth */
@@ -181,8 +182,41 @@
   .pwwrap{position:relative}
   .pwwrap .eye{position:absolute;right:8px;top:8px;border:none;background:none;font-size:17px;cursor:pointer;padding:6px;min-width:36px;min-height:36px}
 
-  .toast{position:fixed;bottom:calc(132px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:13px 20px;border-radius:14px;font-size:13.5px;font-weight:700;opacity:0;transition:.25s;z-index:60;box-shadow:0 10px 28px rgba(0,0,0,.32);max-width:90%;text-align:center;pointer-events:none}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast{position:fixed;bottom:calc(132px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(14px) scale(.96);background:var(--navy);color:#fff;padding:13px 20px;border-radius:14px;font-size:13.5px;font-weight:700;opacity:0;transition:transform .32s cubic-bezier(.2,.9,.25,1),opacity .28s;z-index:60;box-shadow:0 10px 28px rgba(0,0,0,.32);max-width:90%;text-align:center;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+
+  /* ============ MOTION LAYER ============ */
+  @media (prefers-reduced-motion: no-preference){
+    /* view transition on every tab/screen change */
+    #view.vin{animation:viewIn .34s cubic-bezier(.22,.85,.28,1) both}
+    @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    /* staggered card reveal (home/orders/cart lists, category grid) */
+    .stagger>*{animation:cardIn .4s cubic-bezier(.22,.85,.28,1) both}
+    .stagger>*:nth-child(1){animation-delay:.02s}.stagger>*:nth-child(2){animation-delay:.06s}
+    .stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.14s}
+    .stagger>*:nth-child(5){animation-delay:.18s}.stagger>*:nth-child(6){animation-delay:.22s}
+    .stagger>*:nth-child(7){animation-delay:.26s}.stagger>*:nth-child(8){animation-delay:.3s}
+    .stagger>*:nth-child(n+9){animation-delay:.34s}
+    @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+    /* hero + cart bar entrances */
+    .repeat{animation:heroIn .5s cubic-bezier(.2,.9,.25,1) both}
+    @keyframes heroIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+    .cartbar .inner{animation:barUp .38s cubic-bezier(.2,.95,.3,1.15) both}
+    @keyframes barUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+    /* cart badge pop when it changes */
+    .badge.pop,.ncount.pop{animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+    @keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.45)}100%{transform:scale(1)}}
+    /* fly-to-cart dot */
+    .flyer{position:fixed;z-index:70;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;pointer-events:none;box-shadow:0 6px 16px rgba(16,32,58,.4)}
+    /* qty control settle */
+    .qc{animation:qcin .22s ease both}@keyframes qcin{from{transform:scale(.85);opacity:.4}to{transform:none;opacity:1}}
+  }
+  /* universal pressable feedback (works even with reduced motion off) */
+  .prow:active,.cline:active,.ctile:active,.ord .h:active,.chip:active{transition:transform .06s}
+  .prow,.cline,.ctile,.repeat,.summary,.ord,.chip,.card{transition:transform .12s ease, box-shadow .2s ease}
+  .btn,.addbtn,.go,.qc button,.reorder{transition:transform .09s ease, box-shadow .2s ease, background .2s ease}
+  .btn:active,.addbtn:active,.go:active,.reorder:active{transform:scale(.97)}
+  .ctile:active,.chip:active{transform:scale(.95)}
 </style>
 </head>
 <body>

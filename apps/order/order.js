@@ -79,6 +79,7 @@
       navBtn('home', '🏠', 'Home') + navBtn('shop', '🛍️', 'Shop') +
       navBtn('cart', '🛒', 'Cart') + navBtn('orders', '🧾', 'Orders') +
       '</div>';
+    var vE = $('#view'); if (vE) vE.classList.add('vin'); // view transition
     if (view === 'home') renderHome();
     else if (view === 'shop') renderShop();
     else if (view === 'cart') renderCart();
@@ -137,10 +138,10 @@
       var usual = usualItems();
       if (usual.length) {
         html += '<div class="shead"><div class="eyebrow">Quick add</div><h2>Your usual items</h2></div>' +
-          '<div class="plist">' + usual.map(prow).join('') + '</div>';
+          '<div class="plist stagger">' + usual.map(prow).join('') + '</div>';
       }
       // Shop by category
-      html += '<div class="shead"><div class="eyebrow">Browse</div><h2>Shop by category</h2></div><div class="cgrid">' +
+      html += '<div class="shead"><div class="eyebrow">Browse</div><h2>Shop by category</h2></div><div class="cgrid stagger">' +
         CAT_LIST.map(function (c) {
           var info = catInfo(c);
           return '<div class="ctile" data-act="gocat" data-c="' + esc(c) + '"><div class="e">' + info.e + '</div><b>' + esc(catLabel(c)) + '</b><span>' + (catCount[c] || 0) + ' items</span></div>';
@@ -235,7 +236,7 @@
         qcHtml(id) + '<button class="rm" data-act="removeLine" data-i="' + id + '">🗑</button></div>';
     }).join('');
     $('#view').innerHTML = '<div class="shead"><div class="eyebrow">Your basket</div><h2>Review your order</h2></div>' +
-      '<div class="cart">' + lines +
+      '<div class="cart stagger">' + lines +
       '<div class="summary"><div class="r"><span>Subtotal</span><span>' + aed(sub) + '</span></div>' +
       '<div class="r"><span>VAT (5%)</span><span>' + aed(vat) + '</span></div>' +
       '<div class="r big"><span>Total (cash on delivery)</span><b>' + aed(tot) + '</b></div></div>' +
@@ -260,7 +261,7 @@
           '<button class="reorder" data-act="reorder" data-o="' + esc(o.id) + '">🔁 Reorder these items</button></div></div>';
       }).join('') : '<div class="empty"><div class="big">🧾</div><p>No orders yet.<br/>Start your first order now.</p><button class="btn" data-act="view" data-v="shop">Order now</button></div>';
       var vv = $('#view'); if (!vv) return; // guard: session may have expired mid-load
-      vv.innerHTML = '<div class="shead"><div class="eyebrow">Your history</div><h2>My orders ' + (orders.length ? '(' + orders.length + ')' : '') + '</h2></div><div class="obody">' + body + '</div>';
+      vv.innerHTML = '<div class="shead"><div class="eyebrow">Your history</div><h2>My orders ' + (orders.length ? '(' + orders.length + ')' : '') + '</h2></div><div class="obody stagger">' + body + '</div>';
     });
   }
 
@@ -363,8 +364,26 @@
       saveCart(); updateCartBar(); updateNavBadge();
     }
   });
+  // fly a little dot from the tapped Add button to the cart tab, then pop the badge
+  function flyToCart(el) {
+    try {
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!el.animate) return;
+      var target = document.querySelector('.nav [data-v="cart"]'); if (!target) return;
+      var a = el.getBoundingClientRect(), b = target.getBoundingClientRect();
+      var f = document.createElement('div'); f.className = 'flyer'; f.textContent = '+';
+      f.style.left = (a.left + a.width / 2 - 10) + 'px'; f.style.top = (a.top + a.height / 2 - 10) + 'px';
+      document.body.appendChild(f);
+      var dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+      f.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.35)', opacity: .4 }],
+        { duration: 540, easing: 'cubic-bezier(.4,.05,.3,1)' }).onfinish = function () { f.remove(); popBadge(); };
+    } catch (e) {}
+  }
+  function popBadge() { var b = document.querySelector('.nav [data-v="cart"] .ncount'); if (b && b.classList) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); } }
+
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-act]'); if (!t) return;
+    if (t.dataset.act === 'add') flyToCart(t);
     var fn = ACT[t.dataset.act]; if (fn) fn(t.dataset);
   });
 
