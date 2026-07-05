@@ -205,7 +205,10 @@
   function prow(p) {
     var info = catInfo(p.category); var pp = perPiece(p);
     var ob = _orderedSet[p.id] ? '<span class="ob">✓ ordered before</span>' : '';
-    return '<div class="prow"><div class="tile" style="background:' + info.c + '18;color:' + info.c + '">' + info.e + '</div>' +
+    var tile = p.img
+      ? '<div class="tile ph"><img src="./' + esc(p.img) + '" loading="lazy" alt="" /></div>'
+      : '<div class="tile" style="background:' + info.c + '18;color:' + info.c + '">' + info.e + '</div>';
+    return '<div class="prow">' + tile +
       '<div class="m"><b>' + esc(p.name) + '</b><div class="meta">' + esc(p.unit || '') + '</div>' +
       '<div class="price">' + aed(p.price) + (pp ? '<small>' + aed(pp).replace('AED ', '') + '/pc</small>' : '') + '</div>' + ob + '</div>' +
       qcHtml(p.id) + '</div>';

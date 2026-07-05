@@ -87,7 +87,9 @@
   /* product rows (dense) */
   .plist{padding:8px 16px 4px;display:flex;flex-direction:column;gap:8px}
   .prow{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:10px 11px;box-shadow:var(--shadow-sm)}
-  .prow .tile{width:44px;height:44px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .prow .tile{width:48px;height:48px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
+  .prow .tile.ph{background:#fff;border:1px solid var(--line);padding:2px}
+  .prow .tile.ph img{width:100%;height:100%;object-fit:contain;border-radius:10px}
   .prow .m{flex:1;min-width:0}
   .prow .m b{font-size:13.5px;font-weight:650;display:block;line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .prow .m .meta{font-size:11.5px;color:var(--muted);margin-top:2px}
