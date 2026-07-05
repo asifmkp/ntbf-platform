@@ -95,11 +95,16 @@ function picker() {
     ['customer', '🛒', 'var(--purple)', 'var(--purple-bg)', 'Customer', 'Shop, orders, support'],
   ];
   return `<div class="picker">
-    <h1>National Trading</h1><p>Beverage &amp; foodstuff distribution · Ajman, UAE · choose your role</p>
+    <div class="pbrand">
+      <img src="/icons/icon-staff-192.png" alt="National Trading" />
+      <h1>National Trading</h1>
+      <p>Beverage &amp; Foodstuff · Ajman · Staff</p>
+    </div>
+    <div class="psub">Choose your role</div>
     ${cards.map(([id, ic, c, bg, t, s]) => `<div class="role" data-act="pick" data-id="${id}">
       <div class="ri" style="background:${bg};color:${c}">${ic}</div>
       <div><b>${t}</b><span>${s}</span></div><div class="arr">›</div></div>`).join('')}
-    <p class="muted" style="font-size:11.5px;margin-top:18px">Demo seeded from your live Zoho catalog (AED). Everything you do is saved on this device. <a href="#" data-act="reset" style="color:var(--accent)">Reset data</a></p>
+    <p class="muted" style="font-size:11.5px;margin-top:18px;text-align:center">Seeded from your live Zoho catalog (AED). Everything you do is saved on this device. <a href="#" data-act="reset" style="color:var(--accent)">Reset data</a></p>
   </div>`;
 }
 
