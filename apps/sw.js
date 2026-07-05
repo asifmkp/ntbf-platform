@@ -4,7 +4,7 @@
    - Static assets (css/js/images/icons): stale-while-revalidate.
    - /api/* and cross-origin: never cached (always live).
    Bump CACHE to force all clients onto a new version. */
-const CACHE = 'ntbf-pwa-v3'; // v3: premium redesign (customer + staff)
+const CACHE = 'ntbf-pwa-v4'; // v4: staff login + role lock
 
 const CORE = [
   '/',

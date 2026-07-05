@@ -54,24 +54,51 @@ function curCustomerId() {
 }
 window.curCustomer = () => S.customer(curCustomerId());
 
+// ---------------- staff authentication ----------------
+let staff = (() => { try { return JSON.parse(localStorage.getItem('ntbf_staff') || 'null'); } catch (e) { return null; } })();
+let staffToken = localStorage.getItem('ntbf_stafftoken') || '';
+const ALL_ROLES = ['salesman', 'driver', 'warehouse', 'purchase', 'finance', 'admin', 'service', 'customer'];
+function allowedRoles() {
+  if (!staff) return [];
+  if (staff.roles && staff.roles.indexOf('admin') >= 0) return ALL_ROLES.slice(); // admin = full access
+  return (staff.roles || []).slice();
+}
+async function staffApi(path, method, body) {
+  const base = localStorage.getItem('ntbf_api') || ((location.protocol.startsWith('http') && location.port !== '8080') ? location.origin : 'http://localhost:3000');
+  const headers = { 'content-type': 'application/json' };
+  if (staffToken) headers['authorization'] = 'Bearer ' + staffToken;
+  const r = await fetch(base + path, { method: method || 'GET', headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((data && data.message) || ('Error ' + r.status));
+  return data;
+}
+
 let role = localStorage.getItem('ntbf_role') || '';
 let tab = localStorage.getItem('ntbf_tab') || '';
 
 // ---------------- shell ----------------
 function render() {
   const app = $('#app');
-  if (!role) { app.innerHTML = picker(); return; }
+  if (!staffToken || !staff) { app.innerHTML = loginScreen(); return; }
+  const allow = allowedRoles();
+  // Enforce that the active role is one this staff is allowed to use.
+  if (role && allow.indexOf(role) < 0) { role = ''; localStorage.removeItem('ntbf_role'); }
+  if (!role) {
+    if (allow.length === 1) { role = allow[0]; localStorage.setItem('ntbf_role', role); }
+    else { app.innerHTML = picker(); return; }
+  }
   const R = ROLES[role];
   if (!tab || !R.tabs.find((t) => t.id === tab)) tab = R.tabs[0].id;
-  let name = R.name, pic = R.pic, sub = R.sub;
+  let name = staff.name || R.name, pic = (staff.name || R.name).slice(0, 1).toUpperCase(), sub = R.sub;
   if (role === 'customer') { const c = window.curCustomer(); if (c) { name = c.name; pic = c.name.slice(0, 2).toUpperCase(); sub = c.category + ' account'; } }
+  const canSwitch = allow.length > 1;
   app.innerHTML = `
     <div class="head">
       <div class="top">
         <div class="pic">${pic}</div>
         <div class="who"><b>${name}</b><span>${sub}</span></div>
         <button class="switch" data-act="settings" style="padding:8px 10px">⚙</button>
-        <button class="switch" data-act="switchRole">⇄</button>
+        ${canSwitch ? '<button class="switch" data-act="switchRole">⇄</button>' : '<button class="switch" data-act="staffLogout" style="padding:8px 10px">⏻</button>'}
       </div>
       <div class="status"><span class="dot"></span> ${R.status}</div>
     </div>
@@ -81,6 +108,22 @@ function render() {
     </div>`;
   mountMaps();
   if (role === 'salesman' && tab === 'online' && !onlineLoaded) loadOnlineOrders();
+}
+
+function loginScreen() {
+  return `<div class="picker">
+    <div class="pbrand">
+      <img src="/icons/icon-staff-192.png" alt="National Trading" />
+      <h1>National Trading</h1>
+      <p>Staff Sign In · Ajman</p>
+    </div>
+    <div class="card pad" style="margin-top:4px">
+      <label class="fld"><span class="lab">Username</span><input id="lg_user" autocapitalize="none" autocomplete="username" placeholder="e.g. musthafa" /></label>
+      <label class="fld"><span class="lab">Password</span><input id="lg_pass" type="password" autocomplete="current-password" placeholder="Your password" /></label>
+      <button class="btn primary full" data-act="staffLogin">Sign in</button>
+    </div>
+    <p class="muted" style="font-size:11.5px;margin-top:16px;text-align:center">Access is limited to your assigned role. Contact your manager if you can't sign in.</p>
+  </div>`;
 }
 
 function picker() {
@@ -94,17 +137,19 @@ function picker() {
     ['service', '🎧', 'var(--amber)', 'var(--amber-bg)', 'Customer Service', 'Support tickets & queries'],
     ['customer', '🛒', 'var(--purple)', 'var(--purple-bg)', 'Customer', 'Shop, orders, support'],
   ];
+  const allow = allowedRoles();
+  const first = staff && staff.name ? String(staff.name).split(' ')[0] : '';
   return `<div class="picker">
     <div class="pbrand">
       <img src="/icons/icon-staff-192.png" alt="National Trading" />
-      <h1>National Trading</h1>
-      <p>Beverage &amp; Foodstuff · Ajman · Staff</p>
+      <h1>Hi, ${esc(first)}</h1>
+      <p>Choose a role to continue</p>
     </div>
-    <div class="psub">Choose your role</div>
-    ${cards.map(([id, ic, c, bg, t, s]) => `<div class="role" data-act="pick" data-id="${id}">
+    <div class="psub">Your roles</div>
+    ${cards.filter(([id]) => allow.indexOf(id) >= 0).map(([id, ic, c, bg, t, s]) => `<div class="role" data-act="pick" data-id="${id}">
       <div class="ri" style="background:${bg};color:${c}">${ic}</div>
       <div><b>${t}</b><span>${s}</span></div><div class="arr">›</div></div>`).join('')}
-    <p class="muted" style="font-size:11.5px;margin-top:18px;text-align:center">Seeded from your live Zoho catalog (AED). Everything you do is saved on this device. <a href="#" data-act="reset" style="color:var(--accent)">Reset data</a></p>
+    <div class="btn full" data-act="staffLogout" style="margin-top:16px;color:var(--red)">Sign out</div>
   </div>`;
 }
 
@@ -901,7 +946,19 @@ function reminderForm(cid) {
 function settingsForm() {
   const api = localStorage.getItem('ntbf_api') || ((location.protocol.startsWith('http') && location.port !== '8080') ? location.origin : 'http://localhost:3000');
   const custOpts = S.state.customers.map((c) => `<option value="${c.id}" ${c.id === curCustomerId() ? 'selected' : ''}>${c.name}</option>`).join('');
+  const isAdmin = staff && staff.roles && staff.roles.indexOf('admin') >= 0;
   openSheet('Settings', `
+    ${staff ? `<div class="card pad" style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted)">Signed in as</div>
+      <div style="font-size:16px;font-weight:800;margin:2px 0 2px">${esc(staff.name)} <span class="muted" style="font-weight:500;font-size:12px">@${esc(staff.username || '')}</span></div>
+      <div style="font-size:12px;color:var(--muted)">Roles: ${esc((staff.roles || []).join(', '))}</div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn" data-act="changePwForm">Change password</button>
+        ${isAdmin ? '<button class="btn" data-act="teamForm">Manage team</button>' : ''}
+      </div>
+      <button class="btn danger full" data-act="staffLogout" style="margin-top:9px">Sign out</button>
+    </div>` : ''}
+    <div class="sect" style="margin-top:4px">Advanced</div>
     <label class="fld"><span class="lab">Backend API URL</span><input id="set_api" value="${esc(api)}" /></label>
     <label class="fld"><span class="lab">API access token (if the server requires one)</span><input id="set_token" placeholder="x-api-key" value="${esc(localStorage.getItem('ntbf_token') || '')}" /></label>
     ${role === 'customer' ? `<label class="fld"><span class="lab">Shopping as</span><select id="set_cust">${custOpts}</select></label>` : ''}
@@ -911,6 +968,42 @@ function settingsForm() {
     (sh) => { fetch(api + '/api/agent/status').then((r) => r.json()).then((s) => { sh.querySelector('#set_stat').textContent = s.configured ? 'online · AI live' : 'online · local AI mode'; }).catch(() => { sh.querySelector('#set_stat').textContent = 'offline (apps run locally)'; }); });
 }
 
+function changePwForm() {
+  openSheet('Change my password', `
+    <label class="fld"><span class="lab">Current password</span><input id="cp_old" type="password" /></label>
+    <label class="fld"><span class="lab">New password</span><input id="cp_new" type="password" placeholder="At least 4 characters" /></label>
+    <label class="fld"><span class="lab">Confirm new password</span><input id="cp_confirm" type="password" /></label>
+    <button class="btn primary full" data-act="saveChangePw">Update password</button>`);
+}
+const ROLE_OPTS = [
+  ['salesman', 'Salesman'], ['driver', 'Driver'], ['warehouse', 'Warehouse'], ['purchase', 'Purchase'],
+  ['finance', 'Finance'], ['service', 'Customer Service'], ['admin', 'Management (admin)'],
+];
+async function teamForm() {
+  openSheet('Manage team', '<div class="empty"><div class="ei">👥</div>Loading team…</div>');
+  let team = [];
+  try { team = await staffApi('/api/staff/team', 'GET'); } catch (e) { toast(e.message); }
+  const rows = team.map((s) => `<div class="li">
+    <div class="ic g">${esc((s.name || '?').slice(0, 1).toUpperCase())}</div>
+    <div class="m"><b>${esc(s.name)} <span class="muted" style="font-weight:500">@${esc(s.username)}</span></b><span>${esc((s.roles || []).join(', '))}</span></div>
+    <div class="end"><button class="btn sm" data-act="resetStaffPw" data-id="${s.id}">Reset PW</button>${s.roles && s.roles.indexOf('admin') >= 0 ? '' : ` <button class="btn sm danger" data-act="removeStaff" data-id="${s.id}">✕</button>`}</div>
+  </div>`).join('');
+  openSheet('Manage team', `
+    <div class="card" style="margin-bottom:12px">${rows || '<div class="empty">No staff yet.</div>'}</div>
+    <button class="btn primary full" data-act="addStaffForm">+ Add staff member</button>`);
+}
+function addStaffForm() {
+  openSheet('Add staff member', `
+    <label class="fld"><span class="lab">Full name</span><input id="ns_name" placeholder="e.g. Rashid Ali" /></label>
+    <label class="fld"><span class="lab">Username (for login)</span><input id="ns_user" autocapitalize="none" placeholder="e.g. rashid" /></label>
+    <label class="fld"><span class="lab">Temporary password</span><input id="ns_pass" placeholder="At least 4 characters" /></label>
+    <div class="lab" style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">Roles (tap to select)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      ${ROLE_OPTS.map(([r, l]) => `<button type="button" class="btn sm ns_role" data-act="toggleNsRole" data-r="${r}">${l}</button>`).join('')}
+    </div>
+    <button class="btn primary full" data-act="saveStaff">Create account</button>
+    <p class="muted" style="font-size:11.5px;margin-top:10px">Give the staff their username and temporary password. They can change it after signing in.</p>`);
+}
 function assetForm() {
   openSheet('Register an asset', `
     <label class="fld"><span class="lab">Asset name</span><input id="as_name" placeholder="e.g. Delivery van" /></label>
@@ -1020,8 +1113,53 @@ function replyForm(id) {
 // ---------------- actions ----------------
 let cart = {};
 const ACT = {
-  pick: (d) => { role = d.id; tab = ''; localStorage.setItem('ntbf_role', role); render(); },
-  switchRole: () => { role = ''; localStorage.removeItem('ntbf_role'); render(); },
+  staffLogin: async () => {
+    const username = ($('#lg_user') || {}).value, password = ($('#lg_pass') || {}).value;
+    if (!username || !password) return toast('Enter username and password');
+    try {
+      const r = await staffApi('/api/staff/login', 'POST', { username: username.trim(), password });
+      staff = r.staff; staffToken = r.token;
+      localStorage.setItem('ntbf_staff', JSON.stringify(staff));
+      localStorage.setItem('ntbf_stafftoken', staffToken);
+      role = ''; localStorage.removeItem('ntbf_role'); tab = '';
+      render(); toast('Welcome, ' + String(staff.name).split(' ')[0]);
+    } catch (e) { toast(e.message); }
+  },
+  staffLogout: () => {
+    staff = null; staffToken = ''; role = '';
+    ['ntbf_staff', 'ntbf_stafftoken', 'ntbf_role', 'ntbf_tab'].forEach((k) => localStorage.removeItem(k));
+    closeSheet(); render();
+  },
+  pick: (d) => { if (allowedRoles().indexOf(d.id) < 0) return toast('Not permitted'); role = d.id; tab = ''; localStorage.setItem('ntbf_role', role); render(); },
+  switchRole: () => { if (allowedRoles().length <= 1) return; role = ''; localStorage.removeItem('ntbf_role'); render(); },
+  changePwForm: () => changePwForm(),
+  saveChangePw: async () => {
+    const o = $('#cp_old').value, n = $('#cp_new').value, c = $('#cp_confirm').value;
+    if (n !== c) return toast('New passwords do not match');
+    try { await staffApi('/api/staff/password', 'POST', { oldPassword: o, newPassword: n }); closeSheet(); toast('Password changed'); }
+    catch (e) { toast(e.message); }
+  },
+  teamForm: () => teamForm(),
+  addStaffForm: () => addStaffForm(),
+  saveStaff: async () => {
+    const name = $('#ns_name').value.trim(), username = $('#ns_user').value.trim(), password = $('#ns_pass').value;
+    const roles = Array.from(document.querySelectorAll('.ns_role.on')).map((b) => b.dataset.r);
+    if (!name || !username || !password) return toast('Fill name, username and password');
+    if (!roles.length) return toast('Pick at least one role');
+    try { await staffApi('/api/staff/team', 'POST', { name, username, password, roles }); toast('Staff added'); teamForm(); }
+    catch (e) { toast(e.message); }
+  },
+  toggleNsRole: (d) => { const b = document.querySelector(`.ns_role[data-r="${d.r}"]`); if (b) b.classList.toggle('on'); },
+  resetStaffPw: async (d) => {
+    const pw = prompt('New password for this staff (min 4 chars):'); if (!pw || pw.length < 4) return;
+    try { await staffApi('/api/staff/team/reset', 'POST', { id: d.id, password: pw }); toast('Password reset'); }
+    catch (e) { toast(e.message); }
+  },
+  removeStaff: async (d) => {
+    if (!confirm('Remove this staff account? They will no longer be able to sign in.')) return;
+    try { await staffApi('/api/staff/team/remove', 'POST', { id: d.id }); toast('Staff removed'); teamForm(); }
+    catch (e) { toast(e.message); }
+  },
   reset: () => { S.reset(); toast('Demo data reset'); render(); },
   tab: (d) => { tab = d.id; localStorage.setItem('ntbf_tab', tab); render(); },
   closeSheet: () => closeSheet(),

@@ -81,6 +81,7 @@ button{font-family:inherit;cursor:pointer}
 .btn.green{background:var(--green);color:#fff;border-color:transparent;box-shadow:0 5px 14px rgba(26,158,117,.3)}
 .btn.danger{background:var(--red-bg);color:var(--red);border-color:transparent;box-shadow:none}
 .btn.full{width:100%}.btn.sm{padding:8px 12px;font-size:12.5px;border-radius:10px}
+.ns_role.on{background:var(--brand);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(26,158,117,.3)}
 .btn-row{display:flex;gap:9px;margin:6px 0 4px}
 .btn-row .btn{flex:1}
 .fab{position:fixed;bottom:94px;right:max(14px,calc(50% - 224px + 14px));z-index:20;width:56px;height:56px;border-radius:50%;
