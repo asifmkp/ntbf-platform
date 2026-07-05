@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 const S = window.Store;
 const $ = (sel) => document.querySelector(sel);
+function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
 
 const ROLES = {
   salesman: { name: 'Tahir', sub: 'Sales', pic: 'T', status: 'On field',
@@ -1209,7 +1210,7 @@ const ACT = {
       const r = await fetch(API + '/api/portal/orders/status', { method: 'POST', headers: staffHeaders(), body: JSON.stringify({ id: d.id, status: d.status }) });
       if (!r.ok) throw new Error('http ' + r.status);
       const o = onlineOrders.find((x) => x.id === d.id); if (o) o.status = d.status;
-      toast('Order ' + d.id + ' updated');
+      buzz([15, 40, 20]); toast('Order ' + d.id + ' updated');
       render();
     } catch (e) { toast('Could not update — check you are signed in'); }
   },
