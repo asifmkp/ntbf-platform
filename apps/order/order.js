@@ -23,6 +23,9 @@
   var view = 'home', authMode = 'login', activeCat = 'All', searchQ = '', shopLimit = 40;
   var cart = {}, orders = [], ordersLoaded = false, placing = false, showPw = false;
   var searchTimer = null;
+  var _orderedSet = {}; // product ids this customer has ordered before (for the 'ordered before' tag)
+  function buzz(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
+  function computeOrdered() { var s = {}; orders.forEach(function (o) { (o.items || []).forEach(function (l) { var p = resolveLine(l); if (p) s[p.id] = 1; }); }); return s; }
 
   // ---- helpers ----
   function $(s) { return document.querySelector(s); }
@@ -85,6 +88,8 @@
     else if (view === 'cart') renderCart();
     else renderOrders();
     updateNavBadge();
+    // prefetch order history so the 'ordered before' tags show on the shop tab too
+    if (view === 'shop' && !ordersLoaded) ensureOrders().then(function () { if (view === 'shop') renderList(); });
   }
   function navBtn(v, i, label) {
     return '<button class="' + (view === v ? 'on' : '') + '" data-act="view" data-v="' + v + '"><span class="i">' + i + '</span>' + label + '</button>';
@@ -199,9 +204,10 @@
   }
   function prow(p) {
     var info = catInfo(p.category); var pp = perPiece(p);
+    var ob = _orderedSet[p.id] ? '<span class="ob">✓ ordered before</span>' : '';
     return '<div class="prow"><div class="tile" style="background:' + info.c + '18;color:' + info.c + '">' + info.e + '</div>' +
       '<div class="m"><b>' + esc(p.name) + '</b><div class="meta">' + esc(p.unit || '') + '</div>' +
-      '<div class="price">' + aed(p.price) + (pp ? '<small>' + aed(pp).replace('AED ', '') + '/pc</small>' : '') + '</div></div>' +
+      '<div class="price">' + aed(p.price) + (pp ? '<small>' + aed(pp).replace('AED ', '') + '/pc</small>' : '') + '</div>' + ob + '</div>' +
       qcHtml(p.id) + '</div>';
   }
   function qcHtml(id) {
@@ -267,7 +273,7 @@
 
   function ensureOrders(force) {
     if (ordersLoaded && !force) return Promise.resolve();
-    return api('/api/portal/orders', 'GET', null, true).then(function (r) { orders = r || []; ordersLoaded = true; })
+    return api('/api/portal/orders', 'GET', null, true).then(function (r) { orders = r || []; ordersLoaded = true; _orderedSet = computeOrdered(); })
       .catch(function (e) { if (e.message !== '__auth__') { orders = orders || []; } });
   }
   function fmtDate(s) { try { return new Date(s).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { return ''; } }
@@ -308,7 +314,7 @@
     cat: function (d) { activeCat = d.c; shopLimit = 40; renderShop(); },
     clearSearch: function () { searchQ = ''; shopLimit = 40; renderShop(); },
     more: function () { shopLimit += 40; renderList(); },
-    add: function (d) { cart[d.i] = (cart[d.i] || 0) + 1; saveCart(); refreshQty(d.i); toastAdd(d.i); },
+    add: function (d) { cart[d.i] = (cart[d.i] || 0) + 1; saveCart(); refreshQty(d.i); toastAdd(d.i); buzz(8); },
     inc: function (d) { cart[d.i] = (cart[d.i] || 0) + 1; saveCart(); refreshOrCart(d.i); },
     dec: function (d) { cart[d.i] = (cart[d.i] || 0) - 1; if (cart[d.i] <= 0) delete cart[d.i]; saveCart(); refreshOrCart(d.i); },
     setqty: function () {}, // handled by input listener
@@ -332,7 +338,7 @@
       api('/api/portal/orders', 'POST', { items: items, method: 'CASH_ON_DELIVERY', address: addr, note: note }, true)
         .then(function (o) {
           cart = {}; saveCart(); placing = false; ordersLoaded = false; view = 'orders'; render();
-          toast('Order ' + o.id + ' placed! 🎉');
+          buzz([18, 45, 25]); toast('Order ' + o.id + ' placed! 🎉');
         })
         .catch(function (e) { placing = false; if (btn) { btn.disabled = false; } renderCart(); if (e.message !== '__auth__') toast(e.message || 'Could not place order — please retry'); });
     }
