@@ -974,17 +974,87 @@ function addBillForm() {
       });
     });
 }
+// --- editable bill line items (Part A) ---
+// Working copy while the purchaser edits the review table; written back into
+// billDraft.extracted.lineItems (with recomputed totals) on "Match with Zoho".
+let billLineRows = [];
+function billLineTotal(r) { return round((+r.quantity || 0) * (+r.unitPrice || 0)); } // excl. VAT
+function billTotals() {
+  let sub = 0, vat = 0;
+  billLineRows.forEach((r) => { const lt = billLineTotal(r); sub += lt; vat += lt * (+r.taxPercent || 0) / 100; });
+  sub = round(sub); vat = round(vat);
+  return { subtotal: sub, taxAmount: vat, total: round(sub + vat) };
+}
+// Read the current input values back into billLineRows (before add/delete or match).
+function syncBillLines() {
+  document.querySelectorAll('#bill_lines .blrow').forEach((el, i) => {
+    const r = billLineRows[i]; if (!r) return;
+    r.description = el.querySelector('.bl_desc').value;
+    r.quantity = +el.querySelector('.bl_qty').value || 0;
+    r.unitPrice = +el.querySelector('.bl_rate').value || 0;
+    r.taxPercent = +el.querySelector('.bl_tax').value || 0;
+  });
+}
+function billRowHtml(r, i) {
+  return `<div class="blrow card pad" style="margin-bottom:8px" data-i="${i}">
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <input class="bl_desc" style="flex:1" value="${esc(r.description)}" placeholder="Description" />
+      <button class="x" data-act="delBillLine" data-i="${i}" title="Remove line">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <label style="flex:1"><span class="lab" style="font-size:11px">Qty</span><input class="bl_qty" type="number" inputmode="decimal" value="${r.quantity}" /></label>
+      <label style="flex:1"><span class="lab" style="font-size:11px">Rate</span><input class="bl_rate" type="number" inputmode="decimal" value="${r.unitPrice}" /></label>
+      <label style="flex:1"><span class="lab" style="font-size:11px">VAT %</span><input class="bl_tax" type="number" inputmode="decimal" value="${r.taxPercent}" /></label>
+    </div>
+    <div class="muted" style="text-align:right;font-size:12px;margin-top:6px">Line total (excl. VAT): <b style="color:var(--ink)" class="bl_lt">${aed(billLineTotal(r))}</b></div>
+  </div>`;
+}
+function renderBillTotals() {
+  const el = document.getElementById('bill_totals'); if (!el) return;
+  const t = billTotals();
+  el.innerHTML = `<div style="display:flex;justify-content:space-between"><span class="muted">Subtotal (excl. VAT)</span><b>${aed(t.subtotal)}</b></div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px"><span class="muted">VAT</span><b>${aed(t.taxAmount)}</b></div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;border-top:1px solid var(--line);padding-top:6px"><b>Total (incl. VAT)</b><b>${aed(t.total)}</b></div>`;
+}
+// Update per-row line totals + the totals card in place (keeps input focus).
+function updateBillLineTotals() {
+  document.querySelectorAll('#bill_lines .blrow').forEach((el, i) => {
+    const r = billLineRows[i]; if (!r) return;
+    const lt = el.querySelector('.bl_lt'); if (lt) lt.textContent = aed(billLineTotal(r));
+  });
+  renderBillTotals();
+}
+function renderBillLines() {
+  const host = document.getElementById('bill_lines'); if (!host) return;
+  host.innerHTML = billLineRows.map((r, i) => billRowHtml(r, i)).join('');
+  renderBillTotals();
+}
 function reviewBillForm() {
   const b = billDraft.extracted;
+  // Seed the editable rows; default VAT to 5% when the bill didn't specify one.
+  billLineRows = (b.lineItems || []).map((l) => ({
+    description: l.description || '',
+    quantity: +l.quantity || 0,
+    unitPrice: +l.unitPrice || 0,
+    taxPercent: l.taxPercent != null ? +l.taxPercent : 5,
+  }));
   openSheet('Review extracted bill', `
     ${b._demo ? '<div class="card pad" style="background:var(--amber-bg);border-color:transparent;margin-bottom:12px"><b style="color:var(--amber);font-size:12.5px">Demo extraction</b><div class="muted" style="font-size:11.5px">Backend/Claude key not detected — sample values shown. Connect the API for real OCR.</div></div>' : '<div class="card pad" style="background:var(--green-bg);border-color:transparent;margin-bottom:12px"><b style="color:var(--green);font-size:12.5px">✓ Read by Claude</b></div>'}
     <label class="fld"><span class="lab">Supplier</span><input id="b_sup" value="${esc(b.supplierName)}" /></label>
     <label class="fld"><span class="lab">Invoice no</span><input id="b_inv" value="${esc(b.invoiceNumber)}" /></label>
     <label class="fld"><span class="lab">Date</span><input id="b_date" value="${esc(b.invoiceDate)}" /></label>
-    <span class="lab" style="font-size:12px;color:var(--muted);font-weight:600">Line items</span>
-    <div class="card">${b.lineItems.map((l) => `<div class="li"><div class="m"><b>${esc(l.description)}</b><span>${l.quantity} × ${aed(l.unitPrice)}</span></div><div class="end">${aed(l.amount)}</div></div>`).join('')}</div>
-    <div class="li" style="border:none"><div class="m"><b>Total (incl. VAT)</b></div><div class="end" style="font-weight:700">${aed(b.total)}</div></div>
-    <button class="btn primary full" data-act="matchBill">Match with Zoho →</button>`);
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
+      <span class="lab" style="font-size:12px;color:var(--muted);font-weight:600">Line items</span>
+      <button class="btn sm" data-act="addBillLine">+ Add line</button>
+    </div>
+    <div id="bill_lines"></div>
+    <div id="bill_totals" class="card pad" style="margin-top:4px"></div>
+    <button class="btn primary full" data-act="matchBill" style="margin-top:12px">Match with Zoho →</button>`,
+    () => {
+      renderBillLines();
+      const host = document.getElementById('bill_lines');
+      if (host) host.addEventListener('input', () => { syncBillLines(); updateBillLineTotals(); });
+    });
 }
 function matchReviewForm() {
   const b = billDraft.extracted, m = billDraft.match;
@@ -1299,9 +1369,19 @@ const ACT = {
     } catch (e) { bill = mockExtract(); }
     billDraft.extracted = bill; reviewBillForm();
   },
+  addBillLine: () => { syncBillLines(); billLineRows.push({ description: '', quantity: 1, unitPrice: 0, taxPercent: 5 }); renderBillLines(); },
+  delBillLine: (d) => { syncBillLines(); const i = +d.i; if (i >= 0 && i < billLineRows.length) billLineRows.splice(i, 1); renderBillLines(); },
   matchBill: async () => {
     const b = billDraft.extracted;
     b.supplierName = $('#b_sup').value; b.invoiceNumber = $('#b_inv').value; b.invoiceDate = $('#b_date').value;
+    // Carry the edited line items + recomputed totals into the match/record steps.
+    syncBillLines();
+    b.lineItems = billLineRows.map((r) => ({
+      description: r.description, quantity: +r.quantity || 0, unitPrice: +r.unitPrice || 0,
+      taxPercent: +r.taxPercent || 0, amount: billLineTotal(r),
+    }));
+    const t = billTotals();
+    b.subtotal = t.subtotal; b.taxAmount = t.taxAmount; b.total = t.total;
     toast('Matching with Zoho…');
     let m;
     try { m = await apiPost('/api/bills/match', { bill: b }); if (!m || !m.lines) throw new Error('bad'); }

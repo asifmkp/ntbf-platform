@@ -5,6 +5,7 @@ export interface ExtractedLine {
   description: string;
   quantity: number;
   unitPrice: number;
+  taxPercent: number;
   amount: number;
 }
 
@@ -39,8 +40,12 @@ const BILL_TOOL = {
           properties: {
             description: { type: 'string' },
             quantity: { type: 'number' },
-            unitPrice: { type: 'number' },
-            amount: { type: 'number' },
+            unitPrice: { type: 'number', description: 'Unit price / rate, excluding tax' },
+            taxPercent: {
+              type: 'number',
+              description: 'VAT percent for this line (e.g. 5 for 5%; 0 if exempt or zero-rated)',
+            },
+            amount: { type: 'number', description: 'Line total EXCLUDING tax (quantity × unit price)' },
           },
           required: ['description', 'quantity', 'unitPrice', 'amount'],
         },
@@ -173,7 +178,9 @@ export class AnthropicService {
                   text:
                     'This is a supplier bill / purchase invoice for a UAE beverage distributor. ' +
                     'Extract every line item and the totals accurately. Amounts are in the bill currency ' +
-                    '(usually AED). If a value is unclear, give your best estimate. Call record_bill.',
+                    '(usually AED). For each line, give the unit price and line total EXCLUDING tax, and ' +
+                    'the VAT percent for that line (UAE VAT is usually 5%; use 0 for exempt or zero-rated ' +
+                    'items). If a value is unclear, give your best estimate. Call record_bill.',
                 },
               ],
             },
@@ -221,6 +228,7 @@ export class AnthropicService {
         description: l.description || '',
         quantity: Number(l.quantity) || 0,
         unitPrice: Number(l.unitPrice) || 0,
+        taxPercent: Number(l.taxPercent) || 0,
         amount: Number(l.amount) || 0,
       })),
     };
