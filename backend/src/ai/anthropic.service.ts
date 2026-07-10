@@ -138,52 +138,75 @@ export class AnthropicService {
 
   async extractBill(imageBase64: string, mediaType: string): Promise<ExtractedBill> {
     if (!this.configured) {
+      // Log the misconfiguration so the real reason shows up in Render logs,
+      // instead of the frontend only seeing a generic "Claude not connected".
+      this.logger.error('Bill extraction aborted: ANTHROPIC_API_KEY not set');
       throw new ServiceUnavailableException('ANTHROPIC_API_KEY not set');
     }
     const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
+    this.logger.log(`Extracting bill via Anthropic (model=${model}, mediaType=${mediaType})`);
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': this.config.get<string>('ANTHROPIC_API_KEY')!,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 2000,
-        tools: [BILL_TOOL],
-        tool_choice: { type: 'tool', name: 'record_bill' },
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: mediaType, data: imageBase64 },
-              },
-              {
-                type: 'text',
-                text:
-                  'This is a supplier bill / purchase invoice for a UAE beverage distributor. ' +
-                  'Extract every line item and the totals accurately. Amounts are in the bill currency ' +
-                  '(usually AED). If a value is unclear, give your best estimate. Call record_bill.',
-              },
-            ],
-          },
-        ],
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': this.config.get<string>('ANTHROPIC_API_KEY')!,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 2000,
+          tools: [BILL_TOOL],
+          tool_choice: { type: 'tool', name: 'record_bill' },
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image',
+                  source: { type: 'base64', media_type: mediaType, data: imageBase64 },
+                },
+                {
+                  type: 'text',
+                  text:
+                    'This is a supplier bill / purchase invoice for a UAE beverage distributor. ' +
+                    'Extract every line item and the totals accurately. Amounts are in the bill currency ' +
+                    '(usually AED). If a value is unclear, give your best estimate. Call record_bill.',
+                },
+              ],
+            },
+          ],
+        }),
+      });
+    } catch (e) {
+      // Network-level failure (DNS, TLS, timeout) never reached Anthropic.
+      this.logger.error(`Anthropic request failed (network): ${(e as Error).message}`);
+      throw new ServiceUnavailableException(`Claude request failed: ${(e as Error).message}`);
+    }
 
     if (!res.ok) {
       const body = await res.text();
       this.logger.error(`Anthropic API error ${res.status}: ${body}`);
-      throw new ServiceUnavailableException(`Claude extraction failed: ${res.status}`);
+      // Surface a short, safe reason (e.g. authentication_error, not_found_error)
+      // in the thrown message too — never the key.
+      let reason = `HTTP ${res.status}`;
+      try {
+        const j = JSON.parse(body);
+        reason = j?.error?.type || j?.error?.message || reason;
+      } catch {
+        /* keep HTTP status */
+      }
+      throw new ServiceUnavailableException(`Claude extraction failed: ${res.status} ${reason}`);
     }
 
     const data: any = await res.json();
     const toolUse = (data.content || []).find((b: any) => b.type === 'tool_use');
-    if (!toolUse) throw new ServiceUnavailableException('No structured extraction returned');
+    if (!toolUse) {
+      this.logger.error(`Anthropic returned no tool_use block: ${JSON.stringify(data).slice(0, 500)}`);
+      throw new ServiceUnavailableException('No structured extraction returned');
+    }
 
     const b = toolUse.input as ExtractedBill;
     return {
