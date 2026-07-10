@@ -1,10 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Disable Nest's built-in body parser (default 100kb limit) so we can register
+  // our own with a larger limit below. Without this, the default 100kb parser
+  // runs first and rejects phone-photo uploads with PayloadTooLargeError.
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // Bill capture POSTs phone photos to /api/bills/extract as base64 JSON, which
+  // easily exceeds the old 100kb default. Allow normal phone photos (15mb).
+  app.use(json({ limit: '15mb' }));
+  app.use(urlencoded({ extended: true, limit: '15mb' }));
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
