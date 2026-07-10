@@ -714,7 +714,15 @@ function sum(method) { return S.state.payments.filter((p) => p.method === method
 const API = localStorage.getItem('ntbf_api') || ((location.protocol.startsWith('http') && location.port !== '8080') ? location.origin : 'http://localhost:3000');
 function authHeaders(extra) {
   const tok = localStorage.getItem('ntbf_token');
-  return Object.assign({ 'content-type': 'application/json' }, tok ? { 'x-api-key': tok } : {}, extra || {});
+  // Signed-in staff already hold a JWT; send it so the gated endpoints (bill
+  // capture, copilot) authorize via the staff session — no shared secret needed.
+  const staffTok = localStorage.getItem('ntbf_stafftoken');
+  return Object.assign(
+    { 'content-type': 'application/json' },
+    tok ? { 'x-api-key': tok } : {},
+    staffTok ? { authorization: 'Bearer ' + staffTok } : {},
+    extra || {},
+  );
 }
 // Logged-in-staff headers (used for reading customer online orders + updating their status).
 function staffHeaders(extra) {
