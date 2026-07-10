@@ -917,6 +917,37 @@ function captureGps(elId) {
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
+// Shrink a phone photo before upload. Camera images are often 3-8MB, which
+// bloats the request and can exceed Claude's per-image size cap. Cap the longest
+// edge at maxDim and re-encode as JPEG. If the browser can't process it via
+// canvas (rare), fall back to the original file so capture still works.
+// Resolves to { dataUrl, mediaType }, or null if the file can't be read at all.
+function downscaleImage(file, maxDim = 1600, quality = 0.8) {
+  return new Promise((resolve) => {
+    const rd = new FileReader();
+    rd.onload = () => {
+      const dataUrl = rd.result;
+      const fallback = { dataUrl, mediaType: file.type || 'image/jpeg' };
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          if (scale >= 1) { resolve(fallback); return; } // already small enough
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(img.width * scale);
+          cv.height = Math.round(img.height * scale);
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          resolve({ dataUrl: cv.toDataURL('image/jpeg', quality), mediaType: 'image/jpeg' });
+        } catch (e) { resolve(fallback); }
+      };
+      img.onerror = () => resolve(fallback);
+      img.src = dataUrl;
+    };
+    rd.onerror = () => resolve(null);
+    rd.readAsDataURL(file);
+  });
+}
+
 function addBillForm() {
   openSheet('Add purchase bill', `
     <div class="muted" style="font-size:12.5px;margin-bottom:12px">Take or attach a photo of the supplier bill.</div>
@@ -926,14 +957,12 @@ function addBillForm() {
     <p class="muted" style="font-size:11.5px;margin-top:10px">A clear, flat photo reads best. Without an API key it runs a demo extraction.</p>`,
     (sh) => {
       const f = sh.querySelector('#bill_file');
-      f.addEventListener('change', () => {
+      f.addEventListener('change', async () => {
         const file = f.files[0]; if (!file) return;
-        const rd = new FileReader();
-        rd.onload = () => {
-          billDraft = { imageData: rd.result, mediaType: file.type || 'image/jpeg' };
-          sh.querySelector('#bill_preview').innerHTML = `<img src="${rd.result}" style="width:100%;border-radius:10px;border:1px solid var(--line)" />`;
-        };
-        rd.readAsDataURL(file);
+        const shot = await downscaleImage(file);
+        if (!shot) return;
+        billDraft = { imageData: shot.dataUrl, mediaType: shot.mediaType };
+        sh.querySelector('#bill_preview').innerHTML = `<img src="${shot.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line)" />`;
       });
     });
 }
@@ -1064,11 +1093,12 @@ function captureForm(type) {
     ${cfg.fields.map((f) => `<label class="fld"><span class="lab">${f.label}</span><input id="cap_${f.key}" /></label>`).join('')}
     <button class="btn primary full" data-act="reviewCapture">Review &amp; prepare for Zoho</button>`,
     (sh) => {
-      sh.querySelector('#cap_file').addEventListener('change', function () {
+      sh.querySelector('#cap_file').addEventListener('change', async function () {
         const file = this.files[0]; if (!file) return;
-        const rd = new FileReader();
-        rd.onload = () => { capDraft.image = rd.result; sh.querySelector('#cap_preview').innerHTML = `<img src="${rd.result}" style="width:100%;border-radius:10px;border:1px solid var(--line)" />`; };
-        rd.readAsDataURL(file);
+        const shot = await downscaleImage(file);
+        if (!shot) return;
+        capDraft.image = shot.dataUrl; capDraft.mediaType = shot.mediaType;
+        sh.querySelector('#cap_preview').innerHTML = `<img src="${shot.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line)" />`;
       });
     });
 }
@@ -1321,7 +1351,7 @@ const ACT = {
     toast('Reading…');
     const set = (id, v) => { const el = $('#' + id); if (el && v != null) el.value = v; };
     try {
-      const r = await apiPost('/api/bills/extract', { imageBase64: capDraft.image, mediaType: 'image/jpeg' });
+      const r = await apiPost('/api/bills/extract', { imageBase64: capDraft.image, mediaType: capDraft.mediaType || 'image/jpeg' });
       if (r && r.supplierName !== undefined) { set('cap_vendor', r.supplierName); set('cap_invoiceNo', r.invoiceNumber); set('cap_date', r.invoiceDate); set('cap_total', r.total); toast('Extracted — please verify'); return; }
       throw new Error('no data');
     } catch (e) { toast('Claude not connected — enter the details manually'); }
