@@ -47,18 +47,28 @@ const CATALOG_INDEX = Object.keys(CATALOG).map((id) => ({
   toks: new Set(ingestToks(CATALOG[id].name)),
   sizes: sizeToks(CATALOG[id].name),
 }));
+// Document frequency per token — lets us tell brand/flavor words (rare) from generic
+// descriptors like "carbonated"/"drink" (common), so a brand can't be outvoted by filler.
+const CATALOG_DF: Record<string, number> = {};
+for (const c of CATALOG_INDEX) for (const t of c.toks) CATALOG_DF[t] = (CATALOG_DF[t] || 0) + 1;
+const DISTINCT_MAX = Math.max(8, Math.round(CATALOG_INDEX.length * 0.08));
 /** Best catalog id for a free-text product name, or null if no confident match. */
 function matchCatalogId(name: string): string | null {
   const q = ingestToks(name);
   if (!q.length) return null;
   const qset = new Set(q);
   const qsizes = sizeToks(name);
+  // Distinctive query tokens (brand/flavor/size) the candidate MUST contain. This stops
+  // "Pepsi ...295ml" mapping to "7Up ...295ml" on shared filler words. df===0 (typos/noise)
+  // is ignored so a stray word can't force a spurious no-match.
+  const required = [...qset].filter((t) => CATALOG_DF[t] >= 1 && CATALOG_DF[t] <= DISTINCT_MAX);
   let best: string | null = null;
   let bestCov = 0;
   let bestJac = 0;
   for (const c of CATALOG_INDEX) {
     // Size gate: if the request names a volume/size, the candidate must share one.
     if (qsizes.length && !qsizes.some((z) => c.sizes.indexOf(z) >= 0)) continue;
+    if (!required.every((t) => c.toks.has(t))) continue;
     let inter = 0;
     for (const t of qset) if (c.toks.has(t)) inter++;
     if (!inter) continue;
