@@ -1,5 +1,5 @@
 import {
-  BadRequestException, Body, CanActivate, Controller, ExecutionContext, Get, Injectable, Module, Post,
+  BadRequestException, Body, CanActivate, Controller, ExecutionContext, ForbiddenException, Get, Injectable, Module, Post,
   Req, UnauthorizedException, UseGuards,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -98,7 +98,24 @@ class PlaceOrderDto {
   @IsOptional() @IsString() note?: string;
 }
 export const ORDER_STATUSES = ['PLACED', 'CONFIRMED', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
-class StatusDto { @IsString() id: string; @IsString() status: string; }
+class StatusDto {
+  @IsString() id: string;
+  @IsString() status: string;
+  @IsOptional() cashAmount?: number; // for DELIVERED — actual amount collected
+  @IsOptional() @IsString() cashMethod?: string; // CASH_ON_DELIVERY | CHEQUE_ON_DELIVERY
+}
+class ResolveDto { @IsString() id: string; }
+
+// Role-enforced forward transitions: each target lists the from-status(es) it's valid from
+// and the non-admin roles allowed to make it. Admin may make any transition (flagged override).
+// CANCELLED is handled separately (sales/admin before packing; admin only after).
+const TRANSITIONS: Record<string, { from: string[]; roles: string[] }> = {
+  CONFIRMED: { from: ['PLACED'], roles: ['salesman'] },
+  PACKED: { from: ['CONFIRMED'], roles: ['warehouse'] },
+  OUT_FOR_DELIVERY: { from: ['PACKED'], roles: ['warehouse', 'driver'] },
+  DELIVERED: { from: ['OUT_FOR_DELIVERY'], roles: ['driver'] },
+};
+const hasRole = (roles: string[], r: string) => (roles || []).indexOf(r) >= 0;
 
 // WhatsApp bot → platform. Nested item fields are read manually (not class-validated),
 // mirroring PlaceOrderDto, so the bot may include unit_price_aed / line_total_aed freely.
@@ -139,7 +156,8 @@ export class CustomerStore {
   /** items are already server-priced & validated by the service. Total is recomputed from those. */
   addOrder(customerId: string, items: any[], method: string, address?: string, note?: string) {
     const total = items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
-    const o = { id: this.id('ORD'), customerId, items, total: Math.round(total * 100) / 100, method: method || 'CASH_ON_DELIVERY', address: address || '', note: note || '', status: 'PLACED', createdAt: new Date().toISOString() };
+    const at = new Date().toISOString();
+    const o = { id: this.id('ORD'), customerId, items, total: Math.round(total * 100) / 100, method: method || 'CASH_ON_DELIVERY', address: address || '', note: note || '', status: 'PLACED', createdAt: at, statusHistory: [{ from: null, to: 'PLACED', by: 'Customer', role: 'customer', at, override: false }] };
     this.data.orders.unshift(o); this.save(); return o;
   }
   ordersFor(customerId: string) { return this.data.orders.filter((o) => o.customerId === customerId); }
@@ -154,18 +172,32 @@ export class CustomerStore {
   /** items are already resolved & server-priced by the service. Total is recomputed from those. */
   addIngestedOrder(o: { customerId: string; items: any[]; method: string; address?: string; note?: string; source: string; externalRef: string; needsReview: boolean; reviewReasons: string[] }) {
     const total = o.items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
+    const at = new Date().toISOString();
     const rec = {
       id: this.id('ORD'), customerId: o.customerId, items: o.items, total: Math.round(total * 100) / 100,
       method: o.method || 'CASH_ON_DELIVERY', address: o.address || '', note: o.note || '', status: 'PLACED',
       source: o.source, externalRef: o.externalRef, needsReview: !!o.needsReview, reviewReasons: o.reviewReasons || [],
-      createdAt: new Date().toISOString(),
+      createdAt: at, statusHistory: [{ from: null, to: 'PLACED', by: 'WhatsApp bot', role: 'system', at, override: false }],
     };
     this.data.orders.unshift(rec); this.save(); return rec;
   }
-  updateStatus(id: string, status: string) {
+  orderById(id: string) { return this.data.orders.find((x) => x.id === id); }
+  /** Apply a status change with an audit entry and optional extra fields (e.g. collected cash). */
+  applyStatus(id: string, toStatus: string, entry: any, extra?: any) {
     const o = this.data.orders.find((x) => x.id === id);
     if (!o) return null;
-    o.status = status; o.updatedAt = new Date().toISOString();
+    o.status = toStatus; o.updatedAt = entry.at;
+    if (extra) Object.assign(o, extra);
+    o.statusHistory = o.statusHistory || [];
+    o.statusHistory.push(entry);
+    this.save(); return o;
+  }
+  resolveReview(id: string, entry: any) {
+    const o = this.data.orders.find((x) => x.id === id);
+    if (!o) return null;
+    o.needsReview = false; o.reviewResolvedBy = entry.by; o.reviewResolvedAt = entry.at;
+    o.statusHistory = o.statusHistory || [];
+    o.statusHistory.push({ from: o.status, to: o.status, by: entry.by, role: entry.role, at: entry.at, note: 'review resolved', override: false });
     this.save(); return o;
   }
   allOrders() {
@@ -240,11 +272,60 @@ export class CustomerPortalService {
   }
   myOrders(customerId: string) { return this.store.ordersFor(customerId); }
   allOrders() { return this.store.allOrders(); }
-  updateStatus(id: string, status: string) {
-    if (ORDER_STATUSES.indexOf(status) < 0) throw new BadRequestException('Invalid status');
-    const o = this.store.updateStatus(id, status);
+  updateStatus(dto: StatusDto, staff: { id: string; roles: string[]; name: string }) {
+    const to = dto.status;
+    if (ORDER_STATUSES.indexOf(to) < 0) throw new BadRequestException('Invalid status');
+    const o = this.store.orderById(dto.id);
     if (!o) throw new BadRequestException('Order not found');
-    return { id: o.id, status: o.status };
+    const from = o.status;
+    const roles = staff.roles || [];
+    const isAdmin = hasRole(roles, 'admin');
+    if (to === from) throw new BadRequestException('Order is already ' + from);
+
+    // Needs-review gate: an order can't be confirmed until the review is resolved.
+    if (to === 'CONFIRMED' && o.needsReview) {
+      throw new ForbiddenException('This order needs review first — open it and resolve the flagged items before confirming.');
+    }
+
+    let override = false;
+    let actingRole = isAdmin ? 'admin' : (roles[0] || 'staff');
+    if (to === 'CANCELLED') {
+      if (from === 'DELIVERED' || from === 'CANCELLED') throw new BadRequestException('This order can no longer be cancelled');
+      const beforePacked = from === 'PLACED' || from === 'CONFIRMED';
+      if (beforePacked && hasRole(roles, 'salesman')) { actingRole = 'salesman'; }
+      else if (isAdmin) { override = !(beforePacked && hasRole(roles, 'salesman')); actingRole = 'admin'; }
+      else throw new ForbiddenException(beforePacked ? 'Only sales or admin can cancel an order' : 'After packing, only an admin can cancel');
+    } else {
+      const t = TRANSITIONS[to];
+      const fromOk = !!t && t.from.indexOf(from) >= 0;
+      const roleMatch = t ? t.roles.find((r) => hasRole(roles, r)) : undefined;
+      if (fromOk && roleMatch) { actingRole = roleMatch; }
+      else if (isAdmin) { override = true; actingRole = 'admin'; }
+      else if (!fromOk) throw new BadRequestException(`Can't move an order from ${from} to ${to}`);
+      else throw new ForbiddenException(`Your role can't perform ${from} → ${to}`);
+    }
+
+    const at = new Date().toISOString();
+    const entry: any = { from, to, by: staff.name, byId: staff.id, role: actingRole, at, override };
+    const extra: any = {};
+    if (to === 'DELIVERED') {
+      const amt = Number(dto.cashAmount);
+      const amount = (isFinite(amt) && amt >= 0) ? Math.round(amt * 100) / 100 : o.total;
+      extra.collected = { amount, method: dto.cashMethod || o.method || 'CASH_ON_DELIVERY', at, by: staff.name };
+    }
+    const updated = this.store.applyStatus(dto.id, to, entry, extra);
+    return { id: (updated as any).id, status: (updated as any).status, override };
+  }
+  resolveReview(dto: ResolveDto, staff: { id: string; roles: string[]; name: string }) {
+    const roles = staff.roles || [];
+    if (!hasRole(roles, 'salesman') && !hasRole(roles, 'admin')) throw new ForbiddenException('Only sales or admin can resolve a review');
+    const o = this.store.orderById(dto.id);
+    if (!o) throw new BadRequestException('Order not found');
+    if (!o.needsReview) return { id: o.id, needsReview: false };
+    const at = new Date().toISOString();
+    const actingRole = hasRole(roles, 'salesman') ? 'salesman' : 'admin';
+    this.store.resolveReview(dto.id, { by: staff.name, role: actingRole, at });
+    return { id: o.id, needsReview: false };
   }
   /** Ingest a confirmed WhatsApp order into the same pipeline as web orders. */
   ingest(dto: IngestOrderDto) {
@@ -307,7 +388,10 @@ export class CustomerPortalController {
   all() { return this.svc.allOrders(); }
 
   @Public() @UseGuards(StaffAuthGuard) @Post('orders/status')
-  setStatus(@Body() dto: StatusDto) { return this.svc.updateStatus(dto.id, dto.status); }
+  setStatus(@Body() dto: StatusDto, @Req() req: any) { return this.svc.updateStatus(dto, req.staff); }
+
+  @Public() @UseGuards(StaffAuthGuard) @Post('orders/resolve-review')
+  resolveReview(@Body() dto: ResolveDto, @Req() req: any) { return this.svc.resolveReview(dto, req.staff); }
 
   // WhatsApp bot ingest (shared-secret guarded): confirmed WA orders join the same queue.
   @Public() @UseGuards(IngestGuard) @Post('orders/ingest')
