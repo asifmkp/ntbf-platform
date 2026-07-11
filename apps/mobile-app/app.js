@@ -25,6 +25,8 @@ const ROLES = {
 };
 let shopCart = {}; let shopMethod = 'CASH_ON_DELIVERY';
 let onlineOrders = []; let onlineLoaded = false;
+// Which tabs, per role, show the real online-order queue (loaded from /api/portal/orders/all).
+const ONLINE_TABS = { salesman: ['online'], warehouse: ['dispatch'], driver: ['route', 'collect'] };
 let capDraft = {};
 const RENEWAL_KINDS = {
   visa: { label: 'Residence visa', icon: '🛂' },
@@ -108,7 +110,7 @@ function render() {
       ${R.tabs.map((t) => `<button class="bn ${t.id === tab ? 'on' : ''}" data-act="tab" data-id="${t.id}"><span class="i">${t.i}</span>${t.label}</button>`).join('')}
     </div>`;
   mountMaps();
-  if (role === 'salesman' && tab === 'online' && !onlineLoaded) loadOnlineOrders();
+  if ((ONLINE_TABS[role] || []).indexOf(tab) >= 0 && !onlineLoaded) loadOnlineOrders();
 }
 
 function loginScreen() {
@@ -241,57 +243,40 @@ const views = {
 
   // ---------------- DRIVER ----------------
   route() {
-    const sh = S.state.shift;
-    const dl = S.state.driverLoc || (S.state.driverLoc = { lat: 25.4052, lng: 55.5136, name: 'Warehouse depot · Ajman' });
-    const delivered = S.state.orders.filter((o) => o.status === 'DELIVERED').length;
-    const raw = S.driverStops().map((o) => { const c = S.customer(o.customerId) || {}; return { o, name: c.name || '—', lat: c.lat != null ? c.lat : dl.lat, lng: c.lng != null ? c.lng : dl.lng }; });
-    const seq = orderRoute(dl, raw);
-    const totalKm = seq.reduce((s, x) => s + x._dist, 0);
-    window._routeData = { dl, seq };
-    const totalToday = seq.length + delivered;
-    const pct = totalToday ? Math.round((delivered / totalToday) * 100) : 0;
-    const ready = sh.started && sh.loadVerified;
-
-    let head = '';
-    if (!sh.started) head = `<button class="btn primary full" data-act="startShift">▶ Start shift</button>`;
-    else if (!sh.loadVerified) head = `<button class="btn primary full" data-act="verifyLoad">✓ Verify load against dispatch</button>`;
-
-    const mapBlock = ready ? `
-      <div id="map"></div>
-      <div class="btn-row">
-        <button class="btn sm" data-act="useGps">📍 Use my GPS</button>
-        ${seq.length ? `<button class="btn sm primary" data-act="navigate" data-lat="${seq[0].lat}" data-lng="${seq[0].lng}">Navigate to stop 1</button>` : ''}
-      </div>` : '';
-
-    const list = ready
-      ? (seq.length ? seq.map((x, idx) => `
-          <div class="li"><div class="ic">${idx + 1}</div><div class="m"><b>${x.name}</b>
-            <span>${x.o.id} · ${aed(x.o.total)} · ${x.o.method === 'CASH_ON_DELIVERY' ? 'Cash' : 'Cheque'} · ${x._dist.toFixed(1)} km ${idx === 0 ? 'from depot' : 'from prev'}</span>
-            <div class="btn-row">
-              <button class="btn sm" data-act="navigate" data-lat="${x.lat}" data-lng="${x.lng}">Navigate</button>
-              <button class="btn green sm" data-act="deliver" data-id="${x.o.id}">Delivered</button>
-              <button class="btn danger sm" data-act="fail" data-id="${x.o.id}">Failed</button>
-            </div></div></div>`).join('') : emptyRow('All stops done — submit EOD.'))
-      : emptyRow('Start shift and verify load to plan the route.');
-
+    if (!onlineLoaded) return loadingCard('Loading deliveries…');
+    const stops = onlineByStatus(['OUT_FOR_DELIVERY']);
+    const delivered = onlineByStatus(['DELIVERED']).length;
+    const cash = codTotal(stops);
     return `
       <div class="mkpis">
-        ${kpi('Stops left', seq.length, 'accent')}
-        ${kpi('Route distance', totalKm.toFixed(1) + ' km', 'green')}
-        ${kpi('Delivered', delivered)}
-        ${kpi('Cash', aed(sum('CASH_ON_DELIVERY')), 'green')}
+        ${kpi('Stops left', stops.length, 'accent')}
+        ${kpi('Delivered', delivered, 'green')}
+        ${kpi('Cash to collect', aed(cash), 'green')}
       </div>
-      ${ready ? `<div class="sect">Progress</div><div class="card pad"><div class="progress"><i style="width:${pct}%;background:var(--green)"></i></div><div class="muted" style="font-size:12px;margin-top:7px">${delivered} of ${totalToday} delivered · start: ${dl.name}</div></div>` : ''}
-      ${head}
-      ${mapBlock}
-      <div class="sect">Optimized route (nearest first)</div>
-      <div class="card">${list}</div>`;
+      <div class="card pad" style="margin:2px 0 12px"><b style="font-size:13.5px">🚚 Deliveries</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders packed and handed to you (website &amp; WhatsApp). Deliver, collect cash, mark done.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      <div class="sect">Your stops (${stops.length})</div>
+      <div id="online-list">${stops.length ? stops.map((o, i) => `
+        <div class="card pad" style="margin-bottom:10px">
+          <div class="li" style="padding:0"><div class="ic">${i + 1}</div><div class="m"><b>${esc(o.customerName || '—')} ${srcBadge(o)}</b><span>${esc(o.id)} · ${aed(o.total)} · ${isCash(o) ? 'Cash' : 'Cheque'}${o.customerPhone ? ' · ' + esc(o.customerPhone) : ''}</span></div></div>
+          ${o.address ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 ${esc(o.address)}</div>` : '<div class="muted" style="font-size:12px;margin-top:6px;color:var(--amber)">⚠ No address on file</div>'}
+          <div class="muted" style="font-size:12px;margin-top:4px">${orderLinesText(o)}</div>
+          ${reviewNote(o)}
+          <div class="btn-row" style="margin-top:10px">
+            ${o.address ? `<button class="btn sm" data-act="navAddr" data-addr="${esc(o.address)}">Navigate</button>` : ''}
+            <button class="btn green sm" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="DELIVERED">Delivered ✓</button>
+          </div>
+        </div>`).join('') : emptyRow('No deliveries out right now.')}</div>`;
   },
   collect() {
-    const pays = S.state.payments;
-    return `<div class="mkpis">${kpi('Cash collected', aed(sum('CASH_ON_DELIVERY')), 'green')}${kpi('Cheques', aed(sum('CHEQUE_ON_DELIVERY')))}</div>
-      <div class="sect">Collections today</div>
-      <div class="card">${pays.length ? pays.map((p) => { const c = S.customer(p.customerId); return row(p.method === 'CASH_ON_DELIVERY' ? '＄' : '▤', 'g', c ? c.name : '—', p.method === 'CASH_ON_DELIVERY' ? 'Cash · ' + p.time : 'Cheque ' + (p.chequeNo || '') + ' · ' + p.status, aed(p.amount)); }).join('') : emptyRow('No collections yet — deliver an order.')}</div>`;
+    if (!onlineLoaded) return loadingCard('Loading…');
+    const delivered = onlineByStatus(['DELIVERED']);
+    const cashDone = codTotal(delivered);
+    const pending = codTotal(onlineByStatus(['OUT_FOR_DELIVERY']));
+    return `
+      <div class="mkpis">${kpi('Cash collected', aed(cashDone), 'green')}${kpi('Still to collect', aed(pending), pending ? 'amber' : 'green')}</div>
+      <div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">Cash owed on delivered cash-on-delivery orders (website &amp; WhatsApp). Hand this to Haris at end of day.</div></div>
+      <div class="sect">Delivered &amp; collected (${delivered.length})</div>
+      <div class="card">${delivered.length ? delivered.map((o) => row(isCash(o) ? '＄' : '▤', 'g', esc(o.customerName || '—'), esc(o.id) + ' · ' + (isCash(o) ? 'Cash' : 'Cheque'), aed(o.total))).join('') : emptyRow('No deliveries completed yet.')}</div>`;
   },
   eod() {
     const last = S.state.eod[0];
@@ -427,9 +412,23 @@ const views = {
       <div class="card">${mv.length ? mv.slice(0, 80).map((m) => `<div class="li"><div class="ic ${m.type === 'in' ? 'g' : m.type === 'out' ? '' : 'a'}">${icon[m.type] || '•'}</div><div class="m"><b>${m.name}</b><span>${esc(m.reason)} · ${m.by} · ${m.time}</span></div><div class="end" style="font-weight:700;color:${m.qty >= 0 ? 'var(--green)' : 'var(--red)'}">${m.qty >= 0 ? '+' : ''}${m.qty}</div></div>`).join('') : emptyRow('No stock movements yet — receive or sell to see the ledger fill.')}</div>`;
   },
   dispatch() {
-    const q = S.dispatchQueue();
-    return `<div class="sect">Dispatch queue (${q.length})</div>
-      <div class="card">${q.length ? q.map((o) => { const c = S.customer(o.customerId); const next = { PLACED: 'Confirm & pack', CONFIRMED: 'Confirm & pack', PACKED: 'Ready for pickup' }[o.status]; return `<div class="li"><div class="ic">${o.id.replace('SO-', '#')}</div><div class="m"><b>${c ? c.name : '—'}</b><span>${o.id} · ${o.items.length} lines</span></div><div class="end">${statusTag(o.status)}<br><button class="btn primary sm" data-act="dispatch" data-id="${o.id}" style="margin-top:5px">${next}</button></div></div>`; }).join('') : emptyRow('Nothing to dispatch. Sales places orders here.')}</div>`;
+    if (!onlineLoaded) return loadingCard('Loading orders…');
+    const q = onlineByStatus(['CONFIRMED', 'PACKED']);
+    const waiting = onlineByStatus(['PLACED']).length;
+    return `
+      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">📦 Orders to pack</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Confirmed orders from the website &amp; WhatsApp. Pack each one, then hand it to the driver.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      ${waiting ? `<div class="muted" style="font-size:12px;margin-bottom:8px">${waiting} order(s) still awaiting sales confirmation.</div>` : ''}
+      <div class="sect">To pack (${q.length})</div>
+      <div id="online-list">${q.length ? q.map((o) => {
+      const next = o.status === 'CONFIRMED' ? 'PACKED' : 'OUT_FOR_DELIVERY';
+      const label = o.status === 'CONFIRMED' ? 'Mark packed' : 'Hand to driver';
+      return `<div class="card pad" style="margin-bottom:10px">
+          <div class="li" style="padding:0"><div class="m"><b>${esc(o.customerName || '—')} ${srcBadge(o)}</b><span>${esc(o.id)} · ${aed(o.total)} · ${(o.items || []).length} line(s)</span></div><div class="end">${statusTag(o.status)}</div></div>
+          <div class="muted" style="font-size:12px;margin-top:6px">${orderLinesText(o)}</div>
+          ${reviewNote(o)}
+          <button class="btn primary sm full" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="${next}" style="margin-top:10px">${label} →</button>
+        </div>`;
+    }).join('') : emptyRow('Nothing to pack right now.')}</div>`;
   },
   receive() {
     return `<div class="sect">Recent receipts</div>
@@ -744,8 +743,20 @@ async function loadOnlineOrders() {
     onlineOrders = r.ok ? await r.json() : [];
   } catch (e) { onlineOrders = []; }
   onlineLoaded = true;
-  if (role === 'salesman' && tab === 'online') render();
+  if ((ONLINE_TABS[role] || []).indexOf(tab) >= 0) render();
 }
+// ---- shared helpers for the real online-order queue (app + WhatsApp) ----
+function srcBadge(o) { return o && o.source === 'whatsapp' ? '<span class="tag green">WhatsApp</span>' : '<span class="tag blue">App</span>'; }
+function reviewNote(o) {
+  if (!o || !o.needsReview) return '';
+  const r = (o.reviewReasons && o.reviewReasons.length) ? ': ' + o.reviewReasons.map(esc).join('; ') : '';
+  return `<div class="muted" style="font-size:11.5px;color:var(--amber);margin-top:4px">⚠ Needs review${r}</div>`;
+}
+function onlineByStatus(sts) { return onlineOrders.filter((o) => sts.indexOf(o.status) >= 0); }
+function orderLinesText(o) { return (o.items || []).map((l) => esc((l.qty || 1) + '× ' + (l.name || '') + (l.unmatched ? ' ⚠' : ''))).join(', '); }
+function isCash(o) { return (o.method || 'CASH_ON_DELIVERY') === 'CASH_ON_DELIVERY'; }
+function codTotal(list) { return list.filter(isCash).reduce((s, o) => s + (Number(o.total) || 0), 0); }
+function loadingCard(t) { return `<div class="card">${emptyRow(t)}</div>`; }
 function simTokens(a, b) {
   const n = (s) => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
   const A = new Set(n(a)), B = new Set(n(b)); if (!A.size || !B.size) return 0;
@@ -791,7 +802,7 @@ function orderRoute(start, stops) {
   return seq;
 }
 let _map = null;
-function mountMaps() { if (role === 'driver' && tab === 'route') mountRouteMap(); }
+function mountMaps() { if (role === 'driver' && tab === 'route' && document.getElementById('map')) mountRouteMap(); }
 function mountRouteMap() {
   const el = document.getElementById('map');
   if (!el || typeof L === 'undefined' || !window._routeData) return;
@@ -1337,6 +1348,7 @@ const ACT = {
       () => toast('Location permission denied'));
   },
   navigate: (d) => { window.open('https://www.google.com/maps/dir/?api=1&destination=' + d.lat + ',' + d.lng + '&travelmode=driving', '_blank'); },
+  navAddr: (d) => { window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(d.addr || ''), '_blank'); },
   deliver: (d) => deliverForm(d.id),
   saveDeliver: (d) => {
     const method = $('#d_method .on').dataset.m;
