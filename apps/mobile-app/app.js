@@ -215,25 +215,16 @@ const views = {
       <button class="btn primary full" data-act="newOrder">＋ New order</button>`;
   },
   online() {
+    if (!onlineLoaded) return loadingCard('Loading online orders…');
+    const review = onlineOrders.filter((o) => o.needsReview);
+    const active = onlineOrders.filter((o) => !o.needsReview && o.status !== 'DELIVERED' && o.status !== 'CANCELLED');
+    const done = onlineOrders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED');
     return `
-      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">🌐 Online orders</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders customers placed on the website (app.ntbfllc.com/order). Advance each order — customers see the status live.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
-      <div class="sect">Incoming (${onlineOrders.length})</div>
-      <div id="online-list">${onlineOrders.length ? onlineOrders.map((o) => {
-        const ns = nextOrderStatus(o.status);
-        const lines = (o.items || []).map((l) => esc((l.qty || 1) + '× ' + l.name)).join(', ');
-        return `<div class="card pad" style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-            <div style="min-width:0"><b style="font-size:14px">${esc(o.customerName || '—')}</b>
-              <div class="muted" style="font-size:12px;margin-top:2px">${esc(o.id)} · <b style="color:var(--ink)">${aed(o.total)}</b> · ${(o.items || []).length} item(s)</div></div>
-            ${statusTag(o.status)}
-          </div>
-          <div class="muted" style="font-size:12px;margin-top:7px;line-height:1.5">${lines}</div>
-          ${o.address ? `<div class="muted" style="font-size:12px;margin-top:4px">📍 ${esc(o.address)}</div>` : ''}
-          ${o.customerPhone ? `<div class="muted" style="font-size:12px;margin-top:2px">📞 ${esc(o.customerPhone)}</div>` : ''}
-          ${ns ? `<button class="btn primary sm full" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="${ns}" style="margin-top:10px">${ORDER_NEXT_ACTION[o.status] || 'Advance'} →</button>`
-               : `<div style="margin-top:9px;font-size:12.5px;color:var(--green);font-weight:700">✓ Delivered</div>`}
-        </div>`;
-      }).join('') : (onlineLoaded ? emptyRow('No online orders yet.') : emptyRow('Loading…'))}</div>`;
+      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">🌐 Online orders</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Website &amp; WhatsApp orders. Tap any order for full details. Customers see the status live.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      ${review.length ? `<div class="sect">⚠ Needs review (${review.length})</div>${review.map((o) => orderCard(o, 'online')).join('')}` : ''}
+      <div class="sect">Incoming (${active.length})</div>
+      ${active.length ? active.map((o) => orderCard(o, 'online')).join('') : emptyRow('No open online orders. New website & WhatsApp orders land here.')}
+      ${done.length ? `<div class="sect">Completed (${done.length})</div>${done.map((o) => orderCard(o, 'online')).join('')}` : ''}`;
   },
   visits() {
     return `<div class="sect">Visit log</div>
@@ -244,39 +235,31 @@ const views = {
   // ---------------- DRIVER ----------------
   route() {
     if (!onlineLoaded) return loadingCard('Loading deliveries…');
-    const stops = onlineByStatus(['OUT_FOR_DELIVERY']);
+    const stops = onlineByStatus(['OUT_FOR_DELIVERY']).slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     const delivered = onlineByStatus(['DELIVERED']).length;
     const cash = codTotal(stops);
+    const addrs = stops.map((o) => o.address).filter(Boolean);
+    const navAll = addrs.length ? `<button class="btn sm primary" data-act="navAll" data-addrs="${esc(addrs.join('~|~'))}">🧭 Navigate all stops</button>` : '';
     return `
       <div class="mkpis">
         ${kpi('Stops left', stops.length, 'accent')}
         ${kpi('Delivered', delivered, 'green')}
         ${kpi('Cash to collect', aed(cash), 'green')}
       </div>
-      <div class="card pad" style="margin:2px 0 12px"><b style="font-size:13.5px">🚚 Deliveries</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders packed and handed to you (website &amp; WhatsApp). Deliver, collect cash, mark done.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      <div class="card pad" style="margin:2px 0 12px"><b style="font-size:13.5px">🚚 Deliveries</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Orders packed and handed to you (website &amp; WhatsApp), earliest first. Tap a stop for details.</div><div class="btn-row">${navAll}<button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div></div>
       <div class="sect">Your stops (${stops.length})</div>
-      <div id="online-list">${stops.length ? stops.map((o, i) => `
-        <div class="card pad" style="margin-bottom:10px">
-          <div class="li" style="padding:0"><div class="ic">${i + 1}</div><div class="m"><b>${esc(o.customerName || '—')} ${srcBadge(o)}</b><span>${esc(o.id)} · ${aed(o.total)} · ${isCash(o) ? 'Cash' : 'Cheque'}${o.customerPhone ? ' · ' + esc(o.customerPhone) : ''}</span></div></div>
-          ${o.address ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 ${esc(o.address)}</div>` : '<div class="muted" style="font-size:12px;margin-top:6px;color:var(--amber)">⚠ No address on file</div>'}
-          <div class="muted" style="font-size:12px;margin-top:4px">${orderLinesText(o)}</div>
-          ${reviewNote(o)}
-          <div class="btn-row" style="margin-top:10px">
-            ${o.address ? `<button class="btn sm" data-act="navAddr" data-addr="${esc(o.address)}">Navigate</button>` : ''}
-            <button class="btn green sm" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="DELIVERED">Delivered ✓</button>
-          </div>
-        </div>`).join('') : emptyRow('No deliveries out right now.')}</div>`;
+      ${stops.length ? stops.map((o) => orderCard(o, 'route')).join('') : emptyRow('No deliveries out right now. Packed orders handed to you appear here.')}`;
   },
   collect() {
     if (!onlineLoaded) return loadingCard('Loading…');
     const delivered = onlineByStatus(['DELIVERED']);
-    const cashDone = codTotal(delivered);
+    const cashDone = delivered.filter(isCash).reduce((s, o) => s + collectedAmount(o), 0);
     const pending = codTotal(onlineByStatus(['OUT_FOR_DELIVERY']));
     return `
       <div class="mkpis">${kpi('Cash collected', aed(cashDone), 'green')}${kpi('Still to collect', aed(pending), pending ? 'amber' : 'green')}</div>
-      <div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">Cash owed on delivered cash-on-delivery orders (website &amp; WhatsApp). Hand this to Haris at end of day.</div></div>
+      <div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">Actual cash collected on delivered cash-on-delivery orders (website &amp; WhatsApp). Hand this to Haris at end of day.</div></div>
       <div class="sect">Delivered &amp; collected (${delivered.length})</div>
-      <div class="card">${delivered.length ? delivered.map((o) => row(isCash(o) ? '＄' : '▤', 'g', esc(o.customerName || '—'), esc(o.id) + ' · ' + (isCash(o) ? 'Cash' : 'Cheque'), aed(o.total))).join('') : emptyRow('No deliveries completed yet.')}</div>`;
+      ${delivered.length ? delivered.map((o) => orderCard(o, 'online')).join('') : emptyRow('No deliveries completed yet today.')}`;
   },
   eod() {
     const last = S.state.eod[0];
@@ -416,19 +399,10 @@ const views = {
     const q = onlineByStatus(['CONFIRMED', 'PACKED']);
     const waiting = onlineByStatus(['PLACED']).length;
     return `
-      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">📦 Orders to pack</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Confirmed orders from the website &amp; WhatsApp. Pack each one, then hand it to the driver.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">📦 Orders to pack</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Confirmed orders from the website &amp; WhatsApp. Pack each one, then hand it to the driver. Tap for details.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
       ${waiting ? `<div class="muted" style="font-size:12px;margin-bottom:8px">${waiting} order(s) still awaiting sales confirmation.</div>` : ''}
       <div class="sect">To pack (${q.length})</div>
-      <div id="online-list">${q.length ? q.map((o) => {
-      const next = o.status === 'CONFIRMED' ? 'PACKED' : 'OUT_FOR_DELIVERY';
-      const label = o.status === 'CONFIRMED' ? 'Mark packed' : 'Hand to driver';
-      return `<div class="card pad" style="margin-bottom:10px">
-          <div class="li" style="padding:0"><div class="m"><b>${esc(o.customerName || '—')} ${srcBadge(o)}</b><span>${esc(o.id)} · ${aed(o.total)} · ${(o.items || []).length} line(s)</span></div><div class="end">${statusTag(o.status)}</div></div>
-          <div class="muted" style="font-size:12px;margin-top:6px">${orderLinesText(o)}</div>
-          ${reviewNote(o)}
-          <button class="btn primary sm full" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="${next}" style="margin-top:10px">${label} →</button>
-        </div>`;
-    }).join('') : emptyRow('Nothing to pack right now.')}</div>`;
+      ${q.length ? q.map((o) => orderCard(o, 'dispatch')).join('') : emptyRow('Nothing to pack right now. Sales-confirmed orders appear here.')}`;
   },
   receive() {
     return `<div class="sect">Recent receipts</div>
@@ -755,8 +729,92 @@ function reviewNote(o) {
 function onlineByStatus(sts) { return onlineOrders.filter((o) => sts.indexOf(o.status) >= 0); }
 function orderLinesText(o) { return (o.items || []).map((l) => esc((l.qty || 1) + '× ' + (l.name || '') + (l.unmatched ? ' ⚠' : ''))).join(', '); }
 function isCash(o) { return (o.method || 'CASH_ON_DELIVERY') === 'CASH_ON_DELIVERY'; }
+function collectedAmount(o) { return o.collected && o.collected.amount != null ? Number(o.collected.amount) : Number(o.total) || 0; }
 function codTotal(list) { return list.filter(isCash).reduce((s, o) => s + (Number(o.total) || 0), 0); }
 function loadingCard(t) { return `<div class="card">${emptyRow(t)}</div>`; }
+function onlineById(id) { return onlineOrders.find((o) => o.id === id); }
+// Timestamps in UAE time (Asia/Dubai), 24h.
+function uaeTime(iso) { if (!iso) return ''; try { return new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Dubai', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }); } catch (e) { return ''; } }
+const STATUS_LABEL = { PLACED: 'Order placed', CONFIRMED: 'Confirmed', PACKED: 'Packed', OUT_FOR_DELIVERY: 'Out for delivery', DELIVERED: 'Delivered', CANCELLED: 'Cancelled', FAILED: 'Failed' };
+function statusLabel(s) { return STATUS_LABEL[s] || s; }
+function phoneDigits(p) { return String(p || '').replace(/[^0-9]/g, ''); }
+function waLink(p) { const d = phoneDigits(p); return d ? 'https://wa.me/' + d : ''; }
+function telLink(p) { const d = phoneDigits(p); return d ? 'tel:+' + d : ''; }
+// Actions the CURRENT role may take on an order — mirrors the server rules so no dead buttons.
+function nextActionsFor(o) {
+  const isAdmin = role === 'admin';
+  const can = (roles) => isAdmin || roles.indexOf(role) >= 0;
+  const s = o.status; const out = [];
+  if (o.needsReview) {
+    if (can(['salesman'])) out.push({ act: 'oResolve', label: 'Resolve review', cls: 'primary' });
+  } else {
+    if (s === 'PLACED' && can(['salesman'])) out.push({ status: 'CONFIRMED', label: 'Confirm order', cls: 'primary' });
+    if (s === 'CONFIRMED' && can(['warehouse'])) out.push({ status: 'PACKED', label: 'Mark packed', cls: 'primary' });
+    if (s === 'PACKED' && can(['warehouse', 'driver'])) out.push({ status: 'OUT_FOR_DELIVERY', label: 'Hand to driver', cls: 'primary' });
+    if (s === 'OUT_FOR_DELIVERY' && can(['driver'])) out.push({ act: 'deliverOrder', label: 'Delivered + cash', cls: 'green' });
+  }
+  const beforePacked = s === 'PLACED' || s === 'CONFIRMED';
+  if ((beforePacked && can(['salesman'])) || (isAdmin && s !== 'DELIVERED' && s !== 'CANCELLED')) out.push({ act: 'oCancel', label: 'Cancel', cls: 'danger' });
+  return out;
+}
+function actionButtons(o, size) {
+  const sz = size ? ' sm' : '';
+  return nextActionsFor(o).map((a) => a.status
+    ? `<button class="btn ${a.cls}${sz}" data-act="setOrderStatus" data-id="${esc(o.id)}" data-status="${a.status}">${a.label}</button>`
+    : `<button class="btn ${a.cls}${sz}" data-act="${a.act}" data-id="${esc(o.id)}">${a.label}</button>`).join('');
+}
+// One consistent order card, used across every role's queue. mode 'route' adds address + navigate.
+function orderCard(o, mode) {
+  const btns = actionButtons(o, true);
+  const nav = mode === 'route' && o.address ? `<button class="btn sm" data-act="navAddr" data-addr="${esc(o.address)}">Navigate</button>` : '';
+  const meta = mode === 'route' ? ` · ${isCash(o) ? 'Cash' : 'Cheque'}${o.customerPhone ? ' · ' + esc(o.customerPhone) : ''}` : '';
+  const addr = mode === 'route'
+    ? (o.address ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 ${esc(o.address)}</div>` : '<div class="muted" style="font-size:12px;margin-top:6px;color:var(--amber)">⚠ No address on file</div>')
+    : '';
+  return `<div class="card pad" style="margin-bottom:10px;cursor:pointer" data-act="openOrder" data-id="${esc(o.id)}">
+    <div class="li" style="padding:0"><div class="m"><b>${esc(o.customerName || '—')} ${srcBadge(o)}</b><span>${esc(o.id)} · ${aed(o.total)} · ${(o.items || []).length} line(s)${meta}</span></div><div class="end">${statusTag(o.status)}</div></div>
+    <div class="muted" style="font-size:12px;margin-top:6px">${orderLinesText(o)}</div>
+    ${addr}${reviewNote(o)}
+    ${(nav || btns) ? `<div class="btn-row" style="margin-top:10px">${nav}${btns}</div>` : ''}
+  </div>`;
+}
+function timelineHtml(o) {
+  const h = o.statusHistory || [];
+  if (!h.length) return '';
+  return `<div class="sect">Status timeline</div><div class="card">${h.map((e) => `<div class="li" style="padding:8px 13px"><div class="ic ${e.to === 'DELIVERED' ? 'g' : e.to === 'CANCELLED' ? 'r' : 'a'}">${e.note ? '✔' : '•'}</div><div class="m"><b>${e.note ? esc(e.note.charAt(0).toUpperCase() + e.note.slice(1)) : esc(statusLabel(e.to))}</b><span>${esc(e.by || '')}${e.role ? ' (' + esc(e.role) + ')' : ''}${e.override ? ' · override' : ''} · ${uaeTime(e.at)}</span></div></div>`).join('')}</div>`;
+}
+function orderDetailsHtml(o) {
+  const itemRows = (o.items || []).map((it) => {
+    const line = (Number(it.price) || 0) * (Number(it.qty) || 0);
+    return `<div class="li"><div class="m"><b>${esc(it.name || '')}${it.unmatched ? ' <span class="tag red">unmatched</span>' : ''}</b><span>${it.qty} × ${aed(it.price)}${it.unit ? ' · ' + esc(it.unit) : ''}</span></div><div class="end">${aed(line)}</div></div>`;
+  }).join('');
+  const phoneRow = o.customerPhone
+    ? `<div class="btn-row" style="margin-top:8px"><a class="btn sm" href="${waLink(o.customerPhone)}" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn sm" href="${telLink(o.customerPhone)}">📞 Call</a></div><div class="muted" style="font-size:12px;margin-top:4px">${esc(o.customerPhone)}</div>`
+    : '';
+  const review = o.needsReview
+    ? `<div class="card pad" style="background:var(--amber-bg);border-color:transparent;margin-top:12px"><b style="color:var(--amber);font-size:12.5px">⚠ Needs review before confirming</b><ul style="margin:6px 0 0 16px;font-size:12px;color:var(--amber)">${(o.reviewReasons || []).map((r) => '<li>' + esc(r) + '</li>').join('')}</ul></div>` : '';
+  const collected = o.collected
+    ? `<div class="card pad" style="margin-top:12px"><div class="li" style="padding:0"><div class="m"><b>Cash collected</b><span>${o.collected.method === 'CASH_ON_DELIVERY' ? 'Cash' : 'Cheque'}${o.collected.by ? ' · by ' + esc(o.collected.by) : ''} · ${uaeTime(o.collected.at)}</span></div><div class="end"><b>${aed(o.collected.amount)}</b></div></div></div>` : '';
+  const btns = actionButtons(o, false);
+  return `
+    <div style="margin-bottom:10px">${statusTag(o.status)} ${srcBadge(o)}${o.needsReview ? ' <span class="tag amber">review</span>' : ''}</div>
+    <div class="card pad">
+      <div><b>${esc(o.customerName || '—')}</b></div>
+      ${phoneRow}
+      <div class="muted" style="font-size:12px;margin-top:8px">📍 ${o.address ? esc(o.address) : '<span style="color:var(--amber)">No address on file</span>'}</div>
+    </div>
+    ${review}
+    <div class="sect">Items</div>
+    <div class="card">${itemRows}<div class="li"><div class="m"><b>Total</b></div><div class="end"><b>${aed(o.total)}</b></div></div></div>
+    ${collected}
+    ${timelineHtml(o)}
+    ${btns ? `<div class="btn-row" style="margin-top:14px">${btns}</div>` : ''}`;
+}
+async function postStatus(id, status, extra) {
+  const r = await fetch(API + '/api/portal/orders/status', { method: 'POST', headers: staffHeaders(), body: JSON.stringify(Object.assign({ id, status }, extra || {})) });
+  if (!r.ok) { let m = 'Update failed'; try { m = (await r.json()).message || m; } catch (e) { /* ignore */ } throw new Error(m); }
+  return r.json();
+}
 function simTokens(a, b) {
   const n = (s) => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
   const A = new Set(n(a)), B = new Set(n(b)); if (!A.size || !B.size) return 0;
@@ -1324,14 +1382,49 @@ const ACT = {
     catch (e) { toast(e.message); }
   },
   refreshOnline: () => { onlineLoaded = false; loadOnlineOrders(); toast('Refreshing…'); },
+  openOrder: (d) => { const o = onlineById(d.id); if (o) openSheet('Order ' + d.id, orderDetailsHtml(o)); },
   setOrderStatus: async (d) => {
     try {
-      const r = await fetch(API + '/api/portal/orders/status', { method: 'POST', headers: staffHeaders(), body: JSON.stringify({ id: d.id, status: d.status }) });
-      if (!r.ok) throw new Error('http ' + r.status);
-      const o = onlineOrders.find((x) => x.id === d.id); if (o) o.status = d.status;
-      buzz([15, 40, 20]); toast('Order ' + d.id + ' updated');
-      render();
-    } catch (e) { toast('Could not update — check you are signed in'); }
+      await postStatus(d.id, d.status);
+      closeSheet(); buzz([15, 40, 20]); toast('Order ' + d.id + ' → ' + statusLabel(d.status).toLowerCase());
+      await loadOnlineOrders();
+    } catch (e) { toast(e.message || 'Could not update'); }
+  },
+  oResolve: async (d) => {
+    try {
+      const r = await fetch(API + '/api/portal/orders/resolve-review', { method: 'POST', headers: staffHeaders(), body: JSON.stringify({ id: d.id }) });
+      if (!r.ok) { let m = 'Could not resolve'; try { m = (await r.json()).message || m; } catch (e) { /* ignore */ } throw new Error(m); }
+      closeSheet(); toast('Review resolved — order can now be confirmed'); await loadOnlineOrders();
+    } catch (e) { toast(e.message); }
+  },
+  oCancel: (d) => {
+    openSheet('Cancel order', `<div class="card pad" style="margin-bottom:12px"><b>Cancel ${esc(d.id)}?</b><div class="muted" style="font-size:12px;margin-top:4px">This can't be undone.</div></div><button class="btn danger full" data-act="confirmCancel" data-id="${esc(d.id)}">Yes, cancel this order</button>`);
+  },
+  confirmCancel: async (d) => {
+    try { await postStatus(d.id, 'CANCELLED'); closeSheet(); toast('Order ' + d.id + ' cancelled'); await loadOnlineOrders(); }
+    catch (e) { toast(e.message); }
+  },
+  deliverOrder: (d) => {
+    const o = onlineById(d.id); if (!o) return;
+    openSheet('Delivered — cash collected', `
+      <div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">${esc(o.customerName || '')} · ${esc(o.id)}</div><b style="font-size:16px">Order total ${aed(o.total)}</b></div>
+      <label class="fld"><span class="lab">Amount collected (AED)</span><input id="dc_amt" type="number" step="0.01" value="${o.total}" /></label>
+      <div class="fld"><span class="lab">Method</span><div id="dc_method" class="seg"><button class="${isCash(o) ? 'on' : ''}" data-m="CASH_ON_DELIVERY">Cash</button><button class="${!isCash(o) ? 'on' : ''}" data-m="CHEQUE_ON_DELIVERY">Cheque</button></div></div>
+      <button class="btn green full" data-act="confirmDeliver" data-id="${esc(o.id)}">Confirm delivered</button>`,
+    (sh) => { sh.querySelectorAll('#dc_method button').forEach((b) => b.addEventListener('click', () => { sh.querySelectorAll('#dc_method button').forEach((x) => x.classList.remove('on')); b.classList.add('on'); })); });
+  },
+  confirmDeliver: async (d) => {
+    const amt = Number(($('#dc_amt') || {}).value);
+    const mEl = $('#dc_method .on'); const method = mEl ? mEl.dataset.m : 'CASH_ON_DELIVERY';
+    try { await postStatus(d.id, 'DELIVERED', { cashAmount: isFinite(amt) ? amt : undefined, cashMethod: method }); closeSheet(); buzz([15, 40, 20]); toast('Delivered · ' + aed(isFinite(amt) ? amt : 0) + ' collected'); await loadOnlineOrders(); }
+    catch (e) { toast(e.message); }
+  },
+  navAll: (d) => {
+    const addrs = (d.addrs || '').split('~|~').filter(Boolean).map((a) => encodeURIComponent(a));
+    if (!addrs.length) return;
+    const dest = addrs[addrs.length - 1];
+    const wps = addrs.slice(0, -1).join('|');
+    window.open('https://www.google.com/maps/dir/?api=1&destination=' + dest + (wps ? '&waypoints=' + wps : '') + '&travelmode=driving', '_blank');
   },
   checkin: () => checkinForm(),
   saveVisit: () => { const gps = $('#v_gps'); S.checkInVisit($('#v_cust').value, $('#v_note').value.trim()); closeSheet(); render(); toast('Checked in'); },
