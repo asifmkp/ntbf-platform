@@ -148,7 +148,7 @@ export class CustomerStore {
     return this.data.orders.find((o) => o.source === source && String(o.externalRef) === String(externalRef));
   }
   /** Lightweight customer for an unknown phone — flagged guest so staff can reconcile later. */
-  createGuestCustomer(name: string, phone: string) {
+  createGuestCustomer(name: string | undefined, phone: string) {
     return this.createCustomer({ name: name || 'WhatsApp customer', phone, category: 'RETAIL', guest: true });
   }
   /** items are already resolved & server-priced by the service. Total is recomputed from those. */
