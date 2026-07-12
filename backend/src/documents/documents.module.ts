@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Injectable, Module, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Injectable, Module, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsString, IsBoolean } from 'class-validator';
 import { Public } from '../common/decorators/public.decorator';
@@ -11,6 +11,9 @@ class PostDocDto {
   @IsObject() fields: Record<string, string>;
   @IsOptional() @IsString() image?: string;
   @IsOptional() @IsBoolean() confirm?: boolean;
+}
+class ZohoTestDto {
+  @IsOptional() @IsString() vendor_id?: string;
 }
 
 function num(v: any): number {
@@ -123,6 +126,42 @@ export class DocumentsService {
     }
     return { mode: 'preview', target: m.target, payload: m.payload, note: 'No auto-post handler for this module.' };
   }
+
+  /** Gate-3 controlled write test: create ONE draft Purchase Order for an EXISTING vendor.
+   *  POs are draft by default (zero ledger impact). Never creates a vendor. Clearly marked TEST.
+   *  Hard-guarded by ZohoService.post (write-lock + org 928751913). */
+  async zohoTestDraftPO(vendorId?: string) {
+    if (!this.zoho.configured) return { mode: 'preview', note: 'Zoho not connected — nothing written.' };
+    if (!this.zoho.writesEnabled) return { mode: 'preview', note: 'ZOHO_WRITES_ENABLED is off — nothing written.' };
+    let vid = vendorId;
+    if (!vid) {
+      const vendors = await this.zoho.listContacts('vendor');
+      if (!vendors.length) {
+        throw new BadRequestException('No vendor exists in Zoho. Add one supplier in Zoho Books first — this test will not create a vendor.');
+      }
+      vid = vendors[0].contact_id;
+    }
+    const a = this.zoho.accounts;
+    const payload: Record<string, unknown> = {
+      vendor_id: vid,
+      reference_number: 'PLATFORM SMOKE TEST — safe to delete',
+      line_items: [{ account_id: a.inventory, name: 'TEST — delete me (platform Zoho write test)', rate: 1, quantity: 1 }],
+      notes: 'Draft Purchase Order created by the NTBF platform to verify Zoho writes. Draft only — no ledger impact. Delete after verifying.',
+    };
+    const res: any = await this.zoho.createPurchaseOrder(payload);
+    const po = res?.purchaseorder ?? res;
+    return {
+      mode: 'posted-draft',
+      document: 'Purchase Order (DRAFT)',
+      org: this.zoho.orgId,
+      purchaseorder_id: po?.purchaseorder_id,
+      po_number: po?.purchaseorder_number,
+      status: po?.status,
+      vendor: po?.vendor_name,
+      total: po?.total,
+      currency: po?.currency_code,
+    };
+  }
 }
 
 @ApiTags('Document capture → Zoho')
@@ -142,6 +181,11 @@ export class DocumentsController {
   @Public()
   @Post('post')
   post(@Body() dto: PostDocDto) { return this.svc.post(dto); }
+
+  // Gate-3 controlled test: create one DRAFT Purchase Order (existing vendor only).
+  @Public()
+  @Post('zoho-test-po')
+  zohoTestPO(@Body() dto: ZohoTestDto) { return this.svc.zohoTestDraftPO(dto.vendor_id); }
 }
 
 @Module({

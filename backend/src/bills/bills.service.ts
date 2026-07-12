@@ -98,6 +98,17 @@ export class BillsService {
 
   /** Record the bill in Zoho Books. Creates the vendor if missing and createVendor=true. */
   async record(bill: ExtractedBill, match: MatchResult, createVendor = true): Promise<any> {
+    // Write-lock gate (also hard-enforced in ZohoService.post): when writes are off,
+    // return a preview and touch nothing in Zoho — not even a vendor contact.
+    if (!this.zoho.configured || !this.zoho.writesEnabled) {
+      return {
+        mode: 'preview',
+        note: !this.zoho.configured
+          ? 'Zoho not connected — nothing was written.'
+          : 'Preview only — Zoho writing is locked (ZOHO_WRITES_ENABLED is off). Nothing was written.',
+        wouldCreate: 'Vendor Bill in Zoho org 928751913',
+      };
+    }
     let vendorId = match.supplier.matchedId;
     if (!vendorId && createVendor && bill.supplierName) {
       vendorId = await this.zoho.createVendor(bill.supplierName);
