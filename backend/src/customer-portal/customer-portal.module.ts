@@ -203,6 +203,23 @@ export class CustomerStore {
   allOrders() {
     return this.data.orders.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : '—', customerPhone: c ? c.phone : '' }; });
   }
+  /** Production cleanup: snapshot all orders (with customers) to an archive file in the data
+   *  dir, then empty the live orders. seq is preserved so new order IDs never reuse old ones.
+   *  No-op if there are no orders; never clobbers an existing archive file. */
+  archiveOrders(baseName: string) {
+    const count = this.data.orders.length;
+    if (!count) return { archived: 0, seq: this.data.seq, file: null };
+    const dir = path.dirname(this.file);
+    let file = path.join(dir, baseName);
+    let n = 2;
+    while (fs.existsSync(file)) { file = path.join(dir, baseName.replace(/\.json$/, '') + '-' + n + '.json'); n++; }
+    const snapshot = { archivedAt: new Date().toISOString(), seq: this.data.seq, count, orders: this.data.orders, customers: this.data.customers };
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(snapshot, null, 2));
+    this.data.orders = [];
+    this.save();
+    return { archived: count, seq: this.data.seq, file: path.basename(file) };
+  }
 }
 
 /** Validates a customer JWT (typ=customer) and attaches customerId to the request. */
@@ -316,6 +333,11 @@ export class CustomerPortalService {
     const updated = this.store.applyStatus(dto.id, to, entry, extra);
     return { id: (updated as any).id, status: (updated as any).status, override };
   }
+  archiveTestOrders(staff: { roles: string[] }) {
+    if (!hasRole(staff.roles || [], 'admin')) throw new ForbiddenException('Admins only');
+    const date = new Date().toISOString().slice(0, 10);
+    return this.store.archiveOrders(`orders-archive-test-${date}.json`);
+  }
   resolveReview(dto: ResolveDto, staff: { id: string; roles: string[]; name: string }) {
     const roles = staff.roles || [];
     if (!hasRole(roles, 'salesman') && !hasRole(roles, 'admin')) throw new ForbiddenException('Only sales or admin can resolve a review');
@@ -392,6 +414,10 @@ export class CustomerPortalController {
 
   @Public() @UseGuards(StaffAuthGuard) @Post('orders/resolve-review')
   resolveReview(@Body() dto: ResolveDto, @Req() req: any) { return this.svc.resolveReview(dto, req.staff); }
+
+  // One-time production cleanup (admin only): archive all test orders, empty the live queue.
+  @Public() @UseGuards(StaffAuthGuard) @Post('orders/archive')
+  archive(@Req() req: any) { return this.svc.archiveTestOrders(req.staff); }
 
   // WhatsApp bot ingest (shared-secret guarded): confirmed WA orders join the same queue.
   @Public() @UseGuards(IngestGuard) @Post('orders/ingest')
