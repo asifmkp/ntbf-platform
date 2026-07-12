@@ -1,10 +1,13 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 interface TokenCache {
   accessToken: string;
   expiresAt: number;
 }
+
+/** The ONLY Zoho organization this platform is ever allowed to write to (NTBFLLC). */
+export const ALLOWED_ZOHO_ORG_ID = '928751913';
 
 /**
  * Thin Zoho Books client (UAE data center by default).
@@ -27,14 +30,14 @@ export class ZohoService {
     return this.config.get<string>('ZOHO_ORG_ID') ?? '';
   }
 
-  /** Confirmed chart-of-account IDs (defaults are NTBFLLC's real Zoho accounts). */
+  /** Confirmed chart-of-account IDs for org 928751913 (env-overridable). */
   get accounts() {
     return {
-      sales: this.config.get<string>('ZOHO_SALES_ACCOUNT') ?? '2532000000000394',
-      cogs: this.config.get<string>('ZOHO_COGS_ACCOUNT') ?? '2532000000000487',
-      inventory: this.config.get<string>('ZOHO_INVENTORY_ACCOUNT') ?? '2532000000000490',
+      sales: this.config.get<string>('ZOHO_SALES_ACCOUNT') ?? '416943000000000388', // Sales (income)
+      cogs: this.config.get<string>('ZOHO_COGS_ACCOUNT') ?? '416943000000034003', // Cost of Goods Sold
+      inventory: this.config.get<string>('ZOHO_INVENTORY_ACCOUNT') ?? '416943000000034001', // Inventory Asset
       expense: this.config.get<string>('ZOHO_EXPENSE_ACCOUNT') ?? '',
-      cash: this.config.get<string>('ZOHO_CASH_ACCOUNT') ?? '',
+      cash: this.config.get<string>('ZOHO_CASH_ACCOUNT') ?? '416943000000000361', // Petty Cash
     };
   }
 
@@ -127,8 +130,16 @@ export class ZohoService {
     return (await this.listContacts(type)).length;
   }
 
-  /** POST a Zoho Books endpoint (e.g. 'bills', 'contacts'). */
+  /** POST a Zoho Books endpoint (e.g. 'bills', 'contacts').
+   *  Choke point for ALL writes: enforces the write-lock AND the org allow-list here,
+   *  so no code path can write to Zoho — or to any org other than 928751913 — by mistake. */
   async post<T = any>(path: string, payload: Record<string, unknown>): Promise<T> {
+    if (!this.writesEnabled) {
+      throw new ServiceUnavailableException('Zoho writes are disabled (ZOHO_WRITES_ENABLED is off). Nothing was written.');
+    }
+    if (this.orgId !== ALLOWED_ZOHO_ORG_ID) {
+      throw new ForbiddenException(`Zoho write blocked: configured org '${this.orgId || '(unset)'}' is not the allowed org ${ALLOWED_ZOHO_ORG_ID}.`);
+    }
     const token = await this.getAccessToken();
     const params = new URLSearchParams({ organization_id: this.orgId });
     const res = await fetch(`${this.apiHost}/books/v3/${path}?${params.toString()}`, {
