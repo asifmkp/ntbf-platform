@@ -1,65 +1,57 @@
-# NTBF Platform — Project Context (CLAUDE.md)
+# NTBF Platform — Project Context (CLAUDE.md) — updated 12 Jul 2026
 
-Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, Ajman, UAE) — a wholesale FMCG/beverage distributor. Customer ordering app + role-locked staff field app on one backend, with Zoho Books as the accounting system of record and Claude for the AI copilot and bill OCR.
+Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, Ajman, UAE) — wholesale FMCG/beverage distributor. Customer ordering app + role-locked staff app on one backend, a **live Claude-powered WhatsApp bot**, Zoho Books as the accounting system of record, and Claude for AI copilot + bill OCR.
 
 ## Repo & hosting
-- **Local folder:** `C:\Users\Lenovo\foodstuffs-app`
-- **GitHub:** `asifmkp/ntbf-platform` → `main` (auto-deploys)
-- **Host:** Render (Docker, Starter, always-on, 1 GB persistent disk at `/var/data`)
-- **Live:** https://app.ntbfllc.com  (customer: `/order/`, staff: `/mobile-app/`)
+- **Local folder:** `C:\Users\Lenovo\foodstuffs-app` · **GitHub:** `asifmkp/ntbf-platform` → `main` (auto-deploys)
+- **Host:** Render (Docker, Starter, persistent disk `/var/data`) · **Live:** https://app.ntbfllc.com (customer `/order/`, staff `/mobile-app/`)
+- **WhatsApp bot host:** Supabase project `wvsgeumafnqelspcqivo` — Edge Function `whatsapp-webhook` (deployed via MCP by chat-Claude; local folder `Desktop\ntbf-whatsapp` holds an OLD version — the deployed code is the truth).
 
 ## Stack
-- **Backend:** NestJS + TypeScript. Serves the API (`/api/*`) and the frontends from one Docker container.
-- **Data (important):** runs on **file-backed JSON stores** at `STATE_DIR/data/*.json` on the Render disk (staff-auth, appstate, customer-portal, bills). A Prisma/Postgres schema exists but is **UNUSED** — `DATABASE_URL` points at localhost and Prisma is not wired into the running flow. The `prisma:warn ... Database unavailable — running without it` and `libssl.so.1.1` lines in the Render logs are **expected noise, not bugs.**
-- **Frontend:** vanilla HTML/CSS/JS (no framework), installable PWA / Android TWA. Customer app `apps/order/`, staff app `apps/mobile-app/`. Server-side prices in `backend/src/catalog.data.ts`.
-- **AI:** Anthropic API. Model `claude-sonnet-4-6`.
+- **Backend:** NestJS + TypeScript, file-backed JSON stores at `STATE_DIR/data/*.json` (Prisma/Postgres schema exists but UNUSED — `Database unavailable` + `libssl` log lines are expected noise).
+- **Frontend:** vanilla JS PWA/TWA. Server-side prices in `backend/src/catalog.data.ts`.
+- **AI:** Anthropic API, model `claude-sonnet-4-6`.
+
+## WhatsApp bot (LIVE — built 11 Jul 2026)
+- Number **+971 58 980 0236** via **360dialog** (Cloud API; send via `waba-v2.360dialog.io/messages`, header `D360-API-KEY`). Meta-direct attempt abandoned.
+- Features live: Claude replies 24/7 in customer's language; live catalog search (fetches the app's public catalog, 6h refresh, never invents prices); per-customer conversation memory (12 msgs / 24h, table `wa_messages`); webhook-retry dedupe; collects delivery address; `save_order` tool → `wa_orders` → **auto-push to platform ingest** → returns platform `ORD-####`.
+- Supabase tables: `wa_messages`, `wa_orders` (+`address`, `platform_order_id`, `push_status`), `opt_ins`, `bot_settings` (holds review/cron tokens, `reminders_enabled=false`).
+- **Reminder engine:** pg_cron daily 04:00 UTC (8AM UAE) → dormant until Meta template approval + opt-ins, then flip `reminders_enabled=true`.
+- **Team dashboard:** standalone file `NTBF-WhatsApp-Dashboard.html` (Supabase blocks HTML on its domain — JSON API + local HTML viewer). Staff app is the real order queue.
+- Bot secrets in Supabase: `D360_API_KEY`, `ANTHROPIC_API_KEY`, `PLATFORM_INGEST_TOKEN`.
+
+## Unified order pipeline (LIVE)
+- `POST /api/portal/orders/ingest` — auth header `x-ingest-token` = Render env `WHATSAPP_INGEST_TOKEN` (same value as bot's `PLATFORM_INGEST_TOKEN`). Idempotent on `source+external_ref`; server-side re-pricing (brand/size-safe matcher); unknown phones → guest + `needsReview`; orders enter PLACED with source badge. **This contract is frozen — the bot depends on it.**
+- **Role-enforced transitions** (server-side 403s + hidden buttons): PLACED→CONFIRMED (Tahir/admin, blocked while needsReview until resolve-review), CONFIRMED→PACKED (Haris/admin), →OUT_FOR_DELIVERY (Haris/Musthafa/admin), →DELIVERED + real collected-cash amount (Musthafa/admin). Admin overrides flagged. Full `statusHistory[]` audit timeline on every order; order-details sheet everywhere; driver route = ordered stop list with Navigate links (no pin map — informal addresses).
+- All pre-production orders archived (`orders-archive-test-2026-07-12.json`); wa_orders test rows marked `[TEST]`/done.
 
 ## Zoho Books (system of record) — CONFIRMED
-- **Org ID: `928751913`** — the platform's ONLY allowed write target (NTBFLLC). *An earlier note using `170000198188` was wrong.* ⚠ There is a SECOND org on the account — `929441168` "ntbfllc" (a deleted Zoho Expense trial). Writes are hard-locked to `928751913` in code (see write gating), so the second org can never be written to.
-- **Plan: Standard.** Inventory app is joined; treat items as amount + description.
-- **Account IDs (live, org 928751913 — these are the code defaults, env-overridable):**
-  - Sales (income): `416943000000000388`
-  - Cost of Goods Sold: `416943000000034003`
-  - Inventory Asset: `416943000000034001`
-  - Accounts Payable: `416943000000000373` · Petty Cash: `416943000000000361`
-  - Zero Rate tax: `416943000000093180`
-  - *(The stale `2532…` defaults were removed 2026-07-12.)*
-- **Write gating (enforced 2026-07-12):** EVERY Zoho write goes through `ZohoService.post()`, which hard-enforces two invariants, fail-closed: `ZOHO_WRITES_ENABLED === 'true'` **AND** `orgId === 928751913`. No caller can bypass it. Verified live: with writes off, write paths return `{mode:'preview', note:'…writes off'}` (nothing written). **Policy: drafts only.** The controlled write test is `POST /api/documents/zoho-test-po` → ONE draft Purchase Order for an EXISTING vendor (never creates a vendor; POs are draft by default = zero ledger impact). Caveat: Zoho *bills* post as "open" via the API (not drafts).
-- **⚠ PLAN CONSTRAINT (Gate-3 write test PARKED, 2026-07-12):** Purchase Orders require the **Professional** plan; org 928751913 is on **Standard**, so `zoho-test-po` fails with a Zoho plan error and no draft is created. On Standard there is currently **no API path that creates a *draft* document** (bills post "open"; POs unavailable). The one live write test is deferred until a Professional upgrade — then re-run `zoho-test-po`. `ZOHO_WRITES_ENABLED` is back to **false** meanwhile. The gating/guard code (write-lock + org lock) is complete and verified regardless.
-- Zoho reachable via MCP / API. Item list: `ZohoService.listItems()` (`items?per_page=200`; paginate past 200).
+- **Org `928751913`** — the only ACTIVE org (`.com` DC). ⚠️ A **second deleted org `929441168`** exists on the account → **hard org guard required on all writes.** Old note `170000198188` was wrong — never use.
+- **Plan: Standard** (inventory OFF, 3 users, **no Purchase Orders**). **Upgrade to Professional required** — for stock tracking, 5 users, AND POs (the Gate-3 draft-PO test is blocked until upgraded).
+- Accounts: Sales `416943000000000388` · COGS `416943000000034003` · Zero Rate tax `416943000000093180`. (Code's old `2532…` defaults were stale/wrong — fixed in Gate 2; also Inventory Asset `416943000000034001`, Petty Cash `416943000000000361`.)
+- **Gate 2 COMPLETE (12 Jul):** hard org guard + write-lock enforced at the single `ZohoService.post()` choke point (fail-closed), `bills/record` properly gated, correct `416943…` account IDs wired. **Verified on the deployed code (commits `259f9c8`+`b1fb34a`):** write-lock off → `{mode:preview, "…writes off. Nothing was written."}`; org guard → **403** for any org ≠ `928751913` (tested against the real second org `929441168`). Production also blocks anonymous writes with 401.
+- **Gate 3 (one draft-PO live test) PARKED** — POs need the Professional plan. Keep `ZOHO_WRITES_ENABLED=false` until the upgrade, then re-run the Gate-3 PowerShell test, verify + delete the draft PO in Zoho. First vendor already exists in Zoho.
+
+## Migration project (in progress)
+- Business **restarted fresh 1 Jul 2026**; old software still in parallel. Source: all-transactions CSV 1–12 Jul = **428 vouchers** (182 Sales w/ item lines, 145 Receipts, 43 Payments, 30 Purchases, 15 Contra, 13 Credit Notes; VAT@5% exclusive; van-cash ledgers "Musthafa-Cash In Hand", "Vansale UAQ-Haris").
+- Plan: readiness audit → mapping sign-off → pilot (July 1 only) → full run → item pricing from latest purchase/sale rates. Fresh numbering = Zoho defaults from 1. Opening balances arrive later and must precede receipts. **Accountant must confirm Zoho files July VAT (single source of record).**
+- Pricing status: 1,407 items, 247 priced, 1,160 unpriced (`NTBF-Pricing-Worklist.xlsx` with Haris; chat-Claude can bulk-write via item IDs).
 
 ## Auth model
-- Staff and customer JWTs (staff token stored in localStorage as `ntbf_stafftoken`).
-- `PUBLIC_API_TOKEN` gates public/AI endpoints.
-- **`ApiGateGuard` accepts EITHER** a valid `x-api-key` (the `PUBLIC_API_TOKEN`) **OR** a valid staff Bearer JWT (verified against `JWT_SECRET`, `typ === 'staff'`). Anonymous requests are still rejected.
+- Staff/customer JWTs; `ApiGateGuard` accepts `x-api-key` (PUBLIC_API_TOKEN) OR staff Bearer JWT. Admin password must be **rotated again** (the 12-Jul replacement was also exposed in chat — use a strong 10+ char password). Self-service: Settings → Change password; admin resets via Manage team. Rule: passwords are never typed into chats; scripts prompt with masked input.
 
-## Bill capture pipeline (working)
-- Frontend downscales the photo client-side, POSTs base64 to `POST /api/bills/extract` with the staff Bearer token.
-- `AnthropicService.extractBill` → Claude vision with a forced tool call (`record_bill`, schema `BILL_TOOL` in `anthropic.service.ts`). Returns header fields + a `lineItems` array (description, quantity, unitPrice, amount, taxPercent).
-- `POST /api/bills/match` (`BillsService.match`) → Jaccard/token-overlap match against Zoho items.
-- `POST /api/bills/record` (`BillsService.record`) → builds the Zoho bills payload. **Now gated by `ZOHO_WRITES_ENABLED`** — returns a preview (writes nothing, not even a vendor) when off. *Before 2026-07-12 this path was NOT actually gated; the earlier claim here was aspirational. It is now enforced both here and at the `ZohoService.post()` choke point.*
-- Body-parser limit raised to **15 mb** in `main.ts` for image uploads.
-- Diagnostics: `GET /api/agent/status?ping=1` → live key+model test `{ok, model}` (no key leak). `GET /api/bills/status` → gated by `PUBLIC_API_TOKEN` (a plain browser hit returns 401 — expected).
-
-## Env vars (set on Render — never in code)
-`ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `JWT_SECRET`, `PUBLIC_API_TOKEN`, `STATE_DIR`, `PORT`, `CHEQUE_BOUNCE_CHARGE`, `ZOHO_ACCOUNTS_HOST`, `ZOHO_API_HOST`, `ZOHO_WRITES_ENABLED`, plus Zoho OAuth creds.
-
-## Current state / known gaps
-- **`ZOHO_WRITES_ENABLED = false`** — test mode; nothing posts to real Zoho books. Keep as-is until explicitly enabled.
-- Catalog ~**1,678 SKUs, only ~395 priced** → ~1,200 at AED 0.00 (pricing deferred — data task for Asif/Haris).
-- Bill line-item editable table = "Stage 1" built; Stage 2 (per-line Zoho matching + purchaser confirmation + remembered mappings in Supabase) is planned, not built.
-- WhatsApp automation (Build B: Node/Express + 360dialog + VPS) is separate and not yet deployed.
+## Env vars (Render — never in code)
+`ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `JWT_SECRET`, `PUBLIC_API_TOKEN`, `STATE_DIR`, `PORT`, `CHEQUE_BOUNCE_CHARGE`, `WHATSAPP_INGEST_TOKEN`, `ZOHO_ACCOUNTS_HOST`, `ZOHO_API_HOST`, `ZOHO_WRITES_ENABLED`, `ZOHO_ORG_ID`, Zoho OAuth creds (+ account-ID vars after Gate 2).
 
 ## Team
-Tahir (sales/invoicing) · Haris (purchasing/warehouse) · Musthafa (delivery/cash collection).
+Tahir (sales/invoicing) · Haris (purchasing/warehouse) · Musthafa (delivery/cash — van sales heavy).
 
-## Dev environment
-- Claude Code installed natively on Windows. `git` 2.55 present; **no `gh` CLI** (use `git clone https://github.com/asifmkp/ntbf-platform.git`).
-- **`node_modules` is NOT installed locally** → the backend can't be type-checked locally → after any push, confirm the **Render build went green** before trusting a deploy.
+## Chat workstreams (project)
+"Zoho Migration" · "WhatsApp Bot" · "Platform & Claude Code" · "Daily Ops".
 
 ## Hard rules
-- **NEVER commit `.env` or any secret.** Keys live in Render env vars only.
-- **Ask before** deploys, DB/schema changes, Zoho writes, or key changes. **Show changes in plain English before committing; push only when Asif says so.**
-- Keep `ZOHO_WRITES_ENABLED` in test mode unless explicitly told to enable it.
-- Zoho org is `928751913` (Standard, inventory OFF) — never write to any other org.
-- Prefer small, staged changes with a test step; explain trade-offs simply.
+- **NEVER commit `.env` or any secret.** Treat anything typed into a chat as burned.
+- **Ask before** deploys, schema changes, Zoho writes, key changes. Plain-English diffs; push only on Asif's go. `nest build` before every push (no local node_modules → trust Render green).
+- **Zoho org `928751913` only** — hard-guard every write; drafts only; `ZOHO_WRITES_ENABLED` stays false until explicitly enabled.
+- The WhatsApp ingest contract is frozen; never change it without updating the Supabase bot in the same move.
+- Small staged changes, test step each, trade-offs explained simply.
