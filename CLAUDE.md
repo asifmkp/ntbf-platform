@@ -23,7 +23,7 @@ Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, 
 ## Unified order pipeline (LIVE)
 - `POST /api/portal/orders/ingest` — auth header `x-ingest-token` = Render env `WHATSAPP_INGEST_TOKEN` (same value as bot's `PLATFORM_INGEST_TOKEN`). Idempotent on `source+external_ref`; server-side re-pricing (brand/size-safe matcher); unknown phones → guest + `needsReview`; orders enter PLACED with source badge. **This contract is frozen — the bot depends on it.**
 - **Role-enforced transitions** (server-side 403s + hidden buttons): PLACED→CONFIRMED (Tahir/admin, blocked while needsReview until resolve-review), CONFIRMED→PACKED (Haris/admin), →OUT_FOR_DELIVERY (Haris/Musthafa/admin), →DELIVERED + real collected-cash amount (Musthafa/admin). Admin overrides flagged. Full `statusHistory[]` audit timeline on every order; order-details sheet everywhere; driver route = ordered stop list with Navigate links (no pin map — informal addresses).
-- All pre-production orders archived (`orders-archive-test-2026-07-12.json`); wa_orders test rows marked `[TEST]`/done.
+- **Test-data cleanup DONE & verified (12 Jul):** 17 pre-production orders archived to `orders-archive-test-2026-07-12.json` and the live queue emptied (count 0); `seq` preserved at 1022 → next real order is `ORD-1023` (test IDs never reused). wa_orders test rows marked `[TEST]`/done.
 
 ## Zoho Books (system of record) — CONFIRMED
 - **Org `928751913`** — the only ACTIVE org (`.com` DC). ⚠️ A **second deleted org `929441168`** exists on the account → **hard org guard required on all writes.** Old note `170000198188` was wrong — never use.
