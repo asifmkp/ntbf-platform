@@ -141,11 +141,12 @@ export class DocumentsService {
       }
       vid = vendors[0].contact_id;
     }
-    const a = this.zoho.accounts;
+    // On the Professional plan stock is tracked, so a PO line that hits a stock account must
+    // reference a real item_id (else Zoho code 13030). Use a known catalog item, qty 1, rate 1.
     const payload: Record<string, unknown> = {
       vendor_id: vid,
       reference_number: 'PLATFORM SMOKE TEST — safe to delete',
-      line_items: [{ account_id: a.inventory, name: 'TEST — delete me (platform Zoho write test)', rate: 1, quantity: 1 }],
+      line_items: [{ item_id: '416943000000118002', description: 'TEST — delete me (platform Zoho write test)', rate: 1, quantity: 1 }],
       notes: 'Draft Purchase Order created by the NTBF platform to verify Zoho writes. Draft only — no ledger impact. Delete after verifying.',
     };
     const res: any = await this.zoho.createPurchaseOrder(payload);
