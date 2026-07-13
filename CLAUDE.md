@@ -1,4 +1,4 @@
-# NTBF Platform — Project Context (CLAUDE.md) — updated 12 Jul 2026
+# NTBF Platform — Project Context (CLAUDE.md) — updated 14 Jul 2026
 
 Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, Ajman, UAE) — wholesale FMCG/beverage distributor. Customer ordering app + role-locked staff app on one backend, a **live Claude-powered WhatsApp bot**, Zoho Books as the accounting system of record, and Claude for AI copilot + bill OCR.
 
@@ -12,7 +12,7 @@ Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, 
 - **Frontend:** vanilla JS PWA/TWA. Server-side prices in `backend/src/catalog.data.ts`.
 - **AI:** Anthropic API, model `claude-sonnet-4-6`.
 
-## WhatsApp bot (LIVE — built 11 Jul 2026)
+## WhatsApp bot (LIVE — built 11 Jul 2026, **v16** — webhook loop guard deployed 13 Jul 2026)
 - Number **+971 58 980 0236** via **360dialog** (Cloud API; send via `waba-v2.360dialog.io/messages`, header `D360-API-KEY`). Meta-direct attempt abandoned.
 - Features live: Claude replies 24/7 in customer's language; live catalog search (fetches the app's public catalog, 6h refresh, never invents prices); per-customer conversation memory (12 msgs / 24h, table `wa_messages`); webhook-retry dedupe; collects delivery address; `save_order` tool → `wa_orders` → **auto-push to platform ingest** → returns platform `ORD-####`.
 - Supabase tables: `wa_messages`, `wa_orders` (+`address`, `platform_order_id`, `push_status`), `opt_ins`, `bot_settings` (holds review/cron tokens, `reminders_enabled=false`).
@@ -25,6 +25,12 @@ Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, 
 - **Role-enforced transitions** (server-side 403s + hidden buttons): PLACED→CONFIRMED (Tahir/admin, blocked while needsReview until resolve-review), CONFIRMED→PACKED (Haris/admin), →OUT_FOR_DELIVERY (Haris/Musthafa/admin), →DELIVERED + real collected-cash amount (Musthafa/admin). Admin overrides flagged. Full `statusHistory[]` audit timeline on every order; order-details sheet everywhere; driver route = ordered stop list with Navigate links (no pin map — informal addresses).
 - **Test-data cleanup DONE & verified (12 Jul):** 17 pre-production orders archived to `orders-archive-test-2026-07-12.json` and the live queue emptied (count 0); `seq` preserved at 1022 → next real order is `ORD-1023` (test IDs never reused). wa_orders test rows marked `[TEST]`/done.
 
+## Rashid module — Employee expenses & advances (Stage 1 — in PR, NOT deployed)
+- New feature on **System A** (file-backed JSON + staff JWT): `backend/src/rashid/rashid.module.ts` + additions in `apps/mobile-app/app.js`. New role **`staff`** (general employee; first user Rashid, distinct from `driver`), created via existing Manage Team. **Does not touch the `/api/portal/orders/ingest` contract.**
+- Stores `data/expenses.json` + `data/advances.json`; bill photos on the persistent disk at `/var/data/data/expense-bills/<EXP-id>.<ext>` (fetched via `GET /api/expenses/:id/photo`). Endpoints under `/api/expenses/*` and `/api/advances/*`, `StaffAuthGuard` + inline admin gate.
+- Expenses: date/amount/category(8 fixed)/paidFrom(advance|own_money|company_card)/remark/photo → SUBMITTED→APPROVED|REJECTED with `statusHistory[]`; **auto-approve ≤ AED 50** (admin-editable in `expenses.json` settings). Bill OCR reuses the existing `POST /api/bills/extract` (Claude) to prefill. Balance = outstanding advances − approved advance-paid expenses; approved `own_money` = reimbursement owed; negative balances shown. Verified by a 24/24 end-to-end test + photo disk round-trip.
+- **Roadmap (each stage is PLAN-FIRST → written approval → code; "do all" never skips a gate):** Stage 2 = task tracker + vehicle log · Stage 3 = document-expiry locker (60/30/7-day) · Stage 4 (separate explicit go) = approved expenses → Zoho **DRAFT** expenses (org 928751913, `ZOHO_WRITES_ENABLED` respected).
+
 ## Zoho Books (system of record) — CONFIRMED
 - **Org `928751913`** — the only ACTIVE org (`.com` DC). ⚠️ A **second deleted org `929441168`** exists on the account → **hard org guard required on all writes.** Old note `170000198188` was wrong — never use.
 - **Plan: Professional** (upgraded 13 Jul — stock tracking ON, POs enabled). ⚠️ Stock tracking means any PO/bill line that hits a stock account must reference a real `item_id` (else Zoho code **13030** "Item field under stock account cannot be empty").
@@ -32,7 +38,7 @@ Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, 
 - **Gate 2 COMPLETE (12 Jul):** hard org guard + write-lock enforced at the single `ZohoService.post()` choke point (fail-closed), `bills/record` properly gated, correct `416943…` account IDs wired. **Verified on the deployed code (commits `259f9c8`+`b1fb34a`):** write-lock off → `{mode:preview, "…writes off. Nothing was written."}`; org guard → **403** for any org ≠ `928751913` (tested against the real second org `929441168`). Production also blocks anonymous writes with 401.
 - **Gate 3 COMPLETE (13 Jul):** the platform wrote a real **DRAFT** Purchase Order (`PO-00001`, vendor Al Maha General Trading LLC, AED 1, line `item_id 416943000000118002`) to org 928751913 via `POST /api/documents/zoho-test-po` — verified via MCP, then **deleted** (draft = no ledger impact). The full write path (org guard + write-lock + drafts-only) is proven end-to-end. Root-cause chain of the long fight: stale `ZOHO_ORG_ID` (`170000198188`) → `ZOHO_REFRESH_TOKEN` minted from the **wrong identity/world** (deleted trial `929441168`) → fixed with a clean `.com` Self Client token (⚠️ all three creds — client_id, secret, refresh_token — must be a **matched set** in Render, or you get 503 "Could not obtain Zoho access token") → then Zoho `13030` fixed by referencing a real `item_id` (Professional stock tracking). `ZOHO_WRITES_ENABLED` set back to **false**.
 
-## Open security to-dos (TOP PRIORITY)
+## Open security to-dos (TOP PRIORITY — all still OPEN as of 14 Jul 2026)
 - **Rotate Zoho OAuth creds — OVERDUE.** The client secret + refresh token were pasted into chat during Gate-3 troubleshooting → **burned**. Regenerate a fresh `.com` Self Client and enter the new client_id / client_secret / refresh_token **straight into Render** (never into chat or a screenshot); all three must be the same matched set.
 - **Rotate the admin password — OVERDUE.** Burned + weak (see Auth model). Change via Settings → Change password (strong 10+ chars).
 - **Wipe local PowerShell history** — `Remove-Item (Get-PSReadlineOption).HistorySavePath` (leaked values were typed there during the fix).
