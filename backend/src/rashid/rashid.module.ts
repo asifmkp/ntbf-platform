@@ -18,7 +18,7 @@ import { IsIn, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-valid
 import * as fs from 'fs';
 import * as path from 'path';
 import { Public } from '../common/decorators/public.decorator';
-import { StaffAuthGuard, StaffStore } from '../staff-auth/staff-auth.module';
+import { StaffAuthGuard, StaffAuthModule, StaffStore } from '../staff-auth/staff-auth.module';
 
 // Fixed enums (Stage 1). Admin-editable category lists + category→ledger mapping
 // arrive in Stage 4, so these stay hard-coded for now.
@@ -359,6 +359,7 @@ export class RashidController {
 
 @Module({
   imports: [
+    StaffAuthModule, // shares the single StaffStore instance (so newly-created staff are visible)
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -369,6 +370,6 @@ export class RashidController {
     }),
   ],
   controllers: [RashidController],
-  providers: [ExpenseStore, AdvanceStore, RashidService, StaffStore, StaffAuthGuard],
+  providers: [ExpenseStore, AdvanceStore, RashidService, StaffAuthGuard],
 })
 export class RashidModule {}

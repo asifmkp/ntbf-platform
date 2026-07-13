@@ -171,5 +171,6 @@ export class StaffAuthController {
   ],
   controllers: [StaffAuthController],
   providers: [StaffStore, StaffAuthService, StaffAuthGuard],
+  exports: [StaffStore],
 })
 export class StaffAuthModule {}
