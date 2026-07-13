@@ -138,6 +138,7 @@ function picker() {
     ['finance', '＄', 'var(--green)', 'var(--green-bg)', 'Finance', 'Collections, cheques, approvals'],
     ['admin', '★', 'var(--accent)', 'var(--accent-bg)', 'Management', 'Approvals, oversight'],
     ['service', '🎧', 'var(--amber)', 'var(--amber-bg)', 'Customer Service', 'Support tickets & queries'],
+    ['staff', '🧾', 'var(--green)', 'var(--green-bg)', 'Staff', 'Tasks, expenses, advances'],
     ['customer', '🛒', 'var(--purple)', 'var(--purple-bg)', 'Customer', 'Shop, orders, support'],
   ];
   const allow = allowedRoles();
@@ -1157,6 +1158,14 @@ function settingsForm() {
         <button class="btn" data-act="changePwForm">Change password</button>
         ${isAdmin ? '<button class="btn" data-act="teamForm">Manage team</button>' : ''}
       </div>
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="myExpensesSheet">My expenses</button>
+        <button class="btn" data-act="myAdvancesSheet">My advances</button>
+      </div>
+      ${isAdmin ? `<div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="admExpenses">Expense approvals</button>
+        <button class="btn" data-act="admAdvances">Advances (admin)</button>
+      </div>` : ''}
       <button class="btn danger full" data-act="staffLogout" style="margin-top:9px">Sign out</button>
     </div>` : ''}
     <div class="sect" style="margin-top:4px">Advanced</div>
@@ -1619,6 +1628,185 @@ document.addEventListener('click', (e) => {
   const fn = ACT[t.dataset.act]; if (fn) fn(t.dataset);
 });
 $('#scrim').addEventListener('click', closeSheet);
+
+// ===========================================================================
+// Rashid module (Stage 1) — employee Tasks (placeholder) · Expenses · Advances.
+// The `staff` role gets these as bottom-nav tabs; every other role reaches the
+// same expense/advance tools from the ⚙ Settings sheet. Talks to the file-backed
+// backend at /api/expenses/* and /api/advances/* using the staff JWT (staffApi).
+// ===========================================================================
+ROLES.staff = { name: 'Staff', sub: 'Employee', pic: 'S', status: 'On duty',
+  tabs: [{ id: 'mytasks', label: 'Tasks', i: '🗒️' }, { id: 'myexp', label: 'Expenses', i: '🧾' }, { id: 'myadv', label: 'Advances', i: '💵' }] };
+if (ALL_ROLES.indexOf('staff') < 0) ALL_ROLES.push('staff');
+if (!ROLE_OPTS.find((o) => o[0] === 'staff')) ROLE_OPTS.push(['staff', 'General staff']);
+
+const EXP_CATS = ['Fuel', 'Salik', 'Parking', 'Vehicle Maintenance', 'Government Fees', 'Office', 'Hospitality', 'Other'];
+const PAID_FROM_OPTS = [['advance', 'From advance'], ['own_money', 'Own money'], ['company_card', 'Company card']];
+function paidFromLabel(v) { return ({ advance: 'Advance', own_money: 'Own money', company_card: 'Company card' })[v] || v; }
+function expStatusTag(s) { const m = { SUBMITTED: 'amber', APPROVED: 'green', REJECTED: 'red' }; return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase()}</span>`; }
+function advStatusTag(s) { const m = { ISSUED: 'amber', ACKNOWLEDGED: 'accent', SETTLED: 'green' }; return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase()}</span>`; }
+let expDraft = {};
+let myExpData = null;   // my expenses cache (null = not loaded yet)
+let myAdvData = null;   // my advances + balance cache
+
+async function loadMyExp() { try { myExpData = await staffApi('/api/expenses/mine', 'GET'); } catch (e) { myExpData = []; toast(e.message); } render(); }
+async function loadMyAdv() { try { myAdvData = await staffApi('/api/advances/mine', 'GET'); } catch (e) { myAdvData = { advances: [], balance: {} }; toast(e.message); } render(); }
+
+function expensesBody(list, showAdd) {
+  const rows = (list || []).map((x) => `<div class="li" data-act="expOpen" data-id="${x.id}">
+    <div class="ic ${x.status === 'APPROVED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a'}">🧾</div>
+    <div class="m"><b>${esc(x.category)} · ${aed(x.amount)}</b><span>${esc(x.date)} · ${esc(paidFromLabel(x.paidFrom))}${x.hasPhoto ? ' · 📎' : ''}</span></div>
+    <div class="end">${expStatusTag(x.status)}</div></div>`).join('');
+  return `${showAdd ? '<button class="btn primary full" data-act="expAdd" style="margin-bottom:12px">＋ Add expense</button>' : ''}
+    <div class="sect">My expenses (${(list || []).length})</div>
+    <div class="card">${rows || emptyRow('No expenses yet.')}</div>`;
+}
+function advancesBody(data) {
+  const b = (data && data.balance) || {}; const advs = (data && data.advances) || [];
+  const rows = advs.map((a) => `<div class="li">
+    <div class="ic ${a.status === 'SETTLED' ? 'g' : 'a'}">💵</div>
+    <div class="m"><b>${aed(a.amount)}</b><span>${esc((a.issuedAt || '').slice(0, 10))} · by ${esc(a.issuedBy || '—')}${a.remark ? ' · ' + esc(a.remark) : ''}</span></div>
+    <div class="end">${advStatusTag(a.status)}${a.status === 'ISSUED' ? `<br><button class="btn sm" data-act="advAck" data-id="${a.id}" style="margin-top:6px">Acknowledge</button>` : ''}</div></div>`).join('');
+  return `<div class="mkpis">
+      ${kpi('Advance balance', aed(b.balance || 0), (b.balance || 0) < 0 ? 'red' : 'green')}
+      ${kpi('Reimbursement owed', aed(b.reimbursementOwed || 0), (b.reimbursementOwed || 0) > 0 ? 'amber' : '')}
+    </div>
+    <div class="muted" style="font-size:11.5px;margin:2px 2px 10px">Balance = advances held − approved advance-paid expenses. Negative means the company owes you.</div>
+    <div class="sect">My advances (${advs.length})</div>
+    <div class="card">${rows || emptyRow('No advances issued yet.')}</div>`;
+}
+
+views.mytasks = () => `<div class="card pad" style="text-align:center">
+    <div style="font-size:34px;margin-bottom:6px">🗒️</div>
+    <b>Tasks are coming soon</b>
+    <div class="muted" style="font-size:12.5px;margin-top:6px">Your assigned tasks — with locations and proof-of-completion — will appear here in the next update.</div>
+  </div>`;
+views.myexp = function () { if (myExpData === null) { setTimeout(loadMyExp, 0); return loadingCard('Loading your expenses…'); } return expensesBody(myExpData, true); };
+views.myadv = function () { if (myAdvData === null) { setTimeout(loadMyAdv, 0); return loadingCard('Loading your advances…'); } return advancesBody(myAdvData); };
+
+function expenseForm() {
+  expDraft = {};
+  const today = new Date().toISOString().slice(0, 10);
+  openSheet('Add expense', `
+    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Optional: photograph the bill and let Claude read it.</div>
+    <input type="file" id="exp_file" accept="image/*" capture="environment" style="margin-bottom:8px" />
+    <button class="btn full" data-act="expExtract" style="margin-bottom:8px">⚡ Read bill with Claude</button>
+    <div id="exp_preview"></div>
+    <label class="fld"><span class="lab">Date</span><input id="exp_date" type="date" value="${today}" /></label>
+    <label class="fld"><span class="lab">Amount (AED)</span><input id="exp_amount" type="number" inputmode="decimal" placeholder="0.00" /></label>
+    <label class="fld"><span class="lab">Category</span><select id="exp_cat">${EXP_CATS.map((c) => `<option>${c}</option>`).join('')}</select></label>
+    <label class="fld"><span class="lab">Paid from</span><select id="exp_paid">${PAID_FROM_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+    <label class="fld"><span class="lab">Remark</span><input id="exp_remark" placeholder="e.g. ENOC fuel, Sharjah" /></label>
+    <button class="btn primary full" data-act="expSave">Submit expense</button>
+    <p class="muted" style="font-size:11.5px;margin-top:8px">Small expenses are approved automatically; larger ones go to admin for approval.</p>`,
+    (sh) => {
+      sh.querySelector('#exp_file').addEventListener('change', async function () {
+        const f = this.files[0]; if (!f) return;
+        const shot = await downscaleImage(f); if (!shot) return;
+        expDraft.photo = shot.dataUrl; expDraft.mediaType = shot.mediaType;
+        sh.querySelector('#exp_preview').innerHTML = `<img src="${shot.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:10px" />`;
+      });
+    });
+}
+
+async function expenseDetail(x) {
+  if (!x) return;
+  const isAdm = staff && staff.roles && staff.roles.indexOf('admin') >= 0;
+  const hist = (x.statusHistory || []).map((h) => `<div class="li"><div class="ic ${h.to === 'APPROVED' ? 'g' : h.to === 'REJECTED' ? 'r' : 'a'}">•</div><div class="m"><b>${esc(h.to)}</b><span>${esc((h.at || '').slice(0, 16).replace('T', ' '))} · ${esc(h.by)}${h.note ? ' · ' + esc(h.note) : ''}</span></div></div>`).join('');
+  openSheet(x.category + ' · ' + aed(x.amount), `
+    <div id="exp_photo"></div>
+    <div class="card">
+      ${row('👤', 'a', 'Employee', esc(x.employeeName || '—'), '')}
+      ${row('📅', 'a', 'Date', esc(x.date), '')}
+      ${row('🏷', 'a', 'Category', esc(x.category), '')}
+      ${row('💳', 'a', 'Paid from', esc(paidFromLabel(x.paidFrom)), '')}
+      ${row('💬', 'a', 'Remark', esc(x.remark || '—'), '')}
+      ${row('•', x.status === 'APPROVED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a', 'Status', expStatusTag(x.status), '')}
+    </div>
+    ${isAdm && x.status === 'SUBMITTED' ? `<div class="btn-row" style="margin-top:12px"><button class="btn green" data-act="expApprove" data-id="${x.id}">Approve</button><button class="btn danger" data-act="expReject" data-id="${x.id}">Reject</button></div>` : ''}
+    <div class="sect">Timeline</div><div class="card">${hist || emptyRow('—')}</div>`,
+    (sh) => { if (x.hasPhoto) { staffApi('/api/expenses/' + x.id + '/photo', 'GET').then((r) => { if (r && r.dataUrl) { const el = sh.querySelector('#exp_photo'); if (el) el.innerHTML = `<img src="${r.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:12px" />`; } }).catch(() => {}); } });
+}
+
+async function adminExpenses() {
+  openSheet('Expense approvals', '<div class="empty"><div class="ei">🧾</div>Loading…</div>');
+  let cfg = { autoApproveThreshold: 50 }; let pending = [];
+  try { cfg = await staffApi('/api/expenses/config', 'GET'); } catch (e) { /* keep default */ }
+  try { pending = await staffApi('/api/expenses?status=SUBMITTED', 'GET'); } catch (e) { toast(e.message); }
+  window._admExp = pending;
+  const rows = pending.map((x) => `<div class="li">
+    <div class="ic a" data-act="expOpen" data-id="${x.id}">🧾</div>
+    <div class="m" data-act="expOpen" data-id="${x.id}"><b>${esc(x.employeeName)} · ${aed(x.amount)}</b><span>${esc(x.category)} · ${esc(x.date)}${x.hasPhoto ? ' · 📎' : ''}</span></div>
+    <div class="end"><button class="btn green sm" data-act="expApprove" data-id="${x.id}">✓</button> <button class="btn danger sm" data-act="expReject" data-id="${x.id}">✕</button></div></div>`).join('');
+  openSheet('Expense approvals', `
+    <label class="fld"><span class="lab">Auto-approve expenses at/under (AED)</span><input id="exp_thr" type="number" value="${esc(cfg.autoApproveThreshold)}" /></label>
+    <button class="btn full" data-act="setThreshold" style="margin-bottom:14px">Save threshold</button>
+    <div class="sect">Pending approval (${pending.length})</div>
+    <div class="card">${rows || emptyRow('Nothing pending — all clear.')}</div>`);
+}
+
+async function adminAdvances() {
+  openSheet('Advances (admin)', '<div class="empty"><div class="ei">💵</div>Loading…</div>');
+  let balances = []; let all = [];
+  try { balances = await staffApi('/api/advances/balances', 'GET'); } catch (e) { toast(e.message); }
+  try { all = await staffApi('/api/advances', 'GET'); } catch (e) { /* ignore */ }
+  const bRows = balances.map((b) => `<div class="li"><div class="ic ${b.balance < 0 ? 'r' : 'g'}">👤</div><div class="m"><b>${esc(b.name)}</b><span>held ${aed(b.advanced)} · spent ${aed(b.spentFromAdvance)}${b.reimbursementOwed ? ' · owed ' + aed(b.reimbursementOwed) : ''}</span></div><div class="end"><b style="color:${b.balance < 0 ? 'var(--red)' : 'var(--green)'}">${aed(b.balance)}</b></div></div>`).join('');
+  const aRows = all.map((a) => `<div class="li"><div class="ic ${a.status === 'SETTLED' ? 'g' : 'a'}">💵</div><div class="m"><b>${esc(a.employeeName)} · ${aed(a.amount)}</b><span>${esc((a.issuedAt || '').slice(0, 10))}${a.remark ? ' · ' + esc(a.remark) : ''}</span></div><div class="end">${advStatusTag(a.status)}${a.status !== 'SETTLED' ? `<br><button class="btn sm" data-act="advSettle" data-id="${a.id}" style="margin-top:6px">Settle</button>` : ''}</div></div>`).join('');
+  openSheet('Advances (admin)', `
+    <button class="btn primary full" data-act="advIssueForm" style="margin-bottom:14px">＋ Issue an advance</button>
+    <div class="sect">Employee balances</div>
+    <div class="card">${bRows || emptyRow('No balances yet.')}</div>
+    <div class="sect">All advances (${all.length})</div>
+    <div class="card">${aRows || emptyRow('None issued yet.')}</div>`);
+}
+async function advanceIssueForm() {
+  openSheet('Issue an advance', '<div class="empty">Loading team…</div>');
+  let team = []; try { team = await staffApi('/api/staff/team', 'GET'); } catch (e) { toast(e.message); }
+  openSheet('Issue an advance', `
+    <label class="fld"><span class="lab">Employee</span><select id="adv_emp">${team.map((s) => `<option value="${s.id}">${esc(s.name)} (${esc((s.roles || []).join(', '))})</option>`).join('')}</select></label>
+    <label class="fld"><span class="lab">Amount (AED)</span><input id="adv_amount" type="number" inputmode="decimal" /></label>
+    <label class="fld"><span class="lab">Remark</span><input id="adv_remark" placeholder="e.g. weekly fuel float" /></label>
+    <button class="btn primary full" data-act="advIssue">Issue advance</button>`);
+}
+function findExp(id) { return (myExpData || []).concat(window._admExp || []).find((e) => e.id === id); }
+const isAdminNow = () => staff && staff.roles && staff.roles.indexOf('admin') >= 0;
+
+ACT.expAdd = () => expenseForm();
+ACT.expOpen = (d) => expenseDetail(findExp(d.id));
+ACT.expExtract = async () => {
+  if (!expDraft.photo) return toast('Take a photo first');
+  toast('Reading…');
+  const set = (id, v) => { const el = $('#' + id); if (el && v != null && v !== '') el.value = v; };
+  try {
+    const r = await apiPost('/api/bills/extract', { imageBase64: expDraft.photo, mediaType: expDraft.mediaType || 'image/jpeg' });
+    if (r && r.supplierName !== undefined) { if (r.total != null) set('exp_amount', r.total); set('exp_date', r.invoiceDate); if (r.supplierName) set('exp_remark', r.supplierName); expDraft.ocr = { supplierName: r.supplierName, invoiceDate: r.invoiceDate, total: r.total }; toast('Read — please verify'); return; }
+    throw new Error('no data');
+  } catch (e) { toast('Claude not connected — enter the details manually'); }
+};
+ACT.expSave = async () => {
+  const amount = parseFloat($('#exp_amount').value); const date = $('#exp_date').value;
+  const category = $('#exp_cat').value; const paidFrom = $('#exp_paid').value; const remark = $('#exp_remark').value.trim();
+  if (!(amount > 0)) return toast('Enter an amount');
+  if (!date) return toast('Pick a date');
+  const body = { date, amount, category, paidFrom, remark };
+  if (expDraft.photo) { body.billPhoto = expDraft.photo; body.billMediaType = expDraft.mediaType || 'image/jpeg'; }
+  if (expDraft.ocr) body.ocr = expDraft.ocr;
+  try { const r = await staffApi('/api/expenses', 'POST', body); expDraft = {}; myExpData = null; closeSheet(); render(); toast(r.autoApproved ? 'Expense approved ✓' : 'Expense submitted for approval'); }
+  catch (e) { toast(e.message); }
+};
+ACT.expApprove = async (d) => { try { await staffApi('/api/expenses/' + d.id + '/approve', 'POST', {}); myExpData = null; toast('Approved'); if (isAdminNow()) adminExpenses(); else { closeSheet(); render(); } } catch (e) { toast(e.message); } };
+ACT.expReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/expenses/' + d.id + '/reject', 'POST', { note }); myExpData = null; toast('Rejected'); if (isAdminNow()) adminExpenses(); else { closeSheet(); render(); } } catch (e) { toast(e.message); } };
+ACT.setThreshold = async () => { const v = parseFloat($('#exp_thr').value); if (!(v >= 0)) return toast('Enter a number'); try { await staffApi('/api/expenses/config', 'PUT', { autoApproveThreshold: v }); toast('Threshold saved'); } catch (e) { toast(e.message); } };
+ACT.admExpenses = () => adminExpenses();
+
+ACT.admAdvances = () => adminAdvances();
+ACT.advIssueForm = () => advanceIssueForm();
+ACT.advIssue = async () => { const employeeId = $('#adv_emp').value; const amount = parseFloat($('#adv_amount').value); const remark = $('#adv_remark').value.trim(); if (!(amount > 0)) return toast('Enter an amount'); try { await staffApi('/api/advances', 'POST', { employeeId, amount, remark }); toast('Advance issued'); adminAdvances(); } catch (e) { toast(e.message); } };
+ACT.advSettle = async (d) => { const note = prompt('Settlement note (optional):') || ''; try { await staffApi('/api/advances/' + d.id + '/settle', 'POST', { note }); toast('Settled'); adminAdvances(); } catch (e) { toast(e.message); } };
+ACT.advAck = async (d) => { try { await staffApi('/api/advances/' + d.id + '/ack', 'POST', {}); myAdvData = null; toast('Receipt acknowledged'); render(); } catch (e) { toast(e.message); } };
+
+ACT.myExpensesSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/expenses/mine', 'GET'); } catch (e) { toast(e.message); } window._admExp = null; myExpData = list; openSheet('My expenses', expensesBody(list, true)); };
+ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balance: {} }; try { d = await staffApi('/api/advances/mine', 'GET'); } catch (e) { toast(e.message); } openSheet('My advances', advancesBody(d)); };
 
 window.renderApp = render;        // let the copilot refresh the UI after acting
 window.currentRole = () => role;  // expose active role to the copilot
