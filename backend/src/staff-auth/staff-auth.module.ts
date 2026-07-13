@@ -12,7 +12,7 @@ import * as path from 'path';
 import { Public } from '../common/decorators/public.decorator';
 
 /** Roles a staff account can hold. 'admin' = full access (may switch into any role). */
-const ROLE_IDS = ['admin', 'salesman', 'driver', 'warehouse', 'purchase', 'finance', 'service'];
+const ROLE_IDS = ['admin', 'salesman', 'driver', 'warehouse', 'purchase', 'finance', 'service', 'staff'];
 
 class LoginDto { @IsString() username: string; @IsString() password: string; }
 class ChangePwDto { @IsString() oldPassword: string; @IsString() @MinLength(4) newPassword: string; }

@@ -27,6 +27,7 @@ import { AppStateModule } from './appstate/appstate.module';
 import { CustomerPortalModule } from './customer-portal/customer-portal.module';
 import { StaffAuthModule } from './staff-auth/staff-auth.module';
 import { SupportModule } from './support/support.module';
+import { RashidModule } from './rashid/rashid.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SupportModule } from './support/support.module';
     AppStateModule,
     CustomerPortalModule,
     StaffAuthModule,
+    RashidModule,
   ],
   providers: [
     // Global: authenticate every route (unless @Public), then enforce role/dept/access.
