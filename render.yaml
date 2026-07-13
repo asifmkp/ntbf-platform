@@ -22,11 +22,11 @@ services:
       - key: CHEQUE_BOUNCE_CHARGE
         value: "250"
       - key: ZOHO_ORG_ID
-        value: "170000198188"
+        value: "928751913"
       - key: ZOHO_ACCOUNTS_HOST
-        value: "https://accounts.zoho.ae"
+        value: "https://accounts.zoho.com"
       - key: ZOHO_API_HOST
-        value: "https://www.zohoapis.ae"
+        value: "https://www.zohoapis.com"
       - key: ANTHROPIC_MODEL
         value: "claude-sonnet-4-6"
       # Zoho stays read-only until you set this to true.

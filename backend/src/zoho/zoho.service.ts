@@ -10,14 +10,14 @@ interface TokenCache {
 export const ALLOWED_ZOHO_ORG_ID = '928751913';
 
 /**
- * Thin Zoho Books client (UAE data center by default).
+ * Thin Zoho Books client (.com data center by default).
  * Uses the OAuth refresh-token grant; caches the access token until it expires.
  *
  * Required env:
  *   ZOHO_ORG_ID, ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN
- * Optional env (defaults target the UAE DC):
- *   ZOHO_ACCOUNTS_HOST=https://accounts.zoho.ae
- *   ZOHO_API_HOST=https://www.zohoapis.ae
+ * Optional env (defaults target the .com DC):
+ *   ZOHO_ACCOUNTS_HOST=https://accounts.zoho.com
+ *   ZOHO_API_HOST=https://www.zohoapis.com
  */
 @Injectable()
 export class ZohoService {
@@ -56,11 +56,11 @@ export class ZohoService {
   }
 
   private get accountsHost(): string {
-    return this.config.get<string>('ZOHO_ACCOUNTS_HOST') ?? 'https://accounts.zoho.ae';
+    return this.config.get<string>('ZOHO_ACCOUNTS_HOST') ?? 'https://accounts.zoho.com';
   }
 
   private get apiHost(): string {
-    return this.config.get<string>('ZOHO_API_HOST') ?? 'https://www.zohoapis.ae';
+    return this.config.get<string>('ZOHO_API_HOST') ?? 'https://www.zohoapis.com';
   }
 
   private async getAccessToken(): Promise<string> {

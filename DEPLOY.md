@@ -11,9 +11,9 @@ One container, one public URL.
 | `JWT_SECRET` | auth | any long random string |
 | `ANTHROPIC_API_KEY` | live Copilot (Claude) | from console.anthropic.com. Without it the agent runs in local mode. |
 | `ANTHROPIC_MODEL` | model choice | default `claude-sonnet-4-6` |
-| `ZOHO_ORG_ID` | Zoho | `170000198188` |
-| `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` / `ZOHO_REFRESH_TOKEN` | live Zoho data + bill recording | Self Client at api-console.zoho.ae |
-| `ZOHO_ACCOUNTS_HOST` / `ZOHO_API_HOST` | Zoho DC | UAE defaults already set |
+| `ZOHO_ORG_ID` | Zoho | `928751913` |
+| `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` / `ZOHO_REFRESH_TOKEN` | live Zoho data + bill recording | Self Client at api-console.zoho.com |
+| `ZOHO_ACCOUNTS_HOST` / `ZOHO_API_HOST` | Zoho DC | .com defaults already set |
 
 ## Option A — Docker Compose (local, full stack + Postgres)
 ```bash

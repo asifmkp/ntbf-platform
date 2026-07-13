@@ -25,9 +25,9 @@ services:
       JWT_SECRET: "change-me-in-prod"
       PORT: "3000"
       CHEQUE_BOUNCE_CHARGE: "250"
-      ZOHO_ORG_ID: "170000198188"
-      ZOHO_ACCOUNTS_HOST: "https://accounts.zoho.ae"
-      ZOHO_API_HOST: "https://www.zohoapis.ae"
+      ZOHO_ORG_ID: "928751913"
+      ZOHO_ACCOUNTS_HOST: "https://accounts.zoho.com"
+      ZOHO_API_HOST: "https://www.zohoapis.com"
       ANTHROPIC_MODEL: "claude-sonnet-4-6"
       # Set these to go fully live:
       ZOHO_CLIENT_ID: "${ZOHO_CLIENT_ID:-}"

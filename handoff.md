@@ -20,8 +20,8 @@ wholesale FMCG/beverage distributor in Ajman, UAE. Built as a **single-app, role
 ## 2. Company context (the real business)
 
 - **National Trading (NTBFLLC)** — Ajman, UAE. Wholesale beverages + foodstuff. AED, 5% VAT.
-- **Zoho Books** is the accounting system of record (Org ID `170000198188`, UAE data centre).
-  Confirmed account IDs: Sales `2532000000000394`, COGS `2532000000000487`, Inventory Asset `2532000000000490`.
+- **Zoho Books** is the accounting system of record (Org ID `928751913`, .com data centre).
+  Confirmed account IDs: Sales `416943000000000388`, COGS `416943000000034003`, Inventory Asset `416943000000034001`.
 - **4 staff** (not a big org — the generic 7-department TRD was aspirational):
   - **Asif** — Owner/Admin, final approval on all financials. *Not a developer.*
   - **Tahir** — Sales: calls customers, checks stock, creates invoices.
@@ -114,7 +114,7 @@ fix → native app.
 
 ## 6. Integrations & security state
 
-- **Zoho Books:** CONNECTED and reading live from the cloud (OAuth refresh-token, UAE DC). **Writes are
+- **Zoho Books:** CONNECTED and reading live from the cloud (OAuth refresh-token, .com DC). **Writes are
   DOUBLE-LOCKED:** (a) server env `ZOHO_WRITES_ENABLED=false`, and (b) an explicit `confirm:true` flag.
   Nothing has been written to Zoho. To go live for posting: set `ZOHO_WRITES_ENABLED=true` **after**
   testing extraction accuracy on real bills.

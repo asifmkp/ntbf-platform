@@ -22,10 +22,10 @@ fallback in [`assets/snapshot.js`](assets/snapshot.js).
 1. Start the backend with Zoho configured:
    ```bash
    cd ../../backend
-   # set ZOHO_* in .env (see .env.example) — UAE data center
+   # set ZOHO_* in .env (see .env.example) — .com data center
    npm run start:dev      # http://localhost:3000
    ```
-   Get credentials from a Self Client at https://api-console.zoho.ae (scope `ZohoBooks.fullaccess.all`),
+   Get credentials from a Self Client at https://api-console.zoho.com (scope `ZohoBooks.fullaccess.all`),
    then exchange the code for a refresh token.
 2. Open any dashboard. If the API runs somewhere other than `http://localhost:3000`, set it once
    in the browser console: `NTBF.setApiBase('https://your-host')`.
