@@ -691,7 +691,7 @@ const API = localStorage.getItem('ntbf_api') || ((location.protocol.startsWith('
 function authHeaders(extra) {
   const tok = localStorage.getItem('ntbf_token');
   // Signed-in staff already hold a JWT; send it so the gated endpoints (bill
-  // capture, copilot) authorize via the staff session — no shared secret needed.
+  // capture, Muhammed) authorize via the staff session — no shared secret needed.
   const staffTok = localStorage.getItem('ntbf_stafftoken');
   return Object.assign(
     { 'content-type': 'application/json' },
@@ -1858,6 +1858,6 @@ ACT.advAck = async (d) => { try { await staffApi('/api/advances/' + d.id + '/ack
 ACT.myExpensesSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/expenses/mine', 'GET'); } catch (e) { toast(e.message); } window._admExp = null; myExpData = list; openSheet('My expenses', expensesBody(list, true)); };
 ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balance: {} }; try { d = await staffApi('/api/advances/mine', 'GET'); } catch (e) { toast(e.message); } openSheet('My advances', advancesBody(d)); };
 
-window.renderApp = render;        // let the copilot refresh the UI after acting
-window.currentRole = () => role;  // expose active role to the copilot
+window.renderApp = render;        // let Muhammed refresh the UI after acting
+window.currentRole = () => role;  // expose active role to Muhammed
 render();
