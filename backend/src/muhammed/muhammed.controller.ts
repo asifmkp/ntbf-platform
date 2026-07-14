@@ -1,6 +1,6 @@
 import { Body, Controller, ForbiddenException, Get, Post, Query, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { Public } from '../common/decorators/public.decorator';
 import { StaffAuthGuard, StaffStore } from '../staff-auth/staff-auth.module';
 import { MuhammedService } from './muhammed.service';
@@ -18,6 +18,10 @@ class WaAskDto {
   @IsString() phone: string;
   @IsString() text: string;
   @IsOptional() @IsString() wa_id?: string;
+  // Optional identity supplied by the (shared-secret authed) bot from its staff roster,
+  // for numbers not in the in-app staff registry.
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) roles?: string[];
 }
 
 /**
@@ -52,7 +56,7 @@ export class MuhammedController {
     const token = String(req.headers['x-ingest-token'] || '');
     const expected = process.env.WHATSAPP_INGEST_TOKEN || '';
     if (!expected || token !== expected) throw new UnauthorizedException('Invalid ingest token');
-    return this.muhammed.handleWhatsApp(dto.phone, dto.text, dto.wa_id);
+    return this.muhammed.handleWhatsApp(dto.phone, dto.text, dto.wa_id, dto.name, dto.roles);
   }
 
   /** Chat with Muhammed as the signed-in staff member (identity = the staff JWT). */

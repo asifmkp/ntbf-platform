@@ -58,15 +58,20 @@ export class MuhammedService {
    * Resolves the sender's phone to a staff account and answers as Muhammed.
    * Non-staff senders get { staff:false } so the bot runs its customer flow.
    */
-  async handleWhatsApp(phone: string, text: string, waId?: string): Promise<{ staff: boolean; answer?: string; duplicate?: boolean }> {
+  async handleWhatsApp(phone: string, text: string, waId?: string, name?: string, roles?: string[]): Promise<{ staff: boolean; answer?: string; duplicate?: boolean }> {
     if (waId) {
       if (this.waSeen.has(waId)) return { staff: true, duplicate: true, answer: '' };
       this.waSeen.add(waId);
       if (this.waSeen.size > 5000) this.waSeen.clear();
     }
+    // Prefer the in-app staff registry; otherwise trust the identity the bot supplies
+    // from its roster (the bot is authenticated by the shared ingest secret).
+    let identity: Identity | null = null;
     const s = this.staff.byPhone(phone);
-    if (!s) return { staff: false };
-    const res = await this.handle({ id: s.id, name: s.name, roles: s.roles || [] }, text);
+    if (s) identity = { id: s.id, name: s.name, roles: s.roles || [] };
+    else if (roles && roles.length) identity = { id: 'wa-' + phone.replace(/\D/g, ''), name: name || 'there', roles };
+    if (!identity) return { staff: false };
+    const res = await this.handle(identity, text);
     return { staff: true, answer: res.answer };
   }
 
