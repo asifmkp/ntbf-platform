@@ -23,6 +23,8 @@ const ROLES = {
   service: { name: 'Layla Hassan', sub: 'Customer Service', pic: 'LH', status: 'Online',
     tabs: [{ id: 'queue', label: 'Tickets', i: '🎧' }, { id: 'resolved', label: 'Resolved', i: '✓' }] },
 };
+// Muhammed — the AI colleague — gets a tab on every staff role (not the customer portal).
+Object.keys(ROLES).forEach((r) => { if (r !== 'customer') ROLES[r].tabs.push({ id: 'muhammed', label: 'Muhammed', i: '✦' }); });
 let shopCart = {}; let shopMethod = 'CASH_ON_DELIVERY';
 let onlineOrders = []; let onlineLoaded = false;
 // Which tabs, per role, show the real online-order queue (loaded from /api/portal/orders/all).
@@ -1620,6 +1622,55 @@ const ACT = {
   approveCustomer: (d) => { const c = S.customer(d.id); if (c) { c.status = 'ACTIVE'; S.save(); } render(); toast('Customer activated'); },
   hold: (d) => { S.setHold(d.id, true); render(); toast('Account placed on hold'); },
   release: (d) => { S.setHold(d.id, false); render(); toast('Hold released'); },
+
+  // ---- Muhammed (AI colleague) ----
+  muhammedChip: (d) => ACT.muhammedSend({ text: d.q }),
+  muhammedSend: async (d) => {
+    const inp = $('#m-input');
+    const text = (d && d.text) || (inp ? inp.value.trim() : '');
+    if (!text || mBusy) return;
+    if (inp && !(d && d.text)) inp.value = '';
+    mView.push({ k: 'user', t: text });
+    mBusy = true; mDraw();
+    try {
+      const r = await staffApi('/api/muhammed/ask', 'POST', { text });
+      mView.push({ k: 'bot', t: r.answer || '…' });
+    } catch (e) {
+      mView.push({ k: 'bot', t: '⚠ ' + (e.message || 'Could not reach Muhammed. Check Settings → server address.') });
+    }
+    mBusy = false; mDraw();
+  },
+};
+
+// ---------------- Muhammed (AI colleague) chat tab ----------------
+let mView = []; let mBusy = false;
+function mFirstName() { return String((staff && staff.name) || '').split(' ')[0] || 'there'; }
+function muhammedScopeChips() {
+  const roles = (staff && staff.roles) || [];
+  const has = (r) => roles.indexOf(r) >= 0;
+  if (has('admin')) return ["Today's sales", 'Cash by driver', 'Queue health', 'Collections', 'What did the team ask today?', "What couldn't you answer?"];
+  const c = [];
+  if (has('salesman')) c.push('My sales today', 'My customers', 'My orders', 'Pending approvals');
+  if (has('warehouse') || has('purchase')) c.push("What's below reorder?", 'Dispatch queue', 'Cash in hand', 'Handovers to confirm');
+  if (has('driver')) c.push('My next stop', "Cash I've collected", 'Stops left', 'My deliveries');
+  return c.length ? c : ['What can you help me with?'];
+}
+function mMsgsHtml() {
+  let html = mView.map((m) => `<div class="m-msg ${m.k}">${esc(m.t)}</div>`).join('');
+  if (mBusy) html += '<div class="m-dots">Muhammed is typing…</div>';
+  return html;
+}
+function mDraw() { const box = $('#m-msgs'); if (box) box.innerHTML = mMsgsHtml(); const inp = $('#m-input'); if (inp) inp.scrollIntoView({ block: 'end' }); }
+window.__mSend = () => ACT.muhammedSend({});
+views.muhammed = () => {
+  const chips = muhammedScopeChips();
+  const greeting = mView.length ? '' : `<div class="m-msg bot">Hello ${esc(mFirstName())}! 👋 I'm Muhammed, your colleague. Ask me about your work — tap a suggestion or type below. I only ever see your own information, and I reply in your language.</div>`;
+  return `
+    <div class="m-head"><div class="av">✦</div><div><b>Muhammed</b><span>Your NTBFLLC colleague</span></div></div>
+    <div class="m-msgs" id="m-msgs">${greeting}${mMsgsHtml()}</div>
+    <div class="m-chips">${chips.map((q) => `<button data-act="muhammedChip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <div class="m-in"><input id="m-input" placeholder="Ask Muhammed…" onkeydown="if(event.key==='Enter'){event.preventDefault();window.__mSend();}" /><button data-act="muhammedSend">➤</button></div>
+    <div class="m-spacer"></div>`;
 };
 
 document.addEventListener('click', (e) => {
