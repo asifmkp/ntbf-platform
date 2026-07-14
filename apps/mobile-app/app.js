@@ -1175,7 +1175,7 @@ function settingsForm() {
     <label class="fld"><span class="lab">API access token (if the server requires one)</span><input id="set_token" placeholder="x-api-key" value="${esc(localStorage.getItem('ntbf_token') || '')}" /></label>
     ${role === 'customer' ? `<label class="fld"><span class="lab">Shopping as</span><select id="set_cust">${custOpts}</select></label>` : ''}
     <button class="btn primary full" data-act="saveSettings">Save</button>
-    <div class="btn-row" style="margin-top:14px"><button class="btn" data-act="clearChat">Clear copilot chat</button><button class="btn danger" data-act="resetAll">Reset all data</button></div>
+    <div class="btn-row" style="margin-top:14px"><button class="btn danger" data-act="resetAll">Reset all data</button></div>
     <p class="muted" style="font-size:11.5px;margin-top:12px">Backend: <span id="set_stat">checking…</span></p>`,
     (sh) => { fetch(api + '/api/agent/status').then((r) => r.json()).then((s) => { sh.querySelector('#set_stat').textContent = s.configured ? 'online · AI live' : 'online · local AI mode'; }).catch(() => { sh.querySelector('#set_stat').textContent = 'offline (apps run locally)'; }); });
 }
@@ -1613,7 +1613,6 @@ const ACT = {
   // settings
   settings: () => settingsForm(),
   saveSettings: () => { localStorage.setItem('ntbf_api', $('#set_api').value.trim()); const tk = $('#set_token'); if (tk) { const v = tk.value.trim(); if (v) localStorage.setItem('ntbf_token', v); else localStorage.removeItem('ntbf_token'); } const sc = $('#set_cust'); if (sc) localStorage.setItem('ntbf_customer', sc.value); closeSheet(); render(); toast('Settings saved'); },
-  clearChat: () => { if (window.copilotClear) window.copilotClear(); toast('Copilot chat cleared'); },
   resetAll: () => { S.reset(); shopCart = {}; closeSheet(); render(); toast('All data reset'); },
 
   // admin override
