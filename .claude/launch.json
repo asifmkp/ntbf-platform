@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend", "run", "start:dev"],
+      "port": 3000
+    },
+    {
+      "name": "apps-static",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "http.server", "8080", "--directory", "apps"],
+      "port": 8080
+    },
+    {
+      "name": "native-expo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/native", "run", "start"],
+      "port": 8081
+    }
+  ]
+}
