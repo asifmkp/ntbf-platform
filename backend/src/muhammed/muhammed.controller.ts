@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Post, Query, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { Public } from '../common/decorators/public.decorator';
@@ -13,6 +13,11 @@ class AskDto {
 class SetPhoneDto {
   @IsString() staffId: string;
   @IsString() phone: string;
+}
+class WaAskDto {
+  @IsString() phone: string;
+  @IsString() text: string;
+  @IsOptional() @IsString() wa_id?: string;
 }
 
 /**
@@ -34,6 +39,20 @@ export class MuhammedController {
   status(@Query('ping') ping?: string) {
     if (ping === '1' || ping === 'true') return this.muhammed.ping();
     return this.muhammed.status();
+  }
+
+  /**
+   * WhatsApp entry point, called by the Supabase bot's staff pre-check.
+   * Shares the ingest secret (x-ingest-token = WHATSAPP_INGEST_TOKEN) the bot
+   * already holds. Staff senders get Muhammed's answer; others get {staff:false}.
+   */
+  @Public()
+  @Post('wa')
+  wa(@Body() dto: WaAskDto, @Req() req: any) {
+    const token = String(req.headers['x-ingest-token'] || '');
+    const expected = process.env.WHATSAPP_INGEST_TOKEN || '';
+    if (!expected || token !== expected) throw new UnauthorizedException('Invalid ingest token');
+    return this.muhammed.handleWhatsApp(dto.phone, dto.text, dto.wa_id);
   }
 
   /** Chat with Muhammed as the signed-in staff member (identity = the staff JWT). */

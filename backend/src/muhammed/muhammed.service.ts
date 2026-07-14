@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AnthropicService } from '../ai/anthropic.service';
 import { AppStateService } from '../appstate/appstate.module';
+import { StaffStore } from '../staff-auth/staff-auth.module';
 import { MuhammedLog } from './muhammed.log';
 import { capabilityMenu, toolsForRoles, ToolCtx } from './muhammed.tools';
 
@@ -42,12 +43,32 @@ function uaeNow(): string {
 export class MuhammedService {
   /** In-memory per-person session (last few turns). Resets on redeploy — fine for a small team. */
   private readonly sessions = new Map<string, any[]>();
+  /** Seen WhatsApp message ids — WhatsApp re-delivers on slow acks; never answer one twice. */
+  private readonly waSeen = new Set<string>();
 
   constructor(
     private readonly ai: AnthropicService,
     private readonly appstate: AppStateService,
+    private readonly staff: StaffStore,
     private readonly log: MuhammedLog,
   ) {}
+
+  /**
+   * WhatsApp entry point, called by the Supabase bot's staff pre-check.
+   * Resolves the sender's phone to a staff account and answers as Muhammed.
+   * Non-staff senders get { staff:false } so the bot runs its customer flow.
+   */
+  async handleWhatsApp(phone: string, text: string, waId?: string): Promise<{ staff: boolean; answer?: string; duplicate?: boolean }> {
+    if (waId) {
+      if (this.waSeen.has(waId)) return { staff: true, duplicate: true, answer: '' };
+      this.waSeen.add(waId);
+      if (this.waSeen.size > 5000) this.waSeen.clear();
+    }
+    const s = this.staff.byPhone(phone);
+    if (!s) return { staff: false };
+    const res = await this.handle({ id: s.id, name: s.name, roles: s.roles || [] }, text);
+    return { staff: true, answer: res.answer };
+  }
 
   status() { return { configured: this.ai.configured }; }
   ping() { return this.ai.ping(); }

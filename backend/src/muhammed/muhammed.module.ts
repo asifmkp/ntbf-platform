@@ -5,18 +5,16 @@ import { StaffAuthModule } from '../staff-auth/staff-auth.module';
 import { MuhammedController } from './muhammed.controller';
 import { MuhammedService } from './muhammed.service';
 import { MuhammedLog } from './muhammed.log';
-import { WhatsappController } from './whatsapp.controller';
-import { WhatsappService } from './whatsapp.service';
 
 /**
  * Muhammed — the team's AI colleague. Channel-agnostic brain (read-only tools
- * over appstate, per-person sessions, conversation logging). The live WhatsApp
- * (360dialog) front door is added later as a thin adapter that calls
- * MuhammedService.handle().
+ * over appstate, per-person sessions, conversation logging). Reached in-app via
+ * POST /api/muhammed/ask, and on WhatsApp via POST /api/muhammed/wa, which the
+ * Supabase bot's staff pre-check calls on the shared 360dialog number.
  */
 @Module({
   imports: [StaffAuthModule, AppStateModule],
-  controllers: [MuhammedController, WhatsappController],
-  providers: [MuhammedService, AnthropicService, MuhammedLog, WhatsappService],
+  controllers: [MuhammedController],
+  providers: [MuhammedService, AnthropicService, MuhammedLog],
 })
 export class MuhammedModule {}
