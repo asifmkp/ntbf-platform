@@ -25,6 +25,9 @@ class CreateStaffDto {
 class ResetPwDto { @IsString() id: string; @IsString() @MinLength(4) password: string; }
 class RemoveDto { @IsString() id: string; }
 
+/** Normalise a phone number to digits only (drops +, spaces, dashes) for matching. */
+function digits(s: string): string { return String(s || '').replace(/\D/g, ''); }
+
 /** File-backed staff account store (data/staff.json), seeded with the real team on first run. */
 @Injectable()
 export class StaffStore {
@@ -62,6 +65,16 @@ export class StaffStore {
   byUsername(u: string) { return this.data.staff.find((s) => s.username === String(u || '').toLowerCase().trim()); }
   byId(id: string) { return this.data.staff.find((s) => s.id === id); }
   list() { return this.data.staff.map((s) => ({ id: s.id, name: s.name, username: s.username, roles: s.roles })); }
+
+  // ---- WhatsApp identity registry (phone → staff), used by Muhammed's front door ----
+  /** Look up a staff account by WhatsApp phone number (digits only; ignores +, spaces). */
+  byPhone(phone: string) {
+    const p = digits(phone);
+    if (!p) return undefined;
+    return this.data.staff.find((s) => s.phone && digits(s.phone) === p);
+  }
+  setPhone(id: string, phone: string) { const s = this.byId(id); if (s) { s.phone = String(phone || '').trim() || null; this.save(); } return !!s; }
+  listWithPhones() { return this.data.staff.map((s) => ({ id: s.id, name: s.name, username: s.username, roles: s.roles, phone: s.phone || null })); }
   create(name: string, username: string, passwordHash: string, roles: string[]) {
     const rec = { id: this.id(), name, username: username.toLowerCase().trim(), roles, passwordHash, createdAt: new Date().toISOString() };
     this.data.staff.push(rec); this.save(); return rec;
@@ -171,6 +184,7 @@ export class StaffAuthController {
   ],
   controllers: [StaffAuthController],
   providers: [StaffStore, StaffAuthService, StaffAuthGuard],
-  exports: [StaffStore],
+  // Exported so Rashid + Muhammed modules can reuse the same staff identities + JWT guard.
+  exports: [StaffStore, StaffAuthGuard, JwtModule],
 })
 export class StaffAuthModule {}

@@ -58,5 +58,5 @@ export class AppStateController {
   put(@Body() dto: PutStateDto) { return this.svc.put(dto.state); }
 }
 
-@Module({ controllers: [AppStateController], providers: [AppStateService] })
+@Module({ controllers: [AppStateController], providers: [AppStateService], exports: [AppStateService] })
 export class AppStateModule {}
