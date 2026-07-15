@@ -1164,6 +1164,10 @@ function settingsForm() {
         <button class="btn" data-act="myExpensesSheet">My expenses</button>
         <button class="btn" data-act="myAdvancesSheet">My advances</button>
       </div>
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="rcptCollectSheet">Record a receipt</button>
+        ${(isAdmin || (staff.roles || []).indexOf('finance') >= 0) ? '<button class="btn" data-act="rcptQueueSheet">Receipt approvals</button>' : ''}
+      </div>
       ${isAdmin ? `<div class="btn-row" style="margin-top:9px">
         <button class="btn" data-act="admExpenses">Expense approvals</button>
         <button class="btn" data-act="admAdvances">Advances (admin)</button>
@@ -1857,6 +1861,158 @@ ACT.advAck = async (d) => { try { await staffApi('/api/advances/' + d.id + '/ack
 
 ACT.myExpensesSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/expenses/mine', 'GET'); } catch (e) { toast(e.message); } window._admExp = null; myExpData = list; openSheet('My expenses', expensesBody(list, true)); };
 ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balance: {} }; try { d = await staffApi('/api/advances/mine', 'GET'); } catch (e) { toast(e.message); } openSheet('My advances', advancesBody(d)); };
+
+// ===========================================================================
+// Finance module (Stage 1) — Customer Receipts (money IN from customers).
+// Collectors (driver/salesman/anyone) raise a receipt against a bill; finance/
+// admin approve any discount and confirm the money was received. File-backed
+// backend at /api/finance/* via the staff JWT (staffApi). Mirrors the Rashid
+// expenses UI patterns. Does not touch orders or the WhatsApp ingest contract.
+// ===========================================================================
+(function financeReceiptsUI() {
+  const RCPT_METHODS = [['CASH', 'Cash'], ['CHEQUE', 'Cheque'], ['BANK', 'Bank transfer'], ['CARD', 'Card']];
+  const methodLabel = (m) => ({ CASH: 'Cash', CHEQUE: 'Cheque', BANK: 'Bank transfer', CARD: 'Card' })[m] || m;
+  const rcptStatusTag = (s) => { const m = { PENDING_APPROVAL: 'amber', COLLECTED: 'accent', CONFIRMED: 'green', REJECTED: 'red' }; return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase().replace(/_/g, ' ')}</span>`; };
+
+  // Add a Receipts tab (before the Muhammed tab) to the collector + finance/admin roles.
+  ['driver', 'salesman', 'finance', 'admin'].forEach((r) => {
+    const tabs = ROLES[r] && ROLES[r].tabs; if (!tabs || tabs.find((t) => t.id === 'receipts')) return;
+    const mi = tabs.findIndex((t) => t.id === 'muhammed');
+    tabs.splice(mi < 0 ? tabs.length : mi, 0, { id: 'receipts', label: 'Receipts', i: '🧾' });
+  });
+
+  let myRcptData = null;    // collector's own receipts cache
+  let allRcptData = null;   // finance/admin: all receipts cache
+  let rcptDraft = {};
+  async function loadMyRcpt() { try { myRcptData = await staffApi('/api/finance/receipts/mine', 'GET'); } catch (e) { myRcptData = []; toast(e.message); } render(); }
+  async function loadAllRcpt() { try { allRcptData = await staffApi('/api/finance/receipts', 'GET'); } catch (e) { allRcptData = []; toast(e.message); } render(); }
+  const isFinanceView = () => role === 'finance' || role === 'admin';
+  const refreshRcpt = () => { myRcptData = null; allRcptData = null; };
+
+  function receiptRow(x, acts) {
+    return `<div class="li"><div class="ic ${x.status === 'CONFIRMED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a'}" data-act="rcptOpen" data-id="${x.id}">🧾</div>
+      <div class="m" data-act="rcptOpen" data-id="${x.id}"><b>${esc(x.customerName || '—')} · ${aed(x.collectedAmount)}</b><span>${esc(methodLabel(x.method))}${x.billAmount != null ? ' · bill ' + aed(x.billAmount) : ''}${x.discount > 0 ? ' · disc ' + aed(x.discount) : ''}${x.orderId ? ' · ' + esc(x.orderId) : ''}</span></div>
+      <div class="end">${acts}</div></div>`;
+  }
+  function collectorBody(list) {
+    const rows = (list || []).map((x) => receiptRow(x, rcptStatusTag(x.status))).join('');
+    return `<button class="btn primary full" data-act="rcptAdd" style="margin-bottom:12px">＋ Collect a payment</button>
+      <div class="sect">My receipts (${(list || []).length})</div>
+      <div class="card">${rows || emptyRow('No receipts yet. Tap “Collect a payment”.')}</div>`;
+  }
+  function queueBody(list) {
+    const pending = (list || []).filter((x) => x.status === 'PENDING_APPROVAL');
+    const toConfirm = (list || []).filter((x) => x.status === 'COLLECTED');
+    const recent = (list || []).filter((x) => x.status === 'CONFIRMED' || x.status === 'REJECTED').slice(0, 40);
+    return `<div class="mkpis">${kpi('To approve', pending.length, pending.length ? 'amber' : 'green')}${kpi('To confirm', toConfirm.length, toConfirm.length ? 'accent' : 'green')}${kpi('Done', recent.length, 'green')}</div>
+      <div class="sect">Discounts awaiting approval (${pending.length})</div>
+      <div class="card">${pending.map((x) => receiptRow(x, `<button class="btn green sm" data-act="rcptApprove" data-id="${x.id}">✓</button> <button class="btn danger sm" data-act="rcptReject" data-id="${x.id}">✕</button>`)).join('') || emptyRow('Nothing to approve.')}</div>
+      <div class="sect">Awaiting confirmation (${toConfirm.length})</div>
+      <div class="card">${toConfirm.map((x) => receiptRow(x, `<button class="btn primary sm" data-act="rcptConfirm" data-id="${x.id}">Confirm</button>`)).join('') || emptyRow('Nothing to confirm.')}</div>
+      <div class="sect">Recent (${recent.length})</div>
+      <div class="card">${recent.map((x) => receiptRow(x, rcptStatusTag(x.status))).join('') || emptyRow('None yet.')}</div>`;
+  }
+  views.receipts = function () {
+    if (isFinanceView()) { if (allRcptData === null) { setTimeout(loadAllRcpt, 0); return loadingCard('Loading receipts…'); } return queueBody(allRcptData); }
+    if (myRcptData === null) { setTimeout(loadMyRcpt, 0); return loadingCard('Loading your receipts…'); }
+    return collectorBody(myRcptData);
+  };
+
+  function receiptForm() {
+    rcptDraft = {};
+    openSheet('Collect a payment', `
+      <label class="fld"><span class="lab">Order no (optional)</span>
+        <div style="display:flex;gap:8px"><input id="rcpt_order" placeholder="e.g. ORD-1023" style="flex:1" /><button class="btn" data-act="rcptLookup">Look up</button></div></label>
+      <div id="rcpt_billinfo" class="muted" style="font-size:12px;margin:2px 2px 8px"></div>
+      <label class="fld"><span class="lab">Customer</span><input id="rcpt_customer" placeholder="Customer name" /></label>
+      <label class="fld"><span class="lab">Bill amount (AED)</span><input id="rcpt_bill" type="number" inputmode="decimal" placeholder="0.00" /></label>
+      <label class="fld"><span class="lab">Amount collected (AED)</span><input id="rcpt_amount" type="number" inputmode="decimal" placeholder="0.00" /></label>
+      <label class="fld"><span class="lab">Method</span><select id="rcpt_method">${RCPT_METHODS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+      <div id="rcpt_cheque" style="display:none">
+        <label class="fld"><span class="lab">Cheque no</span><input id="rcpt_chqno" /></label>
+        <label class="fld"><span class="lab">Bank</span><input id="rcpt_chqbank" /></label>
+        <label class="fld"><span class="lab">Cheque date</span><input id="rcpt_chqdate" type="date" /></label>
+      </div>
+      <label class="fld"><span class="lab">Narration</span><input id="rcpt_narration" placeholder="e.g. part payment, balance next week" /></label>
+      <div class="muted" style="font-size:12.5px;margin-bottom:6px">Optional: photograph the bill / cheque.</div>
+      <input type="file" id="rcpt_file" accept="image/*" capture="environment" style="margin-bottom:8px" />
+      <div id="rcpt_preview"></div>
+      <button class="btn primary full" data-act="rcptSave">Save receipt</button>
+      <p class="muted" style="font-size:11.5px;margin-top:8px">Collect less than the bill and the discount goes to finance for approval. Every receipt is confirmed by the office.</p>`,
+      (sh) => {
+        const meth = sh.querySelector('#rcpt_method'); const chq = sh.querySelector('#rcpt_cheque');
+        const sync = () => { chq.style.display = meth.value === 'CHEQUE' ? 'block' : 'none'; };
+        meth.addEventListener('change', sync); sync();
+        sh.querySelector('#rcpt_file').addEventListener('change', async function () {
+          const f = this.files[0]; if (!f) return;
+          const shot = await downscaleImage(f); if (!shot) return;
+          rcptDraft.photo = shot.dataUrl; rcptDraft.mediaType = shot.mediaType;
+          sh.querySelector('#rcpt_preview').innerHTML = `<img src="${shot.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:10px" />`;
+        });
+      });
+  }
+
+  function receiptDetail(x) {
+    if (!x) return;
+    const fin = isFinanceView();
+    const hist = (x.statusHistory || []).map((h) => `<div class="li"><div class="ic ${h.to === 'CONFIRMED' || h.to === 'COLLECTED' ? 'g' : h.to === 'REJECTED' ? 'r' : 'a'}">•</div><div class="m"><b>${esc(String(h.to).replace(/_/g, ' '))}</b><span>${esc((h.at || '').slice(0, 16).replace('T', ' '))} · ${esc(h.by)}${h.note ? ' · ' + esc(h.note) : ''}</span></div></div>`).join('');
+    const items = (x.billItems || []).map((i) => `<div class="li"><div class="ic a">▪</div><div class="m"><b>${esc(i.name)}</b><span>${i.qty} × ${aed(i.price)}${i.unit ? ' · ' + esc(i.unit) : ''}</span></div><div class="end">${aed((i.qty || 0) * (i.price || 0))}</div></div>`).join('');
+    let actions = '';
+    if (fin && x.status === 'PENDING_APPROVAL') actions = `<div class="btn-row" style="margin-top:12px"><button class="btn green" data-act="rcptApprove" data-id="${x.id}">Approve discount</button><button class="btn danger" data-act="rcptReject" data-id="${x.id}">Reject</button></div>`;
+    else if (fin && x.status === 'COLLECTED') actions = `<button class="btn primary full" data-act="rcptConfirm" data-id="${x.id}" style="margin-top:12px">Confirm received</button>`;
+    openSheet('Receipt · ' + aed(x.collectedAmount), `
+      <div id="rcpt_photo"></div>
+      <div class="card">
+        ${row('🧾', 'a', 'Receipt', esc(x.id), '')}
+        ${row('👤', 'a', 'Customer', esc(x.customerName || '—'), '')}
+        ${x.orderId ? row('▣', 'a', 'Order', esc(x.orderId), '') : ''}
+        ${x.billAmount != null ? row('🧮', 'a', 'Bill amount', aed(x.billAmount), '') : ''}
+        ${row('💵', 'g', 'Collected', aed(x.collectedAmount), '')}
+        ${x.discount > 0 ? row('🏷', 'a', 'Discount', aed(x.discount), '') : ''}
+        ${row('💳', 'a', 'Method', esc(methodLabel(x.method)) + (x.cheque && x.cheque.no ? ' · ' + esc(x.cheque.no) : ''), '')}
+        ${row('💬', 'a', 'Narration', esc(x.narration || '—'), '')}
+        ${row('•', x.status === 'CONFIRMED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a', 'Status', rcptStatusTag(x.status), '')}
+        ${row('🧍', 'a', 'Collected by', esc(x.collectedBy || '—'), '')}
+      </div>
+      ${items ? `<div class="sect">Bill items</div><div class="card">${items}</div>` : ''}
+      ${actions}
+      <div class="sect">Timeline</div><div class="card">${hist || emptyRow('—')}</div>`,
+      (sh) => { if (x.hasPhoto) { staffApi('/api/finance/receipts/' + x.id + '/photo', 'GET').then((r) => { if (r && r.dataUrl) { const el = sh.querySelector('#rcpt_photo'); if (el) el.innerHTML = `<img src="${r.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:12px" />`; } }).catch(() => {}); } });
+  }
+  const findRcpt = (id) => (myRcptData || []).concat(allRcptData || []).find((r) => r.id === id);
+
+  ACT.rcptAdd = () => receiptForm();
+  ACT.rcptOpen = (d) => receiptDetail(findRcpt(d.id));
+  ACT.rcptLookup = async () => {
+    const id = ($('#rcpt_order').value || '').trim(); if (!id) return toast('Type an order no');
+    try {
+      const o = await staffApi('/api/finance/orders/' + encodeURIComponent(id) + '/lookup', 'GET');
+      const set = (i, v) => { const el = $('#' + i); if (el && v != null) el.value = v; };
+      set('rcpt_customer', o.customerName); set('rcpt_bill', o.billAmount);
+      const inf = $('#rcpt_billinfo'); if (inf) inf.textContent = `Bill ${aed(o.billAmount)} · ${o.customerName || ''} · ${(o.items || []).length} item(s)`;
+      rcptDraft.orderId = o.orderId; toast('Bill loaded');
+    } catch (e) { toast(e.message); }
+  };
+  ACT.rcptSave = async () => {
+    const collected = parseFloat($('#rcpt_amount').value); if (!(collected > 0)) return toast('Enter the amount collected');
+    const method = $('#rcpt_method').value;
+    const body = { collectedAmount: collected, method };
+    const narration = ($('#rcpt_narration').value || '').trim(); if (narration) body.narration = narration;
+    if (rcptDraft.orderId) { body.orderId = rcptDraft.orderId; }
+    else { const cn = ($('#rcpt_customer').value || '').trim(); const bill = parseFloat($('#rcpt_bill').value); if (cn) body.customerName = cn; if (bill > 0) body.billAmount = bill; }
+    if (method === 'CHEQUE') { body.cheque = { no: ($('#rcpt_chqno').value || '').trim(), bank: ($('#rcpt_chqbank').value || '').trim(), date: ($('#rcpt_chqdate').value || '').trim() }; }
+    if (rcptDraft.photo) { body.billPhoto = rcptDraft.photo; body.billMediaType = rcptDraft.mediaType || 'image/jpeg'; }
+    try { const r = await staffApi('/api/finance/receipts', 'POST', body); rcptDraft = {}; refreshRcpt(); closeSheet(); render(); toast(r.status === 'PENDING_APPROVAL' ? 'Saved — discount sent to finance for approval' : 'Receipt saved'); }
+    catch (e) { toast(e.message); }
+  };
+  ACT.rcptApprove = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/approve', 'POST', {}); refreshRcpt(); toast('Discount approved'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.rcptReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/finance/receipts/' + d.id + '/reject', 'POST', { note }); refreshRcpt(); toast('Rejected'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.rcptConfirm = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/confirm', 'POST', {}); refreshRcpt(); toast('Confirmed received ✓'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+
+  // Reachable from ⚙ Settings for every role too.
+  ACT.rcptCollectSheet = () => { closeSheet(); receiptForm(); };
+  ACT.rcptQueueSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/finance/receipts', 'GET'); } catch (e) { toast(e.message); } allRcptData = list; openSheet('Receipt approvals', queueBody(list)); };
+})();
 
 window.renderApp = render;        // let Muhammed refresh the UI after acting
 window.currentRole = () => role;  // expose active role to Muhammed
