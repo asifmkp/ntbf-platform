@@ -1,7 +1,9 @@
-// NTBF WhatsApp bot — v29: staff-routing hardening.
+// NTBF WhatsApp bot — v30: staff-routing hardening.
 //  - Muhammed dedupe reply ({duplicate:true}) is treated as success, not a failure
 //    (was nagging staff with "temporarily unavailable" on every WhatsApp re-delivery).
 //  - Backend {staff:false} now falls through to the customer flow instead of erroring.
+//  - v30: 30s timeout on the Muhammed call so a slow/restarting backend can never leave
+//    staff with NO reply (they now always get at least a "one moment" message).
 //  - New admin self-check: GET ?review=TOKEN&health=staff&phone=<digits> reports whether
 //    a number matches the roster and what /api/muhammed/wa returns — so staff routing is
 //    verifiable without guessing.
@@ -65,11 +67,15 @@ async function matchStaff(from: string): Promise<StaffEntry | null> {
 //   false -> backend says this sender isn't staff — caller should run the customer flow.
 async function routeToMuhammed(from: string, text: string, waId: string, staff: StaffEntry): Promise<boolean> {
   try {
+    // Never let a slow/restarting backend hang forever -> that leaves staff with silence.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
     const r = await fetch(MUHAMMED_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-ingest-token": PLATFORM_INGEST_TOKEN },
       body: JSON.stringify({ phone: from, text, wa_id: waId, name: staff.name, roles: staff.roles }),
-    });
+      signal: ctrl.signal,
+    }).finally(() => clearTimeout(timer));
     const bodyText = await r.text();
     let j: any = {};
     try { j = JSON.parse(bodyText); } catch { /* non-json response */ }
