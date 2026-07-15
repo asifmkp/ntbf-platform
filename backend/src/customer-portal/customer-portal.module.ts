@@ -437,5 +437,7 @@ export class CustomerPortalController {
   ],
   controllers: [CustomerPortalController],
   providers: [CustomerStore, CustomerPortalService, CustomerAuthGuard, StaffAuthGuard, IngestGuard],
+  // Exported so the Finance module can read orders/bills (read-only) to match receipts to the real bill.
+  exports: [CustomerStore],
 })
 export class CustomerPortalModule {}
