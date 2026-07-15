@@ -1168,6 +1168,10 @@ function settingsForm() {
         <button class="btn" data-act="rcptCollectSheet">Record a receipt</button>
         ${(isAdmin || (staff.roles || []).indexOf('finance') >= 0) ? '<button class="btn" data-act="rcptQueueSheet">Receipt approvals</button>' : ''}
       </div>
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="trfAdd">Pay a colleague</button>
+        <button class="btn" data-act="trfMineSheet">My transfers</button>
+      </div>
       ${isAdmin ? `<div class="btn-row" style="margin-top:9px">
         <button class="btn" data-act="admExpenses">Expense approvals</button>
         <button class="btn" data-act="admAdvances">Advances (admin)</button>
@@ -1863,42 +1867,67 @@ ACT.myExpensesSheet = async () => { closeSheet(); let list = []; try { list = aw
 ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balance: {} }; try { d = await staffApi('/api/advances/mine', 'GET'); } catch (e) { toast(e.message); } openSheet('My advances', advancesBody(d)); };
 
 // ===========================================================================
-// Finance module (Stage 1) — Customer Receipts (money IN from customers).
-// Collectors (driver/salesman/anyone) raise a receipt against a bill; finance/
-// admin approve any discount and confirm the money was received. File-backed
-// backend at /api/finance/* via the staff JWT (staffApi). Mirrors the Rashid
-// expenses UI patterns. Does not touch orders or the WhatsApp ingest contract.
+// Finance module — the money hub, built on the live System A.
+//   Collectors (driver/salesman/anyone): a Receipts tab (collect + my receipts)
+//     plus paying a colleague (staff-to-staff transfers).
+//   Finance/admin: a Finance hub with segments — Receipts · Payments · Cheques ·
+//     Transfers · Overview. Talks to /api/finance/* via the staff JWT.
+//   Does not touch orders or the WhatsApp ingest contract.
 // ===========================================================================
-(function financeReceiptsUI() {
+(function financeHubUI() {
   const RCPT_METHODS = [['CASH', 'Cash'], ['CHEQUE', 'Cheque'], ['BANK', 'Bank transfer'], ['CARD', 'Card']];
   const methodLabel = (m) => ({ CASH: 'Cash', CHEQUE: 'Cheque', BANK: 'Bank transfer', CARD: 'Card' })[m] || m;
   const rcptStatusTag = (s) => { const m = { PENDING_APPROVAL: 'amber', COLLECTED: 'accent', CONFIRMED: 'green', REJECTED: 'red' }; return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase().replace(/_/g, ' ')}</span>`; };
 
-  // Add a Receipts tab (before the Muhammed tab) to the collector + finance/admin roles.
-  ['driver', 'salesman', 'finance', 'admin'].forEach((r) => {
+  // Add the finance tab (before Muhammed). Collectors get a simple "Receipts" tab;
+  // finance/admin get the full "Finance" hub under the same tab id.
+  [['driver', 'Receipts', '🧾'], ['salesman', 'Receipts', '🧾'], ['finance', 'Finance', '💰'], ['admin', 'Finance', '💰']].forEach(([r, label, icon]) => {
     const tabs = ROLES[r] && ROLES[r].tabs; if (!tabs || tabs.find((t) => t.id === 'receipts')) return;
     const mi = tabs.findIndex((t) => t.id === 'muhammed');
-    tabs.splice(mi < 0 ? tabs.length : mi, 0, { id: 'receipts', label: 'Receipts', i: '🧾' });
+    tabs.splice(mi < 0 ? tabs.length : mi, 0, { id: 'receipts', label, i: icon });
   });
 
-  let myRcptData = null;    // collector's own receipts cache
-  let allRcptData = null;   // finance/admin: all receipts cache
-  let rcptDraft = {};
+  const payStatusTag = (s) => { const m = { PENDING_APPROVAL: 'amber', APPROVED: 'green', REJECTED: 'red' }; return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase().replace(/_/g, ' ')}</span>`; };
+  const trfStatusTag = (s) => { const m = { PENDING_CONFIRM: 'amber', CONFIRMED: 'green', DECLINED: 'red' }; return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase().replace(/_/g, ' ')}</span>`; };
+  const chqTag = (s) => `<span class="tag ${s === 'CLEARED' ? 'green' : s === 'BOUNCED' ? 'red' : 'amber'}">${String(s || '').toLowerCase()}</span>`;
+
+  let myRcptData = null, allRcptData = null, allPayData = null, chqData = null, myTrfData = null, sumData = null, payCats = null;
+  let rcptDraft = {}, payDraft = {}, trfDraft = {};
+  let finSeg = localStorage.getItem('ntbf_finseg') || 'receipts';
   async function loadMyRcpt() { try { myRcptData = await staffApi('/api/finance/receipts/mine', 'GET'); } catch (e) { myRcptData = []; toast(e.message); } render(); }
   async function loadAllRcpt() { try { allRcptData = await staffApi('/api/finance/receipts', 'GET'); } catch (e) { allRcptData = []; toast(e.message); } render(); }
+  async function loadAllPay() { try { allPayData = await staffApi('/api/finance/payments', 'GET'); } catch (e) { allPayData = []; toast(e.message); } render(); }
+  async function loadCheques() { try { chqData = await staffApi('/api/finance/cheques', 'GET'); } catch (e) { chqData = []; toast(e.message); } render(); }
+  async function loadMyTrf() { try { myTrfData = await staffApi('/api/finance/transfers/mine', 'GET'); } catch (e) { myTrfData = []; toast(e.message); } render(); }
+  async function loadSummary() { try { sumData = await staffApi('/api/finance/summary', 'GET'); } catch (e) { sumData = {}; toast(e.message); } render(); }
+  async function ensureCats() { if (payCats) return payCats; try { payCats = (await staffApi('/api/finance/payments/categories', 'GET')).categories; } catch (e) { payCats = []; } return payCats; }
   const isFinanceView = () => role === 'finance' || role === 'admin';
-  const refreshRcpt = () => { myRcptData = null; allRcptData = null; };
+  const refreshFin = () => { myRcptData = allRcptData = allPayData = chqData = myTrfData = sumData = null; };
 
   function receiptRow(x, acts) {
     return `<div class="li"><div class="ic ${x.status === 'CONFIRMED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a'}" data-act="rcptOpen" data-id="${x.id}">🧾</div>
       <div class="m" data-act="rcptOpen" data-id="${x.id}"><b>${esc(x.customerName || '—')} · ${aed(x.collectedAmount)}</b><span>${esc(methodLabel(x.method))}${x.billAmount != null ? ' · bill ' + aed(x.billAmount) : ''}${x.discount > 0 ? ' · disc ' + aed(x.discount) : ''}${x.orderId ? ' · ' + esc(x.orderId) : ''}</span></div>
       <div class="end">${acts}</div></div>`;
   }
-  function collectorBody(list) {
+  function trfRow(x) {
+    const iAmReceiver = staff && x.toId === staff.id;
+    const canAct = iAmReceiver && x.status === 'PENDING_CONFIRM';
+    return `<div class="li"><div class="ic ${x.status === 'CONFIRMED' ? 'g' : x.status === 'DECLINED' ? 'r' : 'a'}" data-act="trfOpen" data-id="${x.id}">🤝</div>
+      <div class="m" data-act="trfOpen" data-id="${x.id}"><b>${esc(x.fromName)} → ${esc(x.toName)} · ${aed(x.amount)}</b><span>${esc(methodLabel(x.method))}${x.narration ? ' · ' + esc(x.narration) : ''}</span></div>
+      <div class="end">${canAct ? `<button class="btn green sm" data-act="trfConfirm" data-id="${x.id}">✓</button> <button class="btn danger sm" data-act="trfDecline" data-id="${x.id}">✕</button>` : trfStatusTag(x.status)}</div></div>`;
+  }
+  function transfersBlock(list, showAdd) {
+    const rows = (list || []).map((x) => trfRow(x)).join('');
+    return `${showAdd ? '<button class="btn full" data-act="trfAdd" style="margin:14px 0 0">＋ Pay a colleague</button>' : ''}
+      <div class="sect">Colleague transfers (${(list || []).length})</div>
+      <div class="card">${rows || emptyRow('None yet.')}</div>`;
+  }
+  function collectorBody(list, trf) {
     const rows = (list || []).map((x) => receiptRow(x, rcptStatusTag(x.status))).join('');
     return `<button class="btn primary full" data-act="rcptAdd" style="margin-bottom:12px">＋ Collect a payment</button>
       <div class="sect">My receipts (${(list || []).length})</div>
-      <div class="card">${rows || emptyRow('No receipts yet. Tap “Collect a payment”.')}</div>`;
+      <div class="card">${rows || emptyRow('No receipts yet. Tap “Collect a payment”.')}</div>
+      ${trf === null ? loadingCard('Loading transfers…') : transfersBlock(trf, true)}`;
   }
   function queueBody(list) {
     const pending = (list || []).filter((x) => x.status === 'PENDING_APPROVAL');
@@ -1912,10 +1941,65 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
       <div class="sect">Recent (${recent.length})</div>
       <div class="card">${recent.map((x) => receiptRow(x, rcptStatusTag(x.status))).join('') || emptyRow('None yet.')}</div>`;
   }
+  function paymentRow(x, acts) {
+    return `<div class="li"><div class="ic ${x.status === 'APPROVED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a'}" data-act="payOpen" data-id="${x.id}">💸</div>
+      <div class="m" data-act="payOpen" data-id="${x.id}"><b>${esc(x.payee)} · ${aed(x.amount)}</b><span>${esc(x.category)} · ${esc(methodLabel(x.method))}${x.narration ? ' · ' + esc(x.narration) : ''}</span></div>
+      <div class="end">${acts}</div></div>`;
+  }
+  function paymentsBody(list) {
+    const pending = (list || []).filter((x) => x.status === 'PENDING_APPROVAL');
+    const done = (list || []).filter((x) => x.status !== 'PENDING_APPROVAL').slice(0, 40);
+    const adm = isAdminNow();
+    return `<button class="btn primary full" data-act="payAdd" style="margin-bottom:12px">＋ New payment</button>
+      <div class="sect">Awaiting approval (${pending.length})</div>
+      <div class="card">${pending.map((x) => paymentRow(x, adm ? `<button class="btn green sm" data-act="payApprove" data-id="${x.id}">✓</button> <button class="btn danger sm" data-act="payReject" data-id="${x.id}">✕</button>` : payStatusTag(x.status))).join('') || emptyRow('Nothing pending.')}</div>
+      <div class="sect">Recent (${done.length})</div>
+      <div class="card">${done.map((x) => paymentRow(x, payStatusTag(x.status))).join('') || emptyRow('No payments yet.')}</div>
+      ${adm ? '<button class="btn full" data-act="payCatsForm" style="margin-top:8px">Manage categories</button>' : ''}`;
+  }
+  function chequesBody(list) {
+    const rows = (list || []).map((x) => {
+      const st = x.chequeStatus; const a = [];
+      if (st === 'RECEIVED') a.push(`<button class="btn sm" data-act="chqAct" data-kind="${x.kind}" data-id="${x.id}" data-a="deposit">Deposit</button>`);
+      if (st === 'RECEIVED' || st === 'DEPOSITED') { a.push(`<button class="btn green sm" data-act="chqAct" data-kind="${x.kind}" data-id="${x.id}" data-a="clear">Cleared</button>`); a.push(`<button class="btn danger sm" data-act="chqAct" data-kind="${x.kind}" data-id="${x.id}" data-a="bounce">Bounced</button>`); }
+      return `<div class="li"><div class="ic ${st === 'CLEARED' ? 'g' : st === 'BOUNCED' ? 'r' : 'a'}">▤</div>
+        <div class="m"><b>${esc(x.party)} · ${aed(x.amount)}</b><span>${x.kind === 'in' ? 'incoming' : 'outgoing'}${x.cheque && x.cheque.no ? ' · ' + esc(x.cheque.no) : ''}${x.cheque && x.cheque.bank ? ' · ' + esc(x.cheque.bank) : ''}${x.cheque && x.cheque.bounceCharge ? ' · +' + aed(x.cheque.bounceCharge) + ' charge' : ''}</span>${a.length ? `<div class="btn-row">${a.join('')}</div>` : ''}</div>
+        <div class="end">${chqTag(st)}</div></div>`;
+    }).join('');
+    return `<div class="sect">Cheques (${(list || []).length})</div><div class="card">${rows || emptyRow('No cheques yet.')}</div>`;
+  }
+  function overviewBody(s) {
+    s = s || {};
+    return `<div class="mkpis">
+        ${kpi('Money in', aed(s.moneyIn || 0), 'green')}
+        ${kpi('Money out', aed(s.moneyOut || 0), 'red')}
+        ${kpi('Net', aed(s.net || 0), (s.net || 0) < 0 ? 'red' : 'green')}
+        ${kpi('To approve', (s.receiptsPendingApproval || 0) + (s.paymentsPending || 0), ((s.receiptsPendingApproval || 0) + (s.paymentsPending || 0)) ? 'amber' : 'green')}
+        ${kpi('To confirm', s.receiptsToConfirm || 0, (s.receiptsToConfirm || 0) ? 'accent' : 'green')}
+        ${kpi('Cheques out', s.chequesOutstanding || 0, 'accent')}
+        ${kpi('Bounced', s.chequesBounced || 0, (s.chequesBounced || 0) ? 'red' : 'green')}
+        ${kpi('Receipts', s.receiptsCount || 0)}
+        ${kpi('Payments', s.paymentsCount || 0)}
+      </div>
+      <div class="card pad"><div class="muted" style="font-size:12px">Money in = confirmed customer receipts. Money out = approved company payments. Cheques out = received/deposited, not yet cleared.</div></div>`;
+  }
+  function finSegBar() {
+    const segs = [['receipts', 'Receipts'], ['payments', 'Payments'], ['cheques', 'Cheques'], ['transfers', 'Transfers'], ['overview', 'Overview']];
+    return `<div class="seg" style="margin-bottom:12px;overflow-x:auto">${segs.map(([id, l]) => `<button class="${finSeg === id ? 'on' : ''}" data-act="finSeg" data-id="${id}">${l}</button>`).join('')}</div>`;
+  }
   views.receipts = function () {
-    if (isFinanceView()) { if (allRcptData === null) { setTimeout(loadAllRcpt, 0); return loadingCard('Loading receipts…'); } return queueBody(allRcptData); }
+    if (isFinanceView()) {
+      let sub = '';
+      if (finSeg === 'receipts') sub = allRcptData === null ? (setTimeout(loadAllRcpt, 0), loadingCard('Loading…')) : queueBody(allRcptData);
+      else if (finSeg === 'payments') sub = allPayData === null ? (setTimeout(loadAllPay, 0), loadingCard('Loading…')) : paymentsBody(allPayData);
+      else if (finSeg === 'cheques') sub = chqData === null ? (setTimeout(loadCheques, 0), loadingCard('Loading…')) : chequesBody(chqData);
+      else if (finSeg === 'transfers') sub = myTrfData === null ? (setTimeout(loadMyTrf, 0), loadingCard('Loading…')) : transfersBlock(myTrfData, true);
+      else sub = sumData === null ? (setTimeout(loadSummary, 0), loadingCard('Loading…')) : overviewBody(sumData);
+      return finSegBar() + sub;
+    }
     if (myRcptData === null) { setTimeout(loadMyRcpt, 0); return loadingCard('Loading your receipts…'); }
-    return collectorBody(myRcptData);
+    if (myTrfData === null) setTimeout(loadMyTrf, 0);
+    return collectorBody(myRcptData, myTrfData);
   };
 
   function receiptForm() {
@@ -1960,6 +2044,14 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
     let actions = '';
     if (fin && x.status === 'PENDING_APPROVAL') actions = `<div class="btn-row" style="margin-top:12px"><button class="btn green" data-act="rcptApprove" data-id="${x.id}">Approve discount</button><button class="btn danger" data-act="rcptReject" data-id="${x.id}">Reject</button></div>`;
     else if (fin && x.status === 'COLLECTED') actions = `<button class="btn primary full" data-act="rcptConfirm" data-id="${x.id}" style="margin-top:12px">Confirm received</button>`;
+    let chequeActions = '';
+    if (fin && x.method === 'CHEQUE' && x.cheque && x.cheque.status !== 'CLEARED' && x.cheque.status !== 'BOUNCED') {
+      const st = x.cheque.status || 'RECEIVED'; const b = [];
+      if (st === 'RECEIVED') b.push(`<button class="btn sm" data-act="chqAct" data-kind="in" data-id="${x.id}" data-a="deposit">Deposit</button>`);
+      b.push(`<button class="btn green sm" data-act="chqAct" data-kind="in" data-id="${x.id}" data-a="clear">Cleared</button>`);
+      b.push(`<button class="btn danger sm" data-act="chqAct" data-kind="in" data-id="${x.id}" data-a="bounce">Bounced</button>`);
+      chequeActions = `<div class="sect">Cheque · ${esc(st.toLowerCase())}</div><div class="btn-row">${b.join('')}</div>`;
+    }
     openSheet('Receipt · ' + aed(x.collectedAmount), `
       <div id="rcpt_photo"></div>
       <div class="card">
@@ -1976,10 +2068,108 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
       </div>
       ${items ? `<div class="sect">Bill items</div><div class="card">${items}</div>` : ''}
       ${actions}
+      ${chequeActions}
       <div class="sect">Timeline</div><div class="card">${hist || emptyRow('—')}</div>`,
       (sh) => { if (x.hasPhoto) { staffApi('/api/finance/receipts/' + x.id + '/photo', 'GET').then((r) => { if (r && r.dataUrl) { const el = sh.querySelector('#rcpt_photo'); if (el) el.innerHTML = `<img src="${r.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:12px" />`; } }).catch(() => {}); } });
   }
   const findRcpt = (id) => (myRcptData || []).concat(allRcptData || []).find((r) => r.id === id);
+  const findPay = (id) => (allPayData || []).find((r) => r.id === id);
+  const findTrf = (id) => (myTrfData || []).find((r) => r.id === id);
+
+  // ---- Payment form + detail ----
+  async function paymentForm() {
+    payDraft = {};
+    const cats = await ensureCats();
+    const today = new Date().toISOString().slice(0, 10);
+    openSheet('New payment', `
+      <label class="fld"><span class="lab">Paid to</span><input id="pay_payee" placeholder="Supplier / person" /></label>
+      <label class="fld"><span class="lab">Amount (AED)</span><input id="pay_amount" type="number" inputmode="decimal" placeholder="0.00" /></label>
+      <label class="fld"><span class="lab">Category</span><select id="pay_cat">${(cats || []).map((c) => `<option>${esc(c)}</option>`).join('')}</select></label>
+      <label class="fld"><span class="lab">Date</span><input id="pay_date" type="date" value="${today}" /></label>
+      <label class="fld"><span class="lab">Method</span><select id="pay_method">${RCPT_METHODS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+      <div id="pay_cheque" style="display:none">
+        <label class="fld"><span class="lab">Cheque no</span><input id="pay_chqno" /></label>
+        <label class="fld"><span class="lab">Bank</span><input id="pay_chqbank" /></label>
+        <label class="fld"><span class="lab">Cheque date</span><input id="pay_chqdate" type="date" /></label>
+      </div>
+      <label class="fld"><span class="lab">Narration</span><input id="pay_narration" placeholder="What is this payment for?" /></label>
+      <input type="file" id="pay_file" accept="image/*" capture="environment" style="margin:6px 0 8px" />
+      <div id="pay_preview"></div>
+      <button class="btn primary full" data-act="paySave">Submit for approval</button>
+      <p class="muted" style="font-size:11.5px;margin-top:8px">Every payment needs admin approval before it is paid.</p>`,
+      (sh) => {
+        const m = sh.querySelector('#pay_method'); const c = sh.querySelector('#pay_cheque');
+        const sync = () => { c.style.display = m.value === 'CHEQUE' ? 'block' : 'none'; };
+        m.addEventListener('change', sync); sync();
+        sh.querySelector('#pay_file').addEventListener('change', async function () {
+          const f = this.files[0]; if (!f) return; const shot = await downscaleImage(f); if (!shot) return;
+          payDraft.photo = shot.dataUrl; payDraft.mediaType = shot.mediaType;
+          sh.querySelector('#pay_preview').innerHTML = `<img src="${shot.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:10px" />`;
+        });
+      });
+  }
+  function paymentDetail(x) {
+    if (!x) return;
+    const adm = isAdminNow();
+    const hist = (x.statusHistory || []).map((h) => `<div class="li"><div class="ic ${h.to === 'APPROVED' ? 'g' : h.to === 'REJECTED' ? 'r' : 'a'}">•</div><div class="m"><b>${esc(String(h.to).replace(/_/g, ' '))}</b><span>${esc((h.at || '').slice(0, 16).replace('T', ' '))} · ${esc(h.by)}${h.note ? ' · ' + esc(h.note) : ''}</span></div></div>`).join('');
+    let actions = '';
+    if (adm && x.status === 'PENDING_APPROVAL') actions = `<div class="btn-row" style="margin-top:12px"><button class="btn green" data-act="payApprove" data-id="${x.id}">Approve</button><button class="btn danger" data-act="payReject" data-id="${x.id}">Reject</button></div>`;
+    let chequeActions = '';
+    if (x.method === 'CHEQUE' && x.cheque && x.cheque.status !== 'CLEARED' && x.cheque.status !== 'BOUNCED') {
+      const st = x.cheque.status || 'RECEIVED'; const b = [];
+      if (st === 'RECEIVED') b.push(`<button class="btn sm" data-act="chqAct" data-kind="out" data-id="${x.id}" data-a="deposit">Presented</button>`);
+      b.push(`<button class="btn green sm" data-act="chqAct" data-kind="out" data-id="${x.id}" data-a="clear">Cleared</button>`);
+      b.push(`<button class="btn danger sm" data-act="chqAct" data-kind="out" data-id="${x.id}" data-a="bounce">Bounced</button>`);
+      chequeActions = `<div class="sect">Cheque · ${esc(st.toLowerCase())}</div><div class="btn-row">${b.join('')}</div>`;
+    }
+    openSheet('Payment · ' + aed(x.amount), `
+      <div id="pay_photo"></div>
+      <div class="card">
+        ${row('💸', 'a', 'Payment', esc(x.id), '')}
+        ${row('👤', 'a', 'Paid to', esc(x.payee), '')}
+        ${row('🏷', 'a', 'Category', esc(x.category), '')}
+        ${row('💰', 'r', 'Amount', aed(x.amount), '')}
+        ${row('💳', 'a', 'Method', esc(methodLabel(x.method)) + (x.cheque && x.cheque.no ? ' · ' + esc(x.cheque.no) : ''), '')}
+        ${row('📅', 'a', 'Date', esc(x.date || '—'), '')}
+        ${row('💬', 'a', 'Narration', esc(x.narration || '—'), '')}
+        ${row('•', x.status === 'APPROVED' ? 'g' : x.status === 'REJECTED' ? 'r' : 'a', 'Status', payStatusTag(x.status), '')}
+        ${row('🧍', 'a', 'Created by', esc(x.createdBy || '—'), '')}
+      </div>
+      ${actions}
+      ${chequeActions}
+      <div class="sect">Timeline</div><div class="card">${hist || emptyRow('—')}</div>`,
+      (sh) => { if (x.hasPhoto) { staffApi('/api/finance/payments/' + x.id + '/photo', 'GET').then((r) => { if (r && r.dataUrl) { const el = sh.querySelector('#pay_photo'); if (el) el.innerHTML = `<img src="${r.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:12px" />`; } }).catch(() => {}); } });
+  }
+  // ---- Transfer form + detail ----
+  async function transferForm() {
+    trfDraft = {};
+    openSheet('Pay a colleague', '<div class="empty">Loading colleagues…</div>');
+    let team = []; try { team = await staffApi('/api/finance/colleagues', 'GET'); } catch (e) { toast(e.message); }
+    openSheet('Pay a colleague', `
+      <label class="fld"><span class="lab">Colleague</span><select id="trf_to">${(team || []).map((s) => `<option value="${s.id}">${esc(s.name)} (${esc((s.roles || []).join(', '))})</option>`).join('')}</select></label>
+      <label class="fld"><span class="lab">Amount (AED)</span><input id="trf_amount" type="number" inputmode="decimal" placeholder="0.00" /></label>
+      <label class="fld"><span class="lab">Method</span><select id="trf_method">${RCPT_METHODS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+      <label class="fld"><span class="lab">Narration</span><input id="trf_narration" placeholder="e.g. shared fuel" /></label>
+      <button class="btn primary full" data-act="trfSave">Record payment</button>
+      <p class="muted" style="font-size:11.5px;margin-top:8px">The colleague you paid confirms they received it. This stays between you two — it doesn’t go to admin.</p>`);
+  }
+  function transferDetail(x) {
+    if (!x) return;
+    const iAmReceiver = staff && x.toId === staff.id;
+    const hist = (x.statusHistory || []).map((h) => `<div class="li"><div class="ic ${h.to === 'CONFIRMED' ? 'g' : h.to === 'DECLINED' ? 'r' : 'a'}">•</div><div class="m"><b>${esc(String(h.to).replace(/_/g, ' '))}</b><span>${esc((h.at || '').slice(0, 16).replace('T', ' '))} · ${esc(h.by)}${h.note ? ' · ' + esc(h.note) : ''}</span></div></div>`).join('');
+    const actions = (iAmReceiver && x.status === 'PENDING_CONFIRM') ? `<div class="btn-row" style="margin-top:12px"><button class="btn green" data-act="trfConfirm" data-id="${x.id}">Confirm received</button><button class="btn danger" data-act="trfDecline" data-id="${x.id}">Decline</button></div>` : '';
+    openSheet('Transfer · ' + aed(x.amount), `
+      <div class="card">
+        ${row('🤝', 'a', 'Transfer', esc(x.id), '')}
+        ${row('➡', 'a', 'From → To', esc(x.fromName) + ' → ' + esc(x.toName), '')}
+        ${row('💵', 'g', 'Amount', aed(x.amount), '')}
+        ${row('💳', 'a', 'Method', esc(methodLabel(x.method)), '')}
+        ${row('💬', 'a', 'Narration', esc(x.narration || '—'), '')}
+        ${row('•', x.status === 'CONFIRMED' ? 'g' : x.status === 'DECLINED' ? 'r' : 'a', 'Status', trfStatusTag(x.status), '')}
+      </div>
+      ${actions}
+      <div class="sect">Timeline</div><div class="card">${hist || emptyRow('—')}</div>`);
+  }
 
   ACT.rcptAdd = () => receiptForm();
   ACT.rcptOpen = (d) => receiptDetail(findRcpt(d.id));
@@ -2002,16 +2192,69 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
     else { const cn = ($('#rcpt_customer').value || '').trim(); const bill = parseFloat($('#rcpt_bill').value); if (cn) body.customerName = cn; if (bill > 0) body.billAmount = bill; }
     if (method === 'CHEQUE') { body.cheque = { no: ($('#rcpt_chqno').value || '').trim(), bank: ($('#rcpt_chqbank').value || '').trim(), date: ($('#rcpt_chqdate').value || '').trim() }; }
     if (rcptDraft.photo) { body.billPhoto = rcptDraft.photo; body.billMediaType = rcptDraft.mediaType || 'image/jpeg'; }
-    try { const r = await staffApi('/api/finance/receipts', 'POST', body); rcptDraft = {}; refreshRcpt(); closeSheet(); render(); toast(r.status === 'PENDING_APPROVAL' ? 'Saved — discount sent to finance for approval' : 'Receipt saved'); }
+    try { const r = await staffApi('/api/finance/receipts', 'POST', body); rcptDraft = {}; refreshFin(); closeSheet(); render(); toast(r.status === 'PENDING_APPROVAL' ? 'Saved — discount sent to finance for approval' : 'Receipt saved'); }
     catch (e) { toast(e.message); }
   };
-  ACT.rcptApprove = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/approve', 'POST', {}); refreshRcpt(); toast('Discount approved'); closeSheet(); render(); } catch (e) { toast(e.message); } };
-  ACT.rcptReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/finance/receipts/' + d.id + '/reject', 'POST', { note }); refreshRcpt(); toast('Rejected'); closeSheet(); render(); } catch (e) { toast(e.message); } };
-  ACT.rcptConfirm = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/confirm', 'POST', {}); refreshRcpt(); toast('Confirmed received ✓'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.rcptApprove = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/approve', 'POST', {}); refreshFin(); toast('Discount approved'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.rcptReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/finance/receipts/' + d.id + '/reject', 'POST', { note }); refreshFin(); toast('Rejected'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.rcptConfirm = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/confirm', 'POST', {}); refreshFin(); toast('Confirmed received ✓'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+
+  // ---- segment switch ----
+  ACT.finSeg = (d) => { finSeg = d.id; localStorage.setItem('ntbf_finseg', d.id); render(); };
+
+  // ---- payments ----
+  ACT.payAdd = () => paymentForm();
+  ACT.payOpen = (d) => paymentDetail(findPay(d.id));
+  ACT.paySave = async () => {
+    const payee = ($('#pay_payee').value || '').trim(); if (!payee) return toast('Enter who is being paid');
+    const amount = parseFloat($('#pay_amount').value); if (!(amount > 0)) return toast('Enter an amount');
+    const method = $('#pay_method').value;
+    const body = { payee, amount, method, category: $('#pay_cat').value, date: $('#pay_date').value };
+    const narration = ($('#pay_narration').value || '').trim(); if (narration) body.narration = narration;
+    if (method === 'CHEQUE') { body.cheque = { no: ($('#pay_chqno').value || '').trim(), bank: ($('#pay_chqbank').value || '').trim(), date: ($('#pay_chqdate').value || '').trim() }; }
+    if (payDraft.photo) { body.billPhoto = payDraft.photo; body.billMediaType = payDraft.mediaType || 'image/jpeg'; }
+    try { await staffApi('/api/finance/payments', 'POST', body); payDraft = {}; refreshFin(); closeSheet(); render(); toast('Payment submitted for admin approval'); }
+    catch (e) { toast(e.message); }
+  };
+  ACT.payApprove = async (d) => { try { await staffApi('/api/finance/payments/' + d.id + '/approve', 'POST', {}); refreshFin(); toast('Payment approved'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.payReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/finance/payments/' + d.id + '/reject', 'POST', { note }); refreshFin(); toast('Payment rejected'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.payCatsForm = async () => {
+    const cats = await ensureCats();
+    openSheet('Payment categories', `
+      <div class="muted" style="font-size:12.5px;margin-bottom:8px">One category per line. These appear in the New payment dropdown.</div>
+      <textarea id="pay_cats" rows="10" style="resize:vertical">${esc((cats || []).join('\n'))}</textarea>
+      <button class="btn primary full" data-act="payCatsSave" style="margin-top:10px">Save categories</button>`);
+  };
+  ACT.payCatsSave = async () => {
+    const categories = ($('#pay_cats').value || '').split('\n').map((s) => s.trim()).filter(Boolean);
+    if (!categories.length) return toast('Add at least one category');
+    try { const r = await staffApi('/api/finance/payments/categories', 'PUT', { categories }); payCats = r.categories; toast('Categories saved'); closeSheet(); } catch (e) { toast(e.message); }
+  };
+
+  // ---- cheques ----
+  ACT.chqAct = async (d) => {
+    const path = d.kind === 'out' ? '/api/finance/payments/' : '/api/finance/receipts/';
+    try { await staffApi(path + d.id + '/cheque', 'POST', { action: d.a }); refreshFin(); toast('Cheque ' + (d.a === 'deposit' ? 'deposited' : d.a === 'clear' ? 'cleared' : 'bounced')); closeSheet(); render(); } catch (e) { toast(e.message); }
+  };
+
+  // ---- transfers ----
+  ACT.trfAdd = () => transferForm();
+  ACT.trfOpen = (d) => transferDetail(findTrf(d.id));
+  ACT.trfSave = async () => {
+    const toStaffId = $('#trf_to').value; if (!toStaffId) return toast('Pick a colleague');
+    const amount = parseFloat($('#trf_amount').value); if (!(amount > 0)) return toast('Enter an amount');
+    const body = { toStaffId, amount, method: $('#trf_method').value };
+    const narration = ($('#trf_narration').value || '').trim(); if (narration) body.narration = narration;
+    try { await staffApi('/api/finance/transfers', 'POST', body); refreshFin(); closeSheet(); render(); toast('Recorded — waiting for their confirmation'); }
+    catch (e) { toast(e.message); }
+  };
+  ACT.trfConfirm = async (d) => { try { await staffApi('/api/finance/transfers/' + d.id + '/confirm', 'POST', {}); refreshFin(); toast('Confirmed ✓'); closeSheet(); render(); } catch (e) { toast(e.message); } };
+  ACT.trfDecline = async (d) => { try { await staffApi('/api/finance/transfers/' + d.id + '/decline', 'POST', {}); refreshFin(); toast('Declined'); closeSheet(); render(); } catch (e) { toast(e.message); } };
 
   // Reachable from ⚙ Settings for every role too.
   ACT.rcptCollectSheet = () => { closeSheet(); receiptForm(); };
   ACT.rcptQueueSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/finance/receipts', 'GET'); } catch (e) { toast(e.message); } allRcptData = list; openSheet('Receipt approvals', queueBody(list)); };
+  ACT.trfMineSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/finance/transfers/mine', 'GET'); } catch (e) { toast(e.message); } myTrfData = list; openSheet('My transfers', transfersBlock(list, true)); };
 })();
 
 window.renderApp = render;        // let Muhammed refresh the UI after acting
