@@ -1,10 +1,10 @@
 /* National Trading PWA service worker.
-   - Navigations: network-first (staff/customers always get fresh app logic),
-     falling back to cache, then a designed offline page.
-   - Static assets (css/js/images/icons): stale-while-revalidate.
+   - Navigations + app code (.js/.css): network-first — staff/customers ALWAYS get
+     the freshest logic on every load; cache is only a fallback when offline.
+   - Images/icons/fonts: stale-while-revalidate (fast, rarely change).
    - /api/* and cross-origin: never cached (always live).
    Bump CACHE to force all clients onto a new version. */
-const CACHE = 'ntbf-pwa-v11'; // v11: Finance hub (receipts/payments/cheques/transfers) — force clients onto new app.js
+const CACHE = 'ntbf-pwa-v12'; // v12: code files are network-first so phones never serve stale app.js
 
 const CORE = [
   '/',
@@ -45,23 +45,27 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
-  // Page navigations: network-first, fall back to cache, then the offline page.
-  if (req.mode === 'navigate') {
+  // Page navigations AND app code (.js/.css): network-first so the latest logic
+  // always wins; fall back to cache (then the offline page for navigations).
+  const isCode = /\.(?:js|css)$/i.test(url.pathname);
+  if (req.mode === 'navigate' || isCode) {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          if (res && res.status === 200 && res.type === 'basic') {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         })
         .catch(() =>
-          caches.match(req).then((hit) => hit || caches.match('/offline.html'))
+          caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('/offline.html') : undefined))
         )
     );
     return;
   }
 
-  // Static assets: serve cache immediately, refresh in the background.
+  // Images/icons/fonts: serve cache immediately, refresh in the background.
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req)

@@ -39,7 +39,16 @@ import { FinanceModule } from './finance/finance.module';
       rootPath: process.env.STATIC_DIR || join(process.cwd(), '..', 'apps'),
       exclude: ['/api/(.*)'],
       // Serve /.well-known/* (Digital Asset Links for the Android TWA); dotfiles are ignored by default.
-      serveStaticOptions: { dotfiles: 'allow' },
+      serveStaticOptions: {
+        dotfiles: 'allow',
+        // Cache-busting: app code (html/js/css) is always revalidated (ETag → cheap 304s
+        // when unchanged, fresh 200 when deployed), so phones never serve a stale app.js.
+        // Images/icons/fonts rarely change, so cache them for a week for speed.
+        setHeaders: (res: any, filePath: string) => {
+          if (/\.(?:html|js|css)$/i.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
+          else if (/\.(?:png|jpe?g|gif|svg|ico|webp|woff2?|ttf)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=604800');
+        },
+      },
     }),
     PrismaModule,
     NotificationsModule,
