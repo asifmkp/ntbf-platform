@@ -1,6 +1,14 @@
-# NTBF Platform — Project Context (CLAUDE.md) — updated 14 Jul 2026
+# NTBF Platform — Project Context (CLAUDE.md) — updated 16 Jul 2026
 
 Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, Ajman, UAE) — wholesale FMCG/beverage distributor. Customer ordering app + role-locked staff app on one backend, a **live Claude-powered WhatsApp bot**, Zoho Books as the accounting system of record, and Claude for AI copilot + bill OCR.
+
+## ⚠️ ZOHO — CORRECT ORG IS 928751913 ON THE .COM DATA CENTRE. ALWAYS.
+- The ONLY correct Zoho Books org for NTBF is **928751913** (`.com` data centre).
+- Correct connectors: **NATIONALBOOKS\*** and **"ZOHO NATIONAL BOOKS"** (all `.com` endpoints).
+- WRONG org: `170000198188` (and Zoho One IDs `170000198375` / `170000199615`). These come from the `.ae` connector or a different Zoho login. **NEVER write to them.**
+- The `.ae` "Zoho Books" connector returns the WRONG org and error **6041** — do not use it.
+- **BEFORE any Zoho read/write, a chat MUST confirm it can see org 928751913.** If it sees `170000198188`, it is on the WRONG account — **STOP and reconnect via the `.com` world.**
+- Env vars `ZOHO_ACCOUNTS_HOST` / `ZOHO_API_HOST` must use `.com` endpoints, never `.ae`.
 
 ## Repo & hosting
 - **Local folder:** `C:\Users\Lenovo\foodstuffs-app` · **GitHub:** `asifmkp/ntbf-platform` → `main` (auto-deploys)
