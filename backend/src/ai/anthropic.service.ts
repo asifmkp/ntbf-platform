@@ -57,7 +57,7 @@ const BILL_TOOL = {
 
 /**
  * Claude vision extraction. Needs ANTHROPIC_API_KEY.
- * ANTHROPIC_MODEL defaults to claude-sonnet-4-6 (fast, capable for document extraction).
+ * ANTHROPIC_MODEL defaults to claude-sonnet-5 (fast, capable for document extraction).
  */
 @Injectable()
 export class AnthropicService {
@@ -76,7 +76,7 @@ export class AnthropicService {
    */
   async ping(): Promise<{ ok: boolean; status?: number; error?: string; model?: string }> {
     if (!this.configured) return { ok: false, error: 'ANTHROPIC_API_KEY not set' };
-    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
+    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-5';
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15_000);
     try {
@@ -112,7 +112,7 @@ export class AnthropicService {
   /** Generic Claude Messages API passthrough (used by the copilot agent). */
   async createMessage(body: Record<string, unknown>): Promise<any> {
     if (!this.configured) throw new ServiceUnavailableException('ANTHROPIC_API_KEY not set');
-    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
+    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-5';
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
     let res: Response;
@@ -148,7 +148,7 @@ export class AnthropicService {
       this.logger.error('Bill extraction aborted: ANTHROPIC_API_KEY not set');
       throw new ServiceUnavailableException('ANTHROPIC_API_KEY not set');
     }
-    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
+    const model = this.config.get<string>('ANTHROPIC_MODEL') || 'claude-sonnet-5';
     this.logger.log(`Extracting bill via Anthropic (model=${model}, mediaType=${mediaType})`);
 
     let res: Response;
