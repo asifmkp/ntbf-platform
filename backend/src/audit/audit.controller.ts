@@ -2,6 +2,7 @@ import { Controller, ForbiddenException, Get, Query, Req, UseGuards } from '@nes
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { StaffAuthGuard } from '../staff-auth/staff-auth.module';
+import { AuditExporter } from './audit.exporter';
 import { AuditService } from './audit.service';
 import { AuditStore } from './audit.store';
 
@@ -16,6 +17,7 @@ export class AuditController {
   constructor(
     private readonly svc: AuditService,
     private readonly store: AuditStore,
+    private readonly exporter: AuditExporter,
   ) {}
 
   private assertAdmin(req: any) {
@@ -36,5 +38,21 @@ export class AuditController {
   verify(@Req() req: any) {
     this.assertAdmin(req);
     return this.store.verifyChain();
+  }
+
+  /** Stage 3: off-box exporter status (gated, fail-open — reports only). */
+  @Public() @UseGuards(StaffAuthGuard) @Get('export-status')
+  exportStatus(@Req() req: any) {
+    this.assertAdmin(req);
+    const head = this.store.head();
+    const s = this.exporter.status();
+    return {
+      enabled: s.enabled,
+      localHeadHash: head.headHash,
+      localCount: head.count,
+      exportedSeq: s.exportedSeq,
+      queued: s.queued,
+      lastError: s.lastError,
+    };
   }
 }

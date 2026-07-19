@@ -64,6 +64,11 @@ export class AuditStore {
     return entry;
   }
 
+  /** Lightweight local head snapshot (chain head hash + retained row count). */
+  head(): { headHash: string; count: number } {
+    return { headHash: this.data.headHash, count: this.data.rows.length };
+  }
+
   /** Newest-first page of entries. */
   list(limit = 100, offset = 0): AuditEntry[] {
     const newestFirst = this.data.rows.slice().reverse();

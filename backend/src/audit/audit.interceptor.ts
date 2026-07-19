@@ -9,6 +9,7 @@ const AUDITED_METHODS = ['POST', 'PATCH', 'PUT', 'DELETE'];
 // Keys whose values must never be written to the audit log (redacted in-place).
 const REDACT_RE = /password|token|secret|jwt|authorization|api[-_]?key|image|photo|base64|refresh/i;
 const SUMMARY_CAP = 800;
+const REDACT_MAX_DEPTH = 6; // cap recursion so a deeply-nested / hostile body can't blow the stack
 
 /**
  * Global, passive audit interceptor. It observes write requests and records a
@@ -114,19 +115,41 @@ export class AuditInterceptor implements NestInterceptor {
     } catch (e) { return null; }
   }
 
-  /** Redacted, capped, shallow view of the request body for the audit summary. */
+  /** Redacted, capped view of the request body for the audit summary. */
   private summarize(body: any): string {
     try {
       if (body == null) return '';
       if (typeof body !== 'object') return String(body).slice(0, SUMMARY_CAP);
-      const redacted: any = Array.isArray(body) ? [] : {};
-      for (const key of Object.keys(body)) {
-        redacted[key] = REDACT_RE.test(key) ? '[redacted]' : body[key];
-      }
+      const redacted = this.deepRedact(body, 0, new Set());
       const json = JSON.stringify(redacted);
       return json && json.length > SUMMARY_CAP ? json.slice(0, SUMMARY_CAP) : (json || '');
     } catch (e) {
       return '';
     }
+  }
+
+  /**
+   * Walk an arbitrary value (objects AND arrays, to any depth) and replace the
+   * value of any key matching REDACT_RE with '[redacted]', everywhere it appears.
+   * Cycle-safe (a `seen` set of visited containers) and depth-capped so a deeply
+   * nested or hostile body can never blow the stack. Fully fail-open — any throw
+   * bubbles to summarize()'s catch, which returns ''.
+   */
+  private deepRedact(value: any, depth: number, seen: Set<any>): any {
+    if (value == null || typeof value !== 'object') return value;
+    if (depth >= REDACT_MAX_DEPTH) return '[truncated]';
+    if (seen.has(value)) return '[circular]';
+    seen.add(value);
+    let out: any;
+    if (Array.isArray(value)) {
+      out = value.map((v) => this.deepRedact(v, depth + 1, seen));
+    } else {
+      out = {};
+      for (const key of Object.keys(value)) {
+        out[key] = REDACT_RE.test(key) ? '[redacted]' : this.deepRedact(value[key], depth + 1, seen);
+      }
+    }
+    seen.delete(value);
+    return out;
   }
 }
