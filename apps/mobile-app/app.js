@@ -1729,10 +1729,42 @@ function advancesBody(data) {
       ${kpi('Advance balance', aed(b.balance || 0), (b.balance || 0) < 0 ? 'red' : 'green')}
       ${kpi('Reimbursement owed', aed(b.reimbursementOwed || 0), (b.reimbursementOwed || 0) > 0 ? 'amber' : '')}
     </div>
+    <button class="btn full" data-act="advStatement" style="margin-bottom:10px">📄 View statement</button>
     <div class="muted" style="font-size:11.5px;margin:2px 2px 10px">Balance = advances held − approved advance-paid expenses. Negative means the company owes you.</div>
     <div class="sect">My advances (${advs.length})</div>
     <div class="card">${rows || emptyRow('No advances issued yet.')}</div>`;
 }
+
+// Per-staff prepayment ledger — a dated statement of credits/debits with a running
+// balance. Reads GET /api/advances/ledger/mine (own) or /:employeeId (admin/finance
+// drill-down). Pure read; renders the same .li/.card/.tabnum primitives as elsewhere.
+const ledgerKindMeta = { advance_issued: ['💵', 'g'], expense_spend: ['🧾', 'a'], advance_settled: ['✓', 'g'] };
+function ledgerRowHtml(r) {
+  const m = ledgerKindMeta[r.kind] || ['•', 'a'];
+  const amt = r.credit ? `<b style="color:var(--green)">+${aed(r.credit)}</b>` : r.debit ? `<b style="color:var(--red)">−${aed(r.debit)}</b>` : '<span class="muted">—</span>';
+  return `<div class="li"><div class="ic ${m[1]}">${m[0]}</div>
+    <div class="m"><b>${esc(r.description || r.ref || '')}</b><span>${esc((r.at || '').slice(0, 10))} · ${esc(r.ref || '')} · bal <span class="tabnum">${aed(r.runningBalance)}</span></span></div>
+    <div class="end">${amt}</div></div>`;
+}
+function ledgerBody(d) {
+  const cur = (d && d.current) || {}; const rows = (d && d.rows) || [];
+  return `<div class="mkpis">
+      ${kpi('Current balance', aed(cur.balance || 0), (cur.balance || 0) < 0 ? 'red' : 'green')}
+      ${kpi('Held', aed(cur.advanced || 0))}
+      ${kpi('Spent', aed(cur.spentFromAdvance || 0))}
+    </div>
+    <div class="muted" style="font-size:11.5px;margin:2px 2px 10px">Statement of advances (credits) and approved advance-paid expenses (debits), oldest first. Running balance in the right-hand tally.</div>
+    <div class="sect">Statement (${rows.length})</div>
+    <div class="card">${rows.map(ledgerRowHtml).join('') || emptyRow('No ledger entries yet.')}</div>`;
+}
+async function openLedger(employeeId, name) {
+  const path = employeeId ? '/api/advances/ledger/' + encodeURIComponent(employeeId) : '/api/advances/ledger/mine';
+  openSheet('Statement' + (name ? ' — ' + name : ''), loadingCard('Loading statement…'));
+  try { const d = await staffApi(path, 'GET'); openSheet('Statement' + ' — ' + esc(d.name || name || 'me'), ledgerBody(d)); }
+  catch (e) { toast(e.message); openSheet('Statement', emptyRow(esc(e.message))); }
+}
+ACT.advStatement = () => openLedger(null, null);
+ACT.advLedgerOpen = (d) => openLedger(d.id, d.name);
 
 views.mytasks = () => `<div class="card pad" style="text-align:center">
     <div style="font-size:34px;margin-bottom:6px">🗒️</div>
@@ -1808,8 +1840,9 @@ async function adminAdvances() {
   let balances = []; let all = [];
   try { balances = await staffApi('/api/advances/balances', 'GET'); } catch (e) { toast(e.message); }
   try { all = await staffApi('/api/advances', 'GET'); } catch (e) { /* ignore */ }
-  const bRows = balances.map((b) => `<div class="li"><div class="ic ${b.balance < 0 ? 'r' : 'g'}">👤</div><div class="m"><b>${esc(b.name)}</b><span>held ${aed(b.advanced)} · spent ${aed(b.spentFromAdvance)}${b.reimbursementOwed ? ' · owed ' + aed(b.reimbursementOwed) : ''}</span></div><div class="end"><b style="color:${b.balance < 0 ? 'var(--red)' : 'var(--green)'}">${aed(b.balance)}</b></div></div>`).join('');
-  const aRows = all.map((a) => `<div class="li"><div class="ic ${a.status === 'SETTLED' ? 'g' : 'a'}">💵</div><div class="m"><b>${esc(a.employeeName)} · ${aed(a.amount)}</b><span>${esc((a.issuedAt || '').slice(0, 10))}${a.remark ? ' · ' + esc(a.remark) : ''}</span></div><div class="end">${advStatusTag(a.status)}${a.status !== 'SETTLED' ? `<br><button class="btn sm" data-act="advSettle" data-id="${a.id}" style="margin-top:6px">Settle</button>` : ''}</div></div>`).join('');
+  const bRows = balances.map((b) => `<div class="li" data-act="advLedgerOpen" data-id="${esc(b.employeeId)}" data-name="${esc(b.name)}"><div class="ic ${b.balance < 0 ? 'r' : 'g'}">👤</div><div class="m"><b>${esc(b.name)}</b><span>held ${aed(b.advanced)} · spent ${aed(b.spentFromAdvance)}${b.reimbursementOwed ? ' · owed ' + aed(b.reimbursementOwed) : ''} · 📄</span></div><div class="end"><b style="color:${b.balance < 0 ? 'var(--red)' : 'var(--green)'}">${aed(b.balance)}</b></div></div>`).join('');
+  const balByEmp = {}; balances.forEach((b) => { balByEmp[b.employeeId] = b.balance; });
+  const aRows = all.map((a) => { const bal = balByEmp[a.employeeId]; return `<div class="li"><div class="ic ${a.status === 'SETTLED' ? 'g' : 'a'}">💵</div><div class="m"><b>${esc(a.employeeName)} · ${aed(a.amount)}</b><span>${esc((a.issuedAt || '').slice(0, 10))}${a.remark ? ' · ' + esc(a.remark) : ''}</span></div><div class="end">${advStatusTag(a.status)}${a.status !== 'SETTLED' ? `<br><button class="btn sm" data-act="advSettle" data-id="${a.id}" data-bal="${bal != null ? bal : ''}" style="margin-top:6px">Settle</button>` : ''}</div></div>`; }).join('');
   openSheet('Advances (admin)', `
     <button class="btn primary full" data-act="advIssueForm" style="margin-bottom:14px">＋ Issue an advance</button>
     <div class="sect">Employee balances</div>
@@ -1860,7 +1893,18 @@ ACT.admExpenses = () => adminExpenses();
 ACT.admAdvances = () => adminAdvances();
 ACT.advIssueForm = () => advanceIssueForm();
 ACT.advIssue = async () => { const employeeId = $('#adv_emp').value; const amount = parseFloat($('#adv_amount').value); const remark = $('#adv_remark').value.trim(); if (!(amount > 0)) return toast('Enter an amount'); try { await staffApi('/api/advances', 'POST', { employeeId, amount, remark }); toast('Advance issued'); adminAdvances(); } catch (e) { toast(e.message); } };
-ACT.advSettle = async (d) => { const note = prompt('Settlement note (optional):') || ''; try { await staffApi('/api/advances/' + d.id + '/settle', 'POST', { note }); toast('Settled'); adminAdvances(); } catch (e) { toast(e.message); } };
+ACT.advSettle = async (d) => {
+  const note = prompt('Settlement note (optional):') || '';
+  const body = { note };
+  // Balance-aware: when the running balance is non-zero, capture the cash returned at settle.
+  const bal = (d.bal === '' || d.bal == null) ? null : parseFloat(d.bal);
+  if (bal !== null && Math.abs(bal) > 0.005) {
+    const rc = prompt('Balance is ' + aed(bal) + '. Cash returned now (AED)? Leave blank to skip.', bal > 0 ? String(bal) : '0');
+    const n = parseFloat(rc);
+    if (rc != null && rc !== '' && !isNaN(n) && n >= 0) body.returnedCash = n;
+  }
+  try { await staffApi('/api/advances/' + d.id + '/settle', 'POST', body); toast('Settled'); adminAdvances(); } catch (e) { toast(e.message); }
+};
 ACT.advAck = async (d) => { try { await staffApi('/api/advances/' + d.id + '/ack', 'POST', {}); myAdvData = null; toast('Receipt acknowledged'); render(); } catch (e) { toast(e.message); } };
 
 ACT.myExpensesSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/expenses/mine', 'GET'); } catch (e) { toast(e.message); } window._admExp = null; myExpData = list; openSheet('My expenses', expensesBody(list, true)); };
@@ -2356,6 +2400,7 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
         ${row('•', docStatusCls(d.status) === 'green' ? 'g' : docStatusCls(d.status) === 'red' ? 'r' : 'a', 'Status', docStatusTag(d.status), '')}
         ${row('📎', d.hasPhoto ? 'g' : 'a', 'Photo', d.hasPhoto ? 'attached' : 'none', '')}
       </div>
+      ${d.staff && d.staff.id ? `<button class="btn full" data-act="docStatement" data-id="${esc(d.staff.id)}" data-name="${esc(d.staff.name || '')}" style="margin-top:12px">📄 View this staff's prepayment statement</button>` : ''}
       <div class="sect">Update history</div><div class="card">${docTimelineHtml(d.statusHistory) || emptyRow('—')}</div>`,
       (sh) => {
         if (d.hasPhoto && d.photoUrl) {
@@ -2367,6 +2412,7 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
   ACT.docType = (d) => { docType = d.id; localStorage.setItem('ntbf_doctype', d.id); render(); };
   ACT.docStatus = (d) => { docStatus = d.id; localStorage.setItem('ntbf_docstatus', d.id); render(); };
   ACT.docOpen = (d) => docDetail((docData || []).find((x) => x.id === d.id));
+  ACT.docStatement = (d) => openLedger(d.id, d.name); // drill into that staff's prepayment ledger
 })();
 
 window.renderApp = render;        // let Muhammed refresh the UI after acting

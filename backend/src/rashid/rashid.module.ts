@@ -52,10 +52,14 @@ class IssueAdvanceDto {
   @IsNumber() @Min(0.01) amount: number;
   @IsOptional() @IsString() remark?: string;
 }
-class SettleDto { @IsOptional() @IsString() note?: string; }
+// returnedCash is OPTIONAL so existing callers (that send only a note, or an empty
+// body) are unaffected; when present it records the cash physically returned at settle.
+class SettleDto { @IsOptional() @IsString() note?: string; @IsOptional() @IsNumber() @Min(0) returnedCash?: number; }
 
 type Staff = { id: string; roles: string[]; name: string };
 const isAdmin = (s: Staff) => !!s && (s.roles || []).indexOf('admin') >= 0;
+// Finance-or-admin gate (mirrors finance.module.ts isFinance) — used to widen ledger read access.
+const isFinance = (s: Staff) => !!s && ((s.roles || []).indexOf('finance') >= 0 || (s.roles || []).indexOf('admin') >= 0);
 
 // ---- Expense store (data/expenses.json) ----
 @Injectable()
@@ -257,14 +261,57 @@ export class RashidService {
     if (x.status !== 'ISSUED') throw new BadRequestException(`Advance is already ${x.status.toLowerCase()}`);
     return this.advances.applyStatus(id, 'ACKNOWLEDGED', { ...this.histEntry('ISSUED', 'ACKNOWLEDGED', staff, staff.roles?.[0] || 'staff', 'receipt acknowledged'), }, { acknowledgedAt: new Date().toISOString() });
   }
-  settleAdvance(staff: Staff, id: string, note?: string) {
+  settleAdvance(staff: Staff, id: string, note?: string, returnedCash?: number) {
     this.assertAdmin(staff);
     const x = this.advances.byId(id);
     if (!x) throw new NotFoundException('Advance not found');
     if (x.status === 'SETTLED') throw new BadRequestException('Advance is already settled');
-    return this.advances.applyStatus(id, 'SETTLED', this.histEntry(x.status, 'SETTLED', staff, 'admin', note), { settledAt: new Date().toISOString(), settlementNote: note || '' });
+    // Balance-aware settle: snapshot the running balance BEFORE flipping, and record any cash
+    // physically returned. We do NOT block on a non-zero balance — the values are surfaced for
+    // oversight only, so current flows (settle regardless of balance) are unchanged.
+    const balanceAtSettle = this.balanceFor(x.employeeId).balance;
+    const returned = (returnedCash === undefined || returnedCash === null) ? null : round2(returnedCash);
+    const settleNote = `${note ? note + ' — ' : ''}settled (balance AED ${balanceAtSettle}${returned !== null ? `, returned AED ${returned}` : ''})`;
+    return this.advances.applyStatus(id, 'SETTLED', this.histEntry(x.status, 'SETTLED', staff, 'admin', settleNote),
+      { settledAt: new Date().toISOString(), settlementNote: note || '', balanceAtSettle, returnedCash: returned });
   }
   listAllAdvances(staff: Staff) { this.assertAdmin(staff); return this.advances.list(); }
+
+  /**
+   * Per-staff running ledger — PURE derivation, persists nothing. Merges the employee's
+   * advances and their APPROVED advance-paid expenses into one chronological statement
+   * (oldest→newest) with a running balance = cumulative(credit) − cumulative(debit).
+   *   advance_issued → credit = advance.amount (dated issuedAt)
+   *   expense_spend  → debit  = expense.amount (dated the expense date/createdAt)
+   *   advance_settled → marker row (credit/debit 0) at settledAt, noting returnedCash if present.
+   */
+  ledgerFor(employeeId: string) {
+    const advs = this.advances.listByEmployee(employeeId);
+    const exps = this.expenses.listByEmployee(employeeId).filter((e) => e.status === 'APPROVED' && e.paidFrom === 'advance');
+    const events: any[] = [];
+    for (const a of advs) {
+      events.push({ at: a.issuedAt, kind: 'advance_issued', ref: a.id, description: `Advance issued${a.remark ? ' — ' + a.remark : ''}`, credit: round2(a.amount), debit: 0 });
+      if (a.status === 'SETTLED') {
+        const returned = (a.returnedCash === undefined || a.returnedCash === null) ? null : round2(a.returnedCash);
+        events.push({ at: a.settledAt || a.updatedAt, kind: 'advance_settled', ref: a.id, description: `Advance settled${returned !== null ? ` — returned AED ${returned}` : ''}${a.settlementNote ? ' · ' + a.settlementNote : ''}`, credit: 0, debit: 0 });
+      }
+    }
+    for (const e of exps) {
+      events.push({ at: e.date || e.createdAt, kind: 'expense_spend', ref: e.id, description: `${e.category}${e.remark ? ' — ' + e.remark : ''}`, credit: 0, debit: round2(e.amount) });
+    }
+    events.sort((p, q) => String(p.at || '').localeCompare(String(q.at || '')));
+    let run = 0;
+    return events.map((ev) => { run = round2(run + (ev.credit || 0) - (ev.debit || 0)); return { ...ev, runningBalance: run }; });
+  }
+  /** Gated ledger: the owning employee, admin, or finance may read; anyone else Forbidden. */
+  ledger(staff: Staff, employeeId: string) {
+    if (employeeId !== staff.id && !isAdmin(staff) && !isFinance(staff)) throw new ForbiddenException('Not allowed to view this ledger');
+    const emp = this.staffStore.byId(employeeId);
+    const anyAdv = this.advances.listByEmployee(employeeId)[0];
+    const anyExp = this.expenses.listByEmployee(employeeId)[0];
+    const name = (emp && emp.name) || (anyAdv && anyAdv.employeeName) || (anyExp && anyExp.employeeName) || employeeId;
+    return { employeeId, name, rows: this.ledgerFor(employeeId), current: this.balanceFor(employeeId) };
+  }
 
   /**
    * Running balance for one employee (AED):
@@ -347,6 +394,13 @@ export class RashidController {
   @Public() @UseGuards(StaffAuthGuard) @Get('advances/balances')
   balances(@Req() req: any) { return this.svc.balances(req.staff); }
 
+  // Ledger routes (literal 'mine' declared before the ':employeeId' param so it isn't captured).
+  @Public() @UseGuards(StaffAuthGuard) @Get('advances/ledger/mine')
+  ledgerMine(@Req() req: any) { return this.svc.ledger(req.staff, req.staff.id); }
+
+  @Public() @UseGuards(StaffAuthGuard) @Get('advances/ledger/:employeeId')
+  ledger(@Param('employeeId') employeeId: string, @Req() req: any) { return this.svc.ledger(req.staff, employeeId); }
+
   @Public() @UseGuards(StaffAuthGuard) @Get('advances')
   allAdvances(@Req() req: any) { return this.svc.listAllAdvances(req.staff); }
 
@@ -354,7 +408,7 @@ export class RashidController {
   ack(@Param('id') id: string, @Req() req: any) { return this.svc.ackAdvance(req.staff, id); }
 
   @Public() @UseGuards(StaffAuthGuard) @Post('advances/:id/settle')
-  settle(@Param('id') id: string, @Body() dto: SettleDto, @Req() req: any) { return this.svc.settleAdvance(req.staff, id, dto?.note); }
+  settle(@Param('id') id: string, @Body() dto: SettleDto, @Req() req: any) { return this.svc.settleAdvance(req.staff, id, dto?.note, dto?.returnedCash); }
 }
 
 @Module({
