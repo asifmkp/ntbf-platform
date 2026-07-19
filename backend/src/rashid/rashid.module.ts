@@ -371,5 +371,6 @@ export class RashidController {
   ],
   controllers: [RashidController],
   providers: [ExpenseStore, AdvanceStore, RashidService, StaffAuthGuard],
+  exports: [ExpenseStore, AdvanceStore], // read-only reuse by the finance oversight dashboard
 })
 export class RashidModule {}

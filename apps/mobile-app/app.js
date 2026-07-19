@@ -2257,6 +2257,118 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
   ACT.trfMineSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/finance/transfers/mine', 'GET'); } catch (e) { toast(e.message); } myTrfData = list; openSheet('My transfers', transfersBlock(list, true)); };
 })();
 
+// ===========================================================================
+// Oversight — the Finance/Management "Documents" dashboard. One read-only place
+// where finance + admin see EVERY staff-uploaded bill/receipt/document across
+// all five stores (expenses · advances · receipts · payments · transfers),
+// each with its photo and its update history. Reuses the KPI-tile, segmented
+// filter, .tag/.li and photo/timeline primitives from the finance hub. Reads
+// /api/finance/documents(+/summary); never writes anything.
+// ===========================================================================
+(function oversightUI() {
+  // Finance + admin only — inject a Documents tab the same way the finance hub does.
+  ['finance', 'admin'].forEach((r) => {
+    const tabs = ROLES[r] && ROLES[r].tabs; if (!tabs || tabs.find((t) => t.id === 'documents')) return;
+    const mi = tabs.findIndex((t) => t.id === 'muhammed');
+    tabs.splice(mi < 0 ? tabs.length : mi, 0, { id: 'documents', label: 'Documents', i: '📄' });
+  });
+  const canSeeDocs = () => role === 'finance' || role === 'admin';
+
+  const DOC_TYPES = [['all', 'All'], ['expense', 'Expenses'], ['receipt', 'Receipts'], ['payment', 'Payments'], ['transfer', 'Transfers'], ['advance', 'Advances']];
+  const DOC_STATUSES = [['all', 'All'], ['pending', 'Pending'], ['done', 'Done'], ['rejected', 'Rejected']];
+  const typeMeta = { expense: ['🧾', 'accent', 'Expense'], receipt: ['💵', 'blue', 'Receipt'], payment: ['💸', 'purple', 'Payment'], transfer: ['🤝', 'amber', 'Transfer'], advance: ['🏦', 'gray', 'Advance'] };
+  const GREEN = ['APPROVED', 'CONFIRMED', 'COLLECTED', 'SETTLED', 'CLEARED', 'ACKNOWLEDGED'];
+  const RED = ['REJECTED', 'DECLINED', 'BOUNCED'];
+  const docStatusCls = (s) => GREEN.indexOf(s) >= 0 ? 'green' : RED.indexOf(s) >= 0 ? 'red' : 'amber';
+  const docStatusTag = (s) => `<span class="tag ${docStatusCls(s)}">${String(s || '').toLowerCase().replace(/_/g, ' ')}</span>`;
+  const docTypeBadge = (t) => { const m = typeMeta[t] || ['📄', 'gray', t]; return `<span class="tag ${m[1]}">${m[2]}</span>`; };
+  // Coarse status buckets so one filter spans the five different lifecycles.
+  const statusBucket = (s) => GREEN.indexOf(s) >= 0 ? 'done' : RED.indexOf(s) >= 0 ? 'rejected' : 'pending';
+
+  // Shared update-history timeline (also handy for any doc detail sheet).
+  function docTimelineHtml(hist) {
+    return (hist || []).map((h) => `<div class="li"><div class="ic ${GREEN.indexOf(h.to) >= 0 ? 'g' : RED.indexOf(h.to) >= 0 ? 'r' : 'a'}">•</div><div class="m"><b>${esc(String(h.to || '').replace(/_/g, ' '))}</b><span>${esc((h.at || '').slice(0, 16).replace('T', ' '))}${h.by ? ' · ' + esc(h.by) : ''}${h.note ? ' · ' + esc(h.note) : ''}</span></div></div>`).join('');
+  }
+
+  let docData = null, docSummary = null;
+  let docType = localStorage.getItem('ntbf_doctype') || 'all';
+  let docStatus = localStorage.getItem('ntbf_docstatus') || 'all';
+  async function loadDocs() {
+    try { const [list, sum] = await Promise.all([staffApi('/api/finance/documents', 'GET'), staffApi('/api/finance/documents/summary', 'GET')]); docData = Array.isArray(list) ? list : []; docSummary = sum || {}; }
+    catch (e) { docData = []; docSummary = {}; toast(e.message); }
+    render();
+  }
+
+  function docKpis(s) {
+    s = s || {}; const bt = s.byType || {};
+    return `<div class="mkpis">
+        ${kpi('Documents', s.total || 0)}
+        ${kpi('Total value', aed(s.totalValue || 0), 'accent')}
+        ${kpi('With photo', s.withPhotos || 0, (s.withPhotos || 0) ? 'green' : '')}
+        ${kpi('Expenses', bt.expense || 0)}
+        ${kpi('Receipts', bt.receipt || 0)}
+        ${kpi('Payments', bt.payment || 0)}
+        ${kpi('Transfers', bt.transfer || 0)}
+        ${kpi('Advances', bt.advance || 0)}
+      </div>`;
+  }
+  function docSegBar(segs, cur, act) {
+    return `<div class="seg" style="margin-bottom:10px;overflow-x:auto">${segs.map(([id, l]) => `<button class="${cur === id ? 'on' : ''}" data-act="${act}" data-id="${id}">${l}</button>`).join('')}</div>`;
+  }
+  function docRow(d) {
+    const m = typeMeta[d.docType] || ['📄', 'gray', d.docType];
+    const ic = docStatusCls(d.status) === 'green' ? 'g' : docStatusCls(d.status) === 'red' ? 'r' : 'a';
+    const sub = [esc(d.summary || d.category || '—'), d.date ? esc(d.date) : '', d.hasPhoto ? '📎' : ''].filter(Boolean).join(' · ');
+    return `<div class="li" data-act="docOpen" data-id="${d.id}">
+      <div class="ic ${ic}">${m[0]}</div>
+      <div class="m"><b>${docTypeBadge(d.docType)} ${esc(d.staff && d.staff.name || '—')} · ${aed(d.amount)}</b><span>${sub}</span></div>
+      <div class="end">${docStatusTag(d.status)}</div></div>`;
+  }
+  function docsBody() {
+    const list = (docData || []).filter((d) => (docType === 'all' || d.docType === docType) && (docStatus === 'all' || statusBucket(d.status) === docStatus));
+    const rows = list.map((d) => docRow(d)).join('');
+    return docKpis(docSummary)
+      + docSegBar(DOC_TYPES, docType, 'docType')
+      + docSegBar(DOC_STATUSES, docStatus, 'docStatus')
+      + `<div class="sect">Documents (${list.length})</div>`
+      + `<div class="card">${rows || emptyRow('No documents match this filter.')}</div>`;
+  }
+  views.documents = function () {
+    if (!canSeeDocs()) return emptyRow('Finance or management only.');
+    if (docData === null) { setTimeout(loadDocs, 0); return loadingCard('Loading documents…'); }
+    return docsBody();
+  };
+
+  function docDetail(d) {
+    if (!d) return;
+    const m = typeMeta[d.docType] || ['📄', 'gray', d.docType];
+    openSheet(m[2] + ' · ' + aed(d.amount), `
+      <div id="doc_photo"></div>
+      <div class="card">
+        ${row(m[0], 'a', 'Type', docTypeBadge(d.docType), '')}
+        ${row('▣', 'a', 'Reference', esc(d.id), '')}
+        ${row('🧍', 'a', 'Staff', esc(d.staff && d.staff.name || '—'), '')}
+        ${row('💰', docStatusCls(d.status) === 'red' ? 'r' : 'g', 'Amount', aed(d.amount), '')}
+        ${d.category ? row('🏷', 'a', 'Category', esc(d.category), '') : ''}
+        ${d.paidFrom ? row('💳', 'a', 'Paid from', esc(String(d.paidFrom).replace(/_/g, ' ')), '') : ''}
+        ${d.date ? row('📅', 'a', 'Date', esc(d.date), '') : ''}
+        ${d.summary ? row('💬', 'a', 'Summary', esc(d.summary), '') : ''}
+        ${row('•', docStatusCls(d.status) === 'green' ? 'g' : docStatusCls(d.status) === 'red' ? 'r' : 'a', 'Status', docStatusTag(d.status), '')}
+        ${row('📎', d.hasPhoto ? 'g' : 'a', 'Photo', d.hasPhoto ? 'attached' : 'none', '')}
+      </div>
+      <div class="sect">Update history</div><div class="card">${docTimelineHtml(d.statusHistory) || emptyRow('—')}</div>`,
+      (sh) => {
+        if (d.hasPhoto && d.photoUrl) {
+          staffApi(d.photoUrl, 'GET').then((r) => { if (r && r.dataUrl) { const el = sh.querySelector('#doc_photo'); if (el) el.innerHTML = `<img src="${r.dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:12px" />`; } }).catch(() => {});
+        }
+      });
+  }
+
+  ACT.docType = (d) => { docType = d.id; localStorage.setItem('ntbf_doctype', d.id); render(); };
+  ACT.docStatus = (d) => { docStatus = d.id; localStorage.setItem('ntbf_docstatus', d.id); render(); };
+  ACT.docOpen = (d) => docDetail((docData || []).find((x) => x.id === d.id));
+})();
+
 window.renderApp = render;        // let Muhammed refresh the UI after acting
 window.currentRole = () => role;  // expose active role to Muhammed
 render();

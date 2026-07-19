@@ -23,6 +23,7 @@ import * as path from 'path';
 import { Public } from '../common/decorators/public.decorator';
 import { StaffAuthGuard, StaffAuthModule, StaffStore } from '../staff-auth/staff-auth.module';
 import { CustomerPortalModule, CustomerStore } from '../customer-portal/customer-portal.module';
+import { RashidModule, ExpenseStore, AdvanceStore } from '../rashid/rashid.module';
 
 export const RECEIPT_METHODS = ['CASH', 'CHEQUE', 'BANK', 'CARD'];
 export const RECEIPT_STATUSES = ['PENDING_APPROVAL', 'COLLECTED', 'CONFIRMED', 'REJECTED'];
@@ -466,10 +467,167 @@ export class FinanceController {
   summary(@Req() req: any) { return this.svc.summary(req.staff); }
 }
 
+// ---------------------------------------------------------------------------
+// Oversight — a read-only finance + admin dashboard that unions all five
+// staff-uploaded document stores (expenses, advances, receipts, payments,
+// transfers) into one normalized list, each with its photo endpoint and its
+// statusHistory trail. It NEVER writes: no create/transition/patch calls, no
+// guard changes on the write routes it reads from. Stores are injected as-is
+// (ExpenseStore/AdvanceStore come from RashidModule, which exports them).
+// ---------------------------------------------------------------------------
+type OversightDoc = {
+  docType: 'expense' | 'receipt' | 'payment' | 'transfer' | 'advance';
+  id: string;
+  staff: { id: string; name: string };
+  amount: number;
+  date: string;
+  status: string;
+  category: string | null;
+  paidFrom?: string;
+  summary: string;
+  hasPhoto: boolean;
+  photoUrl: string | null;
+  statusHistory: any[];
+};
+
+@Injectable()
+export class OversightService {
+  constructor(
+    private readonly receipts: ReceiptStore,
+    private readonly payments: PaymentStore,
+    private readonly transfers: TransferStore,
+    private readonly expenses: ExpenseStore,
+    private readonly advances: AdvanceStore,
+  ) {}
+
+  private assertFinance(s: Staff) { if (!isFinance(s)) throw new ForbiddenException('Finance or admin only'); }
+
+  // Newest-first ordering key: prefer an explicit create/issue timestamp.
+  private tsOf(x: any): string { return x.createdAt || x.issuedAt || x.updatedAt || x.date || ''; }
+
+  private normExpense(x: any): OversightDoc {
+    return {
+      docType: 'expense', id: x.id,
+      staff: { id: x.employeeId, name: x.employeeName || x.employeeId },
+      amount: round2(x.amount), date: x.date || (x.createdAt || '').slice(0, 10),
+      status: x.status, category: x.category || null, paidFrom: x.paidFrom,
+      summary: x.remark || '',
+      hasPhoto: !!x.billPhoto, photoUrl: x.billPhoto ? `/api/expenses/${x.id}/photo` : null,
+      statusHistory: x.statusHistory || [],
+    };
+  }
+  private normReceipt(x: any): OversightDoc {
+    return {
+      docType: 'receipt', id: x.id,
+      staff: { id: x.collectedById, name: x.collectedBy || x.collectedById },
+      amount: round2(x.collectedAmount != null ? x.collectedAmount : x.billAmount),
+      date: (x.createdAt || '').slice(0, 10),
+      status: x.status, category: x.method || null,
+      summary: x.customerName || x.narration || '',
+      hasPhoto: !!x.billPhoto, photoUrl: x.billPhoto ? `/api/finance/receipts/${x.id}/photo` : null,
+      statusHistory: x.statusHistory || [],
+    };
+  }
+  private normPayment(x: any): OversightDoc {
+    return {
+      docType: 'payment', id: x.id,
+      staff: { id: x.createdById, name: x.createdBy || x.createdById },
+      amount: round2(x.amount), date: x.date || (x.createdAt || '').slice(0, 10),
+      status: x.status, category: x.category || x.method || null,
+      summary: x.payee || x.narration || '',
+      hasPhoto: !!x.billPhoto, photoUrl: x.billPhoto ? `/api/finance/payments/${x.id}/photo` : null,
+      statusHistory: x.statusHistory || [],
+    };
+  }
+  private normTransfer(x: any): OversightDoc {
+    return {
+      docType: 'transfer', id: x.id,
+      staff: { id: x.fromId, name: x.fromName || x.fromId },
+      amount: round2(x.amount), date: (x.createdAt || '').slice(0, 10),
+      status: x.status, category: x.method || null,
+      summary: x.narration || (x.toName ? `to ${x.toName}` : ''),
+      hasPhoto: !!x.billPhoto, photoUrl: x.billPhoto ? `/api/finance/transfers/${x.id}/photo` : null,
+      statusHistory: x.statusHistory || [],
+    };
+  }
+  private normAdvance(x: any): OversightDoc {
+    return {
+      docType: 'advance', id: x.id,
+      staff: { id: x.employeeId, name: x.employeeName || x.employeeId },
+      amount: round2(x.amount), date: (x.issuedAt || '').slice(0, 10),
+      status: x.status, category: null,
+      summary: x.settlementNote || x.remark || '',
+      hasPhoto: false, photoUrl: null,
+      statusHistory: x.statusHistory || [],
+    };
+  }
+
+  /** Union all five stores into normalized docs, newest-first. Empty stores → []. */
+  private allDocs(): OversightDoc[] {
+    const rows: { ts: string; doc: OversightDoc }[] = [];
+    const push = (raw: any[], fn: (x: any) => OversightDoc) => {
+      for (const x of raw || []) rows.push({ ts: this.tsOf(x), doc: fn(x) });
+    };
+    try { push(this.expenses.list(), (x) => this.normExpense(x)); } catch (e) { /* empty store */ }
+    try { push(this.advances.list(), (x) => this.normAdvance(x)); } catch (e) { /* empty store */ }
+    try { push(this.receipts.all(), (x) => this.normReceipt(x)); } catch (e) { /* empty store */ }
+    try { push(this.payments.all(), (x) => this.normPayment(x)); } catch (e) { /* empty store */ }
+    try { push(this.transfers.all(), (x) => this.normTransfer(x)); } catch (e) { /* empty store */ }
+    rows.sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0)); // newest first
+    return rows.map((r) => r.doc);
+  }
+
+  listDocuments(staff: Staff, f: { type?: string; staff?: string; status?: string; from?: string; to?: string }) {
+    this.assertFinance(staff);
+    const q = (f.staff || '').trim().toLowerCase();
+    return this.allDocs().filter((d) => {
+      if (f.type && d.docType !== f.type) return false;
+      if (f.status && d.status !== f.status) return false;
+      if (q && d.staff.id !== f.staff && !(d.staff.name || '').toLowerCase().includes(q)) return false;
+      const day = (d.date || '').slice(0, 10);
+      if (f.from && day && day < f.from) return false;
+      if (f.to && day && day > f.to) return false;
+      return true;
+    });
+  }
+
+  documentsSummary(staff: Staff) {
+    this.assertFinance(staff);
+    const docs = this.allDocs();
+    const byType: Record<string, number> = { expense: 0, receipt: 0, payment: 0, transfer: 0, advance: 0 };
+    const byStatus: Record<string, number> = {};
+    let totalValue = 0;
+    let withPhotos = 0;
+    for (const d of docs) {
+      byType[d.docType] = (byType[d.docType] || 0) + 1;
+      byStatus[d.status] = (byStatus[d.status] || 0) + 1;
+      totalValue += Number(d.amount) || 0;
+      if (d.hasPhoto) withPhotos += 1;
+    }
+    return { total: docs.length, byType, byStatus, totalValue: round2(totalValue), withPhotos };
+  }
+}
+
+@ApiTags('Finance')
+@Controller('finance')
+export class OversightController {
+  constructor(private readonly svc: OversightService) {}
+
+  @Public() @UseGuards(StaffAuthGuard) @Get('documents')
+  documents(
+    @Query('type') type: string, @Query('staff') staff: string, @Query('status') status: string,
+    @Query('from') from: string, @Query('to') to: string, @Req() req: any,
+  ) { return this.svc.listDocuments(req.staff, { type, staff, status, from, to }); }
+
+  @Public() @UseGuards(StaffAuthGuard) @Get('documents/summary')
+  documentsSummary(@Req() req: any) { return this.svc.documentsSummary(req.staff); }
+}
+
 @Module({
   imports: [
     StaffAuthModule,
     CustomerPortalModule,
+    RashidModule, // read-only reuse of ExpenseStore + AdvanceStore (no circular dep: rashid does not import finance)
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -479,7 +637,7 @@ export class FinanceController {
       }),
     }),
   ],
-  controllers: [FinanceController],
-  providers: [ReceiptStore, PaymentStore, TransferStore, FinanceService, StaffAuthGuard],
+  controllers: [FinanceController, OversightController],
+  providers: [ReceiptStore, PaymentStore, TransferStore, FinanceService, OversightService, StaffAuthGuard],
 })
 export class FinanceModule {}
