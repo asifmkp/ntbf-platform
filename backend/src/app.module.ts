@@ -31,6 +31,7 @@ import { RashidModule } from './rashid/rashid.module';
 import { MuhammedModule } from './muhammed/muhammed.module';
 import { FinanceModule } from './finance/finance.module';
 import { AuditModule } from './audit/audit.module';
+import { SuggestionsModule } from './suggestions/suggestions.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { AuditModule } from './audit/audit.module';
     MuhammedModule,
     FinanceModule,
     AuditModule,
+    SuggestionsModule,
   ],
   providers: [
     // Global: authenticate every route (unless @Public), then enforce role/dept/access.

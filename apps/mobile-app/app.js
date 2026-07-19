@@ -1176,6 +1176,13 @@ function settingsForm() {
         <button class="btn" data-act="admExpenses">Expense approvals</button>
         <button class="btn" data-act="admAdvances">Advances (admin)</button>
       </div>` : ''}
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="sugForm">💡 Suggest an improvement</button>
+        <button class="btn" data-act="sugMineSheet">My ideas</button>
+      </div>
+      ${isAdmin ? `<div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="admSuggestions">Suggestions (admin)</button>
+      </div>` : ''}
       <button class="btn danger full" data-act="staffLogout" style="margin-top:9px">Sign out</button>
     </div>` : ''}
     <div class="sect" style="margin-top:4px">Advanced</div>
@@ -1909,6 +1916,75 @@ ACT.advAck = async (d) => { try { await staffApi('/api/advances/' + d.id + '/ack
 
 ACT.myExpensesSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/expenses/mine', 'GET'); } catch (e) { toast(e.message); } window._admExp = null; myExpData = list; openSheet('My expenses', expensesBody(list, true)); };
 ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balance: {} }; try { d = await staffApi('/api/advances/mine', 'GET'); } catch (e) { toast(e.message); } openSheet('My advances', advancesBody(d)); };
+
+// ===========================================================================
+// Staff suggestions — a field-driven improvement inbox. ANY staff can submit an
+// idea and see their own; admin sees all and moves them along the lifecycle.
+// Talks to /api/suggestions via the staff JWT. Purely additive; reuses the same
+// sheet/.li/.card/tag primitives as the rest of the app.
+// ===========================================================================
+const SUG_CATEGORIES = ['Orders', 'Delivery', 'Stock', 'Finance', 'App', 'Other'];
+function sugStatusTag(s) {
+  const m = { NEW: 'amber', REVIEWING: 'accent', PLANNED: 'accent', DONE: 'green', DECLINED: 'red' };
+  return `<span class="tag ${m[s] || ''}">${String(s || '').toLowerCase()}</span>`;
+}
+function sugForm() {
+  openSheet('Suggest an improvement', `
+    <div class="card pad" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700">Your idea — what would make the app better?</div>
+      <div class="muted" style="font-size:11.5px;margin-top:3px">Anything you'd change, add, or fix. The owner reads every one.</div>
+    </div>
+    <label class="fld"><span class="lab">Your idea</span><textarea id="sug_text" rows="5" maxlength="1000" placeholder="e.g. Let me see yesterday's deliveries on the home screen"></textarea></label>
+    <label class="fld"><span class="lab">Category</span><select id="sug_cat">${SUG_CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></label>
+    <button class="btn primary full" data-act="sugSubmit">Submit idea</button>
+    <button class="btn full" data-act="sugMineSheet" style="margin-top:9px">My ideas</button>`);
+}
+function sugMineBody(list) {
+  const rows = (list || []).map((x) => `<div class="li">
+    <div class="ic ${x.status === 'DONE' ? 'g' : x.status === 'DECLINED' ? 'r' : 'a'}">💡</div>
+    <div class="m"><b>${esc(x.category || 'Other')}</b><span>${esc((x.createdAt || '').slice(0, 10))} · ${esc(String(x.text || '').slice(0, 80))}${String(x.text || '').length > 80 ? '…' : ''}</span></div>
+    <div class="end">${sugStatusTag(x.status)}</div></div>`).join('');
+  return `<button class="btn primary full" data-act="sugForm" style="margin-bottom:12px">＋ New idea</button>
+    <div class="sect">My ideas (${(list || []).length})</div>
+    <div class="card">${rows || emptyRow('No ideas yet. Tap “New idea”.')}</div>`;
+}
+function sugAdminBody(d) {
+  const items = (d && d.items) || []; const sum = (d && d.summary) || {};
+  const rows = items.map((x) => `<div class="li">
+    <div class="ic ${x.status === 'DONE' ? 'g' : x.status === 'DECLINED' ? 'r' : 'a'}">💡</div>
+    <div class="m"><b>${esc(x.staffName || '—')} · ${esc(x.category || 'Other')}</b><span>${esc((x.createdAt || '').slice(0, 10))} · ${esc(x.text || '')}</span>
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn sm" data-act="sugStatus" data-id="${x.id}" data-s="REVIEWING">Reviewing</button>
+        <button class="btn sm" data-act="sugStatus" data-id="${x.id}" data-s="PLANNED">Planned</button>
+        <button class="btn green sm" data-act="sugStatus" data-id="${x.id}" data-s="DONE">Done</button>
+        <button class="btn danger sm" data-act="sugStatus" data-id="${x.id}" data-s="DECLINED">Declined</button>
+      </div></div>
+    <div class="end">${sugStatusTag(x.status)}</div></div>`).join('');
+  return `<div class="mkpis">${kpi('New', sum.NEW || 0, (sum.NEW || 0) ? 'amber' : 'green')}${kpi('Reviewing', sum.REVIEWING || 0, 'accent')}${kpi('Planned', sum.PLANNED || 0, 'accent')}${kpi('Done', sum.DONE || 0, 'green')}</div>
+    <div class="sect">All ideas (${items.length})</div>
+    <div class="card">${rows || emptyRow('No ideas submitted yet.')}</div>`;
+}
+ACT.sugForm = () => sugForm();
+ACT.sugSubmit = async () => {
+  const text = ($('#sug_text').value || '').trim(); const category = $('#sug_cat').value;
+  if (!text) return toast('Please write your idea first');
+  try { await staffApi('/api/suggestions', 'POST', { text, category }); closeSheet(); toast('Thanks! Your idea was sent 💡'); }
+  catch (e) { toast(e.message); }
+};
+ACT.sugMineSheet = async () => { closeSheet(); let list = []; try { list = await staffApi('/api/suggestions/mine', 'GET'); } catch (e) { toast(e.message); } openSheet('My ideas', sugMineBody(list)); };
+ACT.admSuggestions = () => adminSuggestions();
+ACT.sugStatus = async (d) => {
+  const note = prompt('Note (optional):') || '';
+  try { await staffApi('/api/suggestions/' + d.id + '/status', 'PATCH', { status: d.s, note: note || undefined }); toast('Updated'); adminSuggestions(); }
+  catch (e) { toast(e.message); }
+};
+async function adminSuggestions() {
+  closeSheet();
+  openSheet('Suggestions (admin)', '<div class="empty"><div class="ei">💡</div>Loading…</div>');
+  let d = { items: [], summary: {} };
+  try { d = await staffApi('/api/suggestions', 'GET'); } catch (e) { toast(e.message); }
+  openSheet('Suggestions (admin)', sugAdminBody(d));
+}
 
 // ===========================================================================
 // Finance module — the money hub, built on the live System A.
