@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { StaffAuthModule } from '../staff-auth/staff-auth.module';
 import { AuditController } from './audit.controller';
+import { AuditExporter } from './audit.exporter';
 import { AuditInterceptor } from './audit.interceptor';
 import { AuditService } from './audit.service';
 import { AuditStore } from './audit.store';
@@ -19,6 +20,7 @@ import { AuditStore } from './audit.store';
   controllers: [AuditController],
   providers: [
     AuditStore,
+    AuditExporter,
     AuditService,
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],

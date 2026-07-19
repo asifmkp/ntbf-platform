@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AuditExporter } from './audit.exporter';
 import { AuditStore } from './audit.store';
 import { AuditEntry, AuditRecordInput } from './audit.types';
 
@@ -9,7 +10,10 @@ import { AuditEntry, AuditRecordInput } from './audit.types';
  */
 @Injectable()
 export class AuditService {
-  constructor(private readonly store: AuditStore) {}
+  constructor(
+    private readonly store: AuditStore,
+    private readonly exporter: AuditExporter,
+  ) {}
 
   record(input: AuditRecordInput): void {
     try {
@@ -22,7 +26,12 @@ export class AuditService {
         outcome: input.outcome,
         meta: input.meta,
       };
-      this.store.append(partial);
+      const entry = this.store.append(partial);
+      // Stage 3: fire-and-forget off-box export. Gated + fully fail-open, so it
+      // can never delay or break the request even if the network/Supabase is down.
+      try {
+        this.exporter.export(entry).catch(() => { /* swallow — export never affects the request */ });
+      } catch (e) { /* swallow — export never affects the request */ }
     } catch (e) {
       // Fail-open: swallow everything — auditing must never surface an error.
     }
