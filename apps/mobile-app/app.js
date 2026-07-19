@@ -2371,7 +2371,8 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
   function docsBody() {
     const list = (docData || []).filter((d) => (docType === 'all' || d.docType === docType) && (docStatus === 'all' || statusBucket(d.status) === docStatus));
     const rows = list.map((d) => docRow(d)).join('');
-    return docKpis(docSummary)
+    return '<button class="btn primary full" data-act="finAdvIssueForm" style="margin-bottom:12px">＋ Issue advance</button>'
+      + docKpis(docSummary)
       + docSegBar(DOC_TYPES, docType, 'docType')
       + docSegBar(DOC_STATUSES, docStatus, 'docStatus')
       + `<div class="sect">Documents (${list.length})</div>`
@@ -2413,6 +2414,32 @@ ACT.myAdvancesSheet = async () => { closeSheet(); let d = { advances: [], balanc
   ACT.docStatus = (d) => { docStatus = d.id; localStorage.setItem('ntbf_docstatus', d.id); render(); };
   ACT.docOpen = (d) => docDetail((docData || []).find((x) => x.id === d.id));
   ACT.docStatement = (d) => openLedger(d.id, d.name); // drill into that staff's prepayment ledger
+
+  // Finance-originated advance (Stage C): finance/admin hand a float directly to a staff member.
+  // POSTs to the finance-gated /api/finance/advances/issue, then refreshes the documents view so
+  // the new float shows immediately (it also lands on the staff's balance/statement server-side).
+  async function financeIssueAdvanceForm() {
+    if (!canSeeDocs()) return; // finance/admin only — same gate as the Documents view
+    openSheet('Issue advance', loadingCard('Loading staff…'));
+    let team = []; try { team = await staffApi('/api/finance/colleagues', 'GET'); } catch (e) { toast(e.message); }
+    openSheet('Issue advance', `
+      <div class="muted" style="font-size:12.5px;margin-bottom:8px">Hand a cash float directly to a staff member. It appears immediately on their advance balance and statement.</div>
+      <label class="fld"><span class="lab">Staff member</span><select id="fadv_emp">${team.map((s) => `<option value="${esc(s.id)}">${esc(s.name)} (${esc((s.roles || []).join(', '))})</option>`).join('')}</select></label>
+      <label class="fld"><span class="lab">Amount (AED)</span><input id="fadv_amount" type="number" inputmode="decimal" placeholder="0.00" /></label>
+      <label class="fld"><span class="lab">Note (optional)</span><input id="fadv_note" placeholder="e.g. weekly fuel float" /></label>
+      <button class="btn primary full" data-act="finAdvIssue">Issue advance</button>`);
+  }
+  ACT.finAdvIssueForm = () => financeIssueAdvanceForm();
+  ACT.finAdvIssue = async () => {
+    const empEl = $('#fadv_emp'); const employeeId = empEl && empEl.value;
+    const amount = parseFloat($('#fadv_amount').value);
+    const note = ($('#fadv_note').value || '').trim();
+    if (!employeeId) return toast('Pick a staff member');
+    if (!(amount > 0)) return toast('Enter an amount');
+    const body = { employeeId, amount }; if (note) body.note = note;
+    try { await staffApi('/api/finance/advances/issue', 'POST', body); toast('Advance issued'); closeSheet(); loadDocs(); }
+    catch (e) { toast(e.message); }
+  };
 })();
 
 window.renderApp = render;        // let Muhammed refresh the UI after acting

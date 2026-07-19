@@ -17,7 +17,7 @@ import {
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ApiTags } from '@nestjs/swagger';
-import { IsArray, IsIn, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsIn, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Public } from '../common/decorators/public.decorator';
@@ -80,6 +80,13 @@ class NoteDto { @IsOptional() @IsString() note?: string; }
 class RejectDto { @IsString() note: string; }
 class ChequeActionDto { @IsIn(['deposit', 'clear', 'bounce']) action: string; @IsOptional() @IsString() note?: string; }
 class CategoriesDto { @IsArray() categories: string[]; }
+// Finance-originated advance (Stage C): a finance/admin user hands a cash float directly to a
+// staff member. Positive amount enforced by @Min AND re-checked in the service.
+class IssueAdvanceDto {
+  @IsString() employeeId: string;
+  @IsNumber() @Min(0.01) amount: number;
+  @IsOptional() @IsString() note?: string;
+}
 
 // ---- Generic file-backed store (shared by receipts / payments / transfers) ----
 class JsonStore {
@@ -168,6 +175,7 @@ export class FinanceService {
     private readonly transfers: TransferStore,
     private readonly orders: CustomerStore,
     private readonly staffStore: StaffStore,
+    private readonly advances: AdvanceStore, // shared singleton from RashidModule (also feeds balanceFor/ledgerFor)
     config: ConfigService,
   ) { this.bounceCharge = Number(config.get('CHEQUE_BOUNCE_CHARGE') ?? 250); }
 
@@ -378,6 +386,35 @@ export class FinanceService {
   /** Colleague picker for transfers — any staff may see names/roles (not passwords) to pay a coworker. */
   colleagues(staff: Staff) { return this.staffStore.list().filter((s: any) => s.id !== staff.id).map((s: any) => ({ id: s.id, name: s.name, roles: s.roles })); }
 
+  // ===================== FINANCE-ORIGINATED ADVANCE (Stage C) =====================
+  /**
+   * Finance (or admin) hands a cash float DIRECTLY to a staff member. The record is written
+   * to the SAME AdvanceStore (data/advances.json) the staff/Rashid flow uses, with the SAME
+   * field set as RashidService.issueAdvance, so balanceFor()/ledgerFor() pick it up as a
+   * normal `advance_issued` credit with NO changes to those functions. The only additions are
+   * an optional `source:'finance'` marker (absent on older records — non-breaking for readers)
+   * and a histEntry note recording that finance issued it, plus the actor id/name/role.
+   */
+  issueAdvance(staff: Staff, dto: IssueAdvanceDto) {
+    this.assertFinance(staff); // finance||admin only — NOT the ordinary staff guard
+    const emp = this.staffStore.byId(dto.employeeId);
+    if (!emp) throw new BadRequestException('Employee not found');
+    const amount = round2(dto.amount);
+    if (!(amount > 0)) throw new BadRequestException('Amount must be greater than 0');
+    const at = new Date().toISOString();
+    const role = isAdmin(staff) ? 'admin' : 'finance';
+    const note = dto.note ? `finance-issued float · ${dto.note}` : 'finance-issued float';
+    const rec: any = {
+      id: '', employeeId: emp.id, employeeName: emp.name,
+      amount, remark: dto.note || '',
+      issuedBy: staff.name, issuedById: staff.id, issuedAt: at,
+      source: 'finance', // optional origin marker; old records simply lack it
+      status: 'ISSUED', acknowledgedAt: null, settledAt: null,
+      updatedAt: at, statusHistory: [this.hist(null, 'ISSUED', staff, role, note)],
+    };
+    return this.advances.create(rec);
+  }
+
   // ===================== OVERVIEW =====================
   summary(staff: Staff) {
     this.assertFinance(staff);
@@ -461,6 +498,10 @@ export class FinanceController {
   confirmTransfer(@Param('id') id: string, @Req() req: any) { return this.svc.confirmTransfer(req.staff, id); }
   @Public() @UseGuards(StaffAuthGuard) @Post('transfers/:id/decline')
   declineTransfer(@Param('id') id: string, @Req() req: any) { return this.svc.declineTransfer(req.staff, id); }
+
+  // ----- advances (finance-originated float, Stage C) -----
+  @Public() @UseGuards(StaffAuthGuard) @Post('advances/issue')
+  issueAdvance(@Body() dto: IssueAdvanceDto, @Req() req: any) { return this.svc.issueAdvance(req.staff, dto); }
 
   // ----- overview -----
   @Public() @UseGuards(StaffAuthGuard) @Get('summary')
