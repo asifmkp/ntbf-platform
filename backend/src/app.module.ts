@@ -32,6 +32,7 @@ import { MuhammedModule } from './muhammed/muhammed.module';
 import { FinanceModule } from './finance/finance.module';
 import { AuditModule } from './audit/audit.module';
 import { SuggestionsModule } from './suggestions/suggestions.module';
+import { AttentionModule } from './attention/attention.module';
 import { ClearTestDataModule } from './admin/clear-test-data.module';
 import { JulyBackfillModule } from './admin/july-backfill.module';
 
@@ -72,6 +73,7 @@ import { JulyBackfillModule } from './admin/july-backfill.module';
     FinanceModule,
     AuditModule,
     SuggestionsModule,
+    AttentionModule,
     ClearTestDataModule,
     JulyBackfillModule,
   ],

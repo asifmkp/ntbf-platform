@@ -112,6 +112,7 @@ function render() {
       ${R.tabs.map((t) => `<button class="bn ${t.id === tab ? 'on' : ''}" data-act="tab" data-id="${t.id}"><span class="i">${t.i}</span>${t.label}</button>`).join('')}
     </div>`;
   mountMaps();
+  if (window.applyAttentionBadges) window.applyAttentionBadges(); // additive: tab badges + handover banner
   if ((ONLINE_TABS[role] || []).indexOf(tab) >= 0 && !onlineLoaded) loadOnlineOrders();
 }
 
@@ -771,6 +772,16 @@ function loadingCard(t) { return `<div class="card">${emptyRow(t)}</div>`; }
 function onlineById(id) { return onlineOrders.find((o) => o.id === id); }
 // Timestamps in UAE time (Asia/Dubai), 24h.
 function uaeTime(iso) { if (!iso) return ''; try { return new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Dubai', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }); } catch (e) { return ''; } }
+// Aging signal (additive): a PLACED order waiting more than 60 minutes gets a visible
+// "waiting" tag — amber past 1h, red past 3h — computed from the order's createdAt.
+function agingTag(o) {
+  if (!o || o.status !== 'PLACED' || !o.createdAt) return '';
+  const mins = Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 60000);
+  if (!isFinite(mins) || mins <= 60) return '';
+  const h = Math.floor(mins / 60), m = mins % 60;
+  const label = h >= 1 ? h + 'h' + (m ? ' ' + m + 'm' : '') : m + 'm';
+  return `<div style="margin-top:6px"><span class="tag ${mins > 180 ? 'red' : 'amber'}">⏱ waiting ${label}</span></div>`;
+}
 const STATUS_LABEL = { PLACED: 'Order placed', CONFIRMED: 'Confirmed', PACKED: 'Packed', OUT_FOR_DELIVERY: 'Out for delivery', DELIVERED: 'Delivered', CANCELLED: 'Cancelled', FAILED: 'Failed' };
 function statusLabel(s) { return STATUS_LABEL[s] || s; }
 function phoneDigits(p) { return String(p || '').replace(/[^0-9]/g, ''); }
@@ -810,7 +821,7 @@ function orderCard(o, mode) {
   return `<div class="card pad" style="margin-bottom:10px;cursor:pointer" data-act="openOrder" data-id="${esc(o.id)}">
     <div class="li" style="padding:0"><div class="m"><b>${esc(o.customerName || '—')} ${srcBadge(o)}</b><span>${esc(o.id)} · ${aed(o.total)} · ${(o.items || []).length} line(s)${meta}</span></div><div class="end">${statusTag(o.status)}</div></div>
     <div class="muted" style="font-size:12px;margin-top:6px">${orderLinesText(o)}</div>
-    ${addr}${reviewNote(o)}
+    ${addr}${agingTag(o)}${reviewNote(o)}
     ${(nav || btns) ? `<div class="btn-row" style="margin-top:10px">${nav}${btns}</div>` : ''}
   </div>`;
 }
@@ -2715,6 +2726,109 @@ async function adminSuggestions() {
   };
   // Existing transfer submit, then refetch today's figures so the pending handover shows.
   ACT.eodTrfSave = async () => { eodData = null; eodErr = null; await ACT.trfSave(); };
+})();
+
+// ===========================================================================
+// Attention badges — role-scoped "what needs me right now" counters from
+// GET /api/attention/mine, polled on its OWN ~30s timer (deliberately separate
+// from the 6s appstate sync in sync.js — attention is a slow, cheap signal).
+//   · Small count chips on the relevant bottom tabs per role (hidden at zero).
+//   · A one-line banner on the caller's FIRST tab when cash handovers are
+//     awaiting THEIR confirmation — taps through to the existing My transfers
+//     sheet (ACT.trfMineSheet → confirm/decline flow, unchanged).
+// Purely additive: wraps login/logout/tab actions, injects DOM after render();
+// no existing flow, endpoint, or role gate is modified.
+// ===========================================================================
+(function attentionUI() {
+  let attn = null;
+  let attnTimer = null;
+
+  async function loadAttention() {
+    if (!staffToken || !staff) return;
+    try {
+      const fresh = await staffApi('/api/attention/mine', 'GET');
+      const changed = JSON.stringify({ ...fresh, at: 0 }) !== JSON.stringify(attn ? { ...attn, at: 0 } : null);
+      attn = fresh;
+      if (changed) render(); // re-render only when the counters actually moved
+    } catch (e) { /* silent — badges just stay as they were */ }
+  }
+  function startAttention() {
+    stopAttention();
+    if (!staffToken || !staff) return;
+    loadAttention();
+    attnTimer = setInterval(loadAttention, 30000); // 30s — NOT tied to the 6s sync poll
+  }
+  function stopAttention() {
+    if (attnTimer) { clearInterval(attnTimer); attnTimer = null; }
+    attn = null;
+  }
+
+  // Badge map: which bottom tab carries which counter, per active role. The
+  // transfers-to-confirm count rides on the tab where the confirm flow lives
+  // (collectors' Receipts tab / the finance hub's Transfers segment); roles
+  // without such a tab still get the first-tab banner below.
+  function badgeCounts() {
+    if (!attn) return {};
+    const t = (attn.transfersToConfirm && attn.transfersToConfirm.count) || 0;
+    const m = {};
+    if (role === 'salesman') {
+      m.online = (attn.ordersNeedsReview || 0) + (attn.ordersIncoming || 0);
+      m.receipts = t;
+    } else if (role === 'driver') {
+      m.route = attn.ordersOutForDelivery || 0;
+      m.receipts = t;
+    } else if (role === 'warehouse') {
+      m.dispatch = attn.ordersToPack || 0;
+    } else if (role === 'finance') {
+      m.receipts = (attn.receiptsPendingApproval || 0) + (attn.receiptsAwaitingConfirm || 0) + (attn.paymentsPending || 0) + t;
+    } else if (role === 'admin') {
+      m.receipts = (attn.receiptsPendingApproval || 0) + (attn.receiptsAwaitingConfirm || 0) + (attn.paymentsPending || 0) + t;
+      m.approvals = (attn.expensesPending || 0) + (attn.suggestionsNew || 0);
+    }
+    return m;
+  }
+
+  // Called from render() after the shell is in the DOM. Idempotent per render.
+  window.applyAttentionBadges = function () {
+    if (!staffToken || !staff || !role || !ROLES[role]) return;
+    const counts = badgeCounts();
+    document.querySelectorAll('.bottom-nav .bn[data-id]').forEach((btn) => {
+      const n = counts[btn.dataset.id] || 0;
+      const old = btn.querySelector('.bn-badge');
+      if (old) old.remove();
+      if (n > 0) {
+        const b = document.createElement('span');
+        b.className = 'bn-badge';
+        b.textContent = n > 99 ? '99+' : String(n);
+        btn.appendChild(b);
+      }
+    });
+    // Handover nudge: one-line banner at the top of this role's FIRST tab.
+    const first = ROLES[role].tabs[0] && ROLES[role].tabs[0].id;
+    const body = document.querySelector('#app .body');
+    const tc = attn && attn.transfersToConfirm;
+    const n = (tc && tc.count) || 0;
+    const oldBanner = document.getElementById('attn-banner');
+    if (oldBanner) oldBanner.remove();
+    if (body && tab === first && n > 0) {
+      const div = document.createElement('div');
+      div.id = 'attn-banner';
+      div.className = 'card pad';
+      div.setAttribute('data-act', 'trfMineSheet');
+      div.style.cssText = 'margin-bottom:12px;cursor:pointer;background:var(--amber-bg);border-color:transparent';
+      div.innerHTML = `<b style="color:var(--amber);font-size:12.5px">💵 ${n} cash handover${n === 1 ? '' : 's'} awaiting your confirmation — ${aed(tc.total || 0)}</b><div class="muted" style="font-size:11.5px;color:var(--amber)">Tap to review and confirm you received the cash.</div>`;
+      body.prepend(div);
+    }
+  };
+
+  // Lifecycle: start after login, stop on logout, refetch on tab switch.
+  const origLogin = ACT.staffLogin;
+  ACT.staffLogin = async (d) => { await origLogin(d); startAttention(); };
+  const origLogout = ACT.staffLogout;
+  ACT.staffLogout = (d) => { stopAttention(); origLogout(d); };
+  const origTab = ACT.tab;
+  ACT.tab = (d) => { origTab(d); loadAttention(); };
+  if (staffToken && staff) startAttention(); // already signed in on load
 })();
 
 window.renderApp = render;        // let Muhammed refresh the UI after acting
