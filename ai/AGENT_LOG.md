@@ -36,3 +36,8 @@ Notes: adoption rules + risks reported to owner; enforcement CI left as template
 What: owner-directed business-first re-prioritization of all open work; orchestrator decision made.
 Result: /ai/ROADMAP.md added (phases 0–3, role model, immediate order); TASK-023/024/025 queued; DEC-013 (roadmap authority) + DEC-014 (orchestrator postponed behind gates G1–G5); HANDOFF read order updated. Docs-only PR, [skip render].
 Notes: first mover is TASK-014 backups — needs owner answer on off-box destination. Next mission (owner): Claude account audit → CLAUDE_ACCOUNT_AUDIT.md.
+
+## 2026-07-21T05:15+04:00 · claude-muhammed · audit (Claude account)
+What: owner-directed evidence-only audit of the Claude account/workspace (connectors, plugins, skills, Routines, environments, artifacts, orchestration, security).
+Result: /ai/CLAUDE_ACCOUNT_AUDIT.md added — 17 connectors mapped, gaps + safe enablement steps + token-efficiency + security notes. Nothing changed/enabled/connected. Docs-only PR, [skip render].
+Notes: visibility limits documented (claude.ai UI Projects/Memory/settings not inspectable from Code sandbox; list_repos denied by classifier). Top recommendations: NTBF Project knowledge, Drive report inbox, disable redundant generic Zoho connector in NTBF chats.
