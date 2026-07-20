@@ -2620,6 +2620,103 @@ async function adminSuggestions() {
   };
 })();
 
+// ===========================================================================
+// Server-backed driver EOD — replaces the legacy client-local EOD/Collect tab
+// bodies with the REAL day from /api/finance/eod/mine (orders the caller
+// delivered, receipts they collected, cash they paid out, transfers both ways,
+// and the resulting cash in hand). The legacy custody/demo code is untouched —
+// these overrides simply stop the EOD & Collect tabs reading it. "Hand over
+// cash" opens the existing pay-a-colleague transfer form (same field ids, same
+// ACT.trfSave handler → POST /api/finance/transfers, receiver confirms on
+// their phone) prefilled with cash-in-hand and an EOD narration. Additive only.
+// ===========================================================================
+(function eodServerUI() {
+  const TRF_METHODS = [['CASH', 'Cash'], ['CHEQUE', 'Cheque'], ['BANK', 'Bank transfer'], ['CARD', 'Card']];
+  let eodData = null, eodErr = null;
+  async function loadEod() {
+    try { eodData = await staffApi('/api/finance/eod/mine', 'GET'); eodErr = null; }
+    catch (e) { eodData = null; eodErr = e.message || 'Could not load'; }
+    render();
+  }
+  function eodErrCard(title) {
+    return `<div class="card pad" style="margin-bottom:12px"><b style="font-size:13.5px">${title}</b>
+      <div class="muted" style="font-size:12px;margin:4px 0 10px">Could not load today’s figures: ${esc(eodErr)}</div>
+      <button class="btn sm" data-act="eodRefresh">↻ Retry</button></div>`;
+  }
+  function deliveredRow(o) {
+    const cash = (o.cashMethod || 'CASH_ON_DELIVERY') === 'CASH_ON_DELIVERY';
+    return row(cash ? '💵' : '▤', 'g', esc(o.customer || '—'),
+      esc(o.orderId) + ' · ' + (cash ? 'Cash' : 'Cheque') + (o.at ? ' · ' + uaeTime(o.at) : ''),
+      aed(o.cashAmount));
+  }
+
+  // ---- EOD tab: the real daily cash-up ----
+  views.eod = function () {
+    if (eodErr) return eodErrCard('▰ End of day');
+    if (eodData === null) { setTimeout(loadEod, 0); return loadingCard('Loading today’s cash-up…'); }
+    const d = eodData;
+    const del = d.delivered || {}; const rc = d.receiptsCollected || {}; const po = d.paidOut || {}; const tr = d.transfers || {};
+    const pend = tr.sentPending || [];
+    const hand = Number(d.cashOnHand) || 0;
+    return `
+      <div class="mkpis">
+        ${kpi('Delivered', del.count || 0, 'accent')}
+        ${kpi('Cash', aed(del.cashTotal || 0), 'green')}
+        ${kpi('Cheques', aed(del.chequeTotal || 0))}
+        ${kpi('Receipts', aed(rc.total || 0), 'green')}
+        ${kpi('Paid out', aed(po.total || 0), (po.total || 0) ? 'amber' : '')}
+        ${kpi('Cash in hand', aed(hand), hand > 0 ? 'amber' : 'green')}
+      </div>
+      <div class="card pad" style="margin-bottom:12px">
+        <b style="font-size:13.5px">▰ End of day · ${esc(d.date || '')}</b>
+        <div class="muted" style="font-size:12px;margin:4px 0 10px">Live server figures for your day. Cash in hand = cash deliveries + cash receipts − cash paid out − confirmed handovers sent + transfers received. Hand it over below — the receiver confirms on their phone.</div>
+        <div class="btn-row">
+          <button class="btn primary" data-act="eodHandover"${hand > 0 ? '' : ' style="opacity:.5"'}>💵 Hand over cash</button>
+          <button class="btn sm" data-act="eodRefresh">↻ Refresh</button>
+        </div>
+      </div>
+      ${pend.length ? `<div class="sect">Awaiting confirmation (${pend.length})</div>
+      <div class="card">${pend.map((t) => row('⏳', 'a', aed(t.amount) + (t.toName ? ' to ' + esc(t.toName) : ''), 'awaiting confirmation by ' + esc(t.toName || 'colleague') + (t.createdAt ? ' · ' + uaeTime(t.createdAt) : ''), '<span class="tag amber">pending</span>')).join('')}</div>` : ''}
+      <div class="sect">Delivered today (${del.count || 0})</div>
+      <div class="card">${(del.list || []).map(deliveredRow).join('') || emptyRow('No deliveries recorded for you today.')}</div>`;
+  };
+
+  // ---- Collect tab: same endpoint's delivered data, cash-method only ----
+  views.collect = function () {
+    if (eodErr) return eodErrCard('＄ Collections');
+    if (eodData === null) { setTimeout(loadEod, 0); return loadingCard('Loading…'); }
+    const del = (eodData.delivered || {});
+    const cashList = (del.list || []).filter((o) => (o.cashMethod || 'CASH_ON_DELIVERY') === 'CASH_ON_DELIVERY');
+    return `
+      <div class="mkpis">${kpi('Cash collected', aed(del.cashTotal || 0), 'green')}${kpi('Cheques', aed(del.chequeTotal || 0))}</div>
+      <div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">Cash collected on orders you delivered today (server records). Hand it over from the EOD tab at end of day.</div>
+      <button class="btn sm" data-act="eodRefresh" style="margin-top:10px">↻ Refresh</button></div>
+      <div class="sect">Cash collected today (${cashList.length})</div>
+      <div class="card">${cashList.map(deliveredRow).join('') || emptyRow('No cash deliveries recorded for you today.')}</div>`;
+  };
+
+  ACT.eodRefresh = () => { eodData = null; eodErr = null; render(); };
+  // "Hand over cash" → the existing pay-a-colleague transfer form, prefilled. Same field
+  // ids as transferForm(), submitted through the existing ACT.trfSave handler → the
+  // unchanged POST /api/finance/transfers (PENDING_CONFIRM until the receiver confirms).
+  ACT.eodHandover = async () => {
+    const d = eodData || {};
+    const hand = Number(d.cashOnHand) || 0;
+    openSheet('Hand over cash', '<div class="empty">Loading colleagues…</div>');
+    let team = []; try { team = await staffApi('/api/finance/colleagues', 'GET'); } catch (e) { toast(e.message); }
+    openSheet('Hand over cash', `
+      <div class="muted" style="font-size:12.5px;margin-bottom:8px">Today’s cash in hand: <b>${aed(hand)}</b>. Edit the amount if you are handing over a different figure.</div>
+      <label class="fld"><span class="lab">Hand over to</span><select id="trf_to">${(team || []).map((s) => `<option value="${s.id}">${esc(s.name)} (${esc((s.roles || []).join(', '))})</option>`).join('')}</select></label>
+      <label class="fld"><span class="lab">Amount (AED)</span><input id="trf_amount" type="number" inputmode="decimal" value="${hand > 0 ? hand : ''}" placeholder="0.00" /></label>
+      <label class="fld"><span class="lab">Method</span><select id="trf_method">${TRF_METHODS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+      <label class="fld"><span class="lab">Narration</span><input id="trf_narration" value="EOD cash handover ${esc(d.date || '')}" /></label>
+      <button class="btn primary full" data-act="eodTrfSave">Record handover</button>
+      <p class="muted" style="font-size:11.5px;margin-top:8px">The colleague confirms on their phone that they received the cash — it stays “awaiting confirmation” until then.</p>`);
+  };
+  // Existing transfer submit, then refetch today's figures so the pending handover shows.
+  ACT.eodTrfSave = async () => { eodData = null; eodErr = null; await ACT.trfSave(); };
+})();
+
 window.renderApp = render;        // let Muhammed refresh the UI after acting
 window.currentRole = () => role;  // expose active role to Muhammed
 render();
