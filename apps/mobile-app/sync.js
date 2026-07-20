@@ -45,8 +45,16 @@
       if (!r.ok) throw new Error('http ' + r.status);
       const d = await r.json();
       setStatus(true);
-      if (d && d.state && d.rev > rev) adopt(d.state, d.rev);
-      else if (d && (!d.state || d.rev === 0) && rev === 0) push(); // seed empty server with local
+      if (d && d.state && d.rev > rev) {
+        const localSeedV = (Store.state && Store.state.seedVersion) || 0;
+        if ((d.state.seedVersion || 0) < localSeedV) {
+          // Remote blob predates our seed (e.g. a stale device pushed the old
+          // demo dataset). Never adopt it — record its rev and push our clean
+          // versioned state so the server (last-write-wins) converges on it.
+          rev = d.rev; localStorage.setItem(REVKEY, rev);
+          push();
+        } else adopt(d.state, d.rev);
+      } else if (d && (!d.state || d.rev === 0) && rev === 0) push(); // seed empty server with local
     } catch (e) { setStatus(false); }
   }
 

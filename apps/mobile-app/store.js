@@ -4,9 +4,16 @@
 // ---------------------------------------------------------------------------
 const KEY = 'ntbf_app_v1';
 
-// Catalog seeded from the live Zoho snapshot (AED sale rate). Demo stock so the
-// order → dispatch → deliver flow is usable; Warehouse can adjust it.
-// velocity = avg cartons sold per day (seeded sales history); leadDays = supplier lead time.
+// Bump SEED_VERSION whenever the built-in seed changes shape or content in a way
+// every device must pick up. On load, any persisted dataset with a missing or
+// older seedVersion is DISCARDED and re-initialized from the current (empty)
+// production seed — this is the one-time migration that drops the old demo
+// dataset (fake orders/customers/cash) from every device automatically.
+const SEED_VERSION = 2; // v2: production mode — empty seed, demo data removed
+
+// Fallback catalog used only when catalog.js hasn't loaded (offline first paint,
+// Node tests). The live app always uses window.NTBF_CATALOG.
+// velocity = avg cartons sold per day; leadDays = supplier lead time.
 const SEED_PRODUCTS = [
   { id: 'p1', name: '7Up 1.5 Litre', unit: 'Ctn of 6', price: 25.71, cost: 24.76, stock: 120, velocity: 12, leadDays: 3 },
   { id: 'p2', name: '7Up 1.5 Litre Zero', unit: 'Ctn of 6', price: 17.62, cost: 16.19, stock: 90, velocity: 6, leadDays: 3 },
@@ -20,51 +27,30 @@ const SEED_PRODUCTS = [
   { id: 'p10', name: 'Mirinda Cans 245ml', unit: 'Ctn of 24', price: 33.81, cost: 36.4, stock: 50, velocity: 5, leadDays: 4 },
 ];
 
+// Production seed: the real catalog plus EMPTY transactional data. Every KPI
+// (revenue, collected, A/R, pipeline, visits, cash…) derives to 0; every list
+// renders its empty state. Real records arrive via staff actions and sync.
 function seed() {
   const catalog = (typeof window !== 'undefined' && window.NTBF_CATALOG && window.NTBF_CATALOG.length) ? window.NTBF_CATALOG : SEED_PRODUCTS;
   return {
+    seedVersion: SEED_VERSION,
     seq: 1050,
     products: catalog.map((p) => ({ ...p })),
-    customers: [
-      { id: 'c1', name: 'Al Madina Supermarket', category: 'RETAIL', credit: 5000, creditDays: 30, status: 'ACTIVE', onHold: false, lat: 25.4052, lng: 55.4750 },
-      { id: 'c2', name: 'Rashid Stores', category: 'WHOLESALE', credit: 8000, creditDays: 15, status: 'ACTIVE', onHold: false, lat: 25.3870, lng: 55.4400 },
-      { id: 'c3', name: 'Corniche Bakery', category: 'RESTAURANT', credit: 3000, creditDays: 15, status: 'ACTIVE', onHold: false, lat: 25.4180, lng: 55.4860 },
-      { id: 'c4', name: 'Ajman Mini Mart', category: 'RETAIL', credit: 2000, creditDays: 7, status: 'ACTIVE', onHold: false, lat: 25.3990, lng: 55.4520 },
-    ],
+    customers: [],
     visits: [],
-    orders: [
-      { id: 'SO-1042', customerId: 'c1', items: [{ pid: 'p6', qty: 6 }, { pid: 'p1', qty: 3 }], total: 271.41, status: 'OUT_FOR_DELIVERY', method: 'CASH_ON_DELIVERY', driver: 'd1', createdBy: 'sales' },
-      { id: 'SO-1043', customerId: 'c2', items: [{ pid: 'p4', qty: 4 }], total: 289.52, status: 'OUT_FOR_DELIVERY', method: 'CHEQUE_ON_DELIVERY', driver: 'd1', createdBy: 'sales' },
-      { id: 'SO-1044', customerId: 'c3', items: [{ pid: 'p9', qty: 5 }, { pid: 'p10', qty: 3 }], total: 225.23, status: 'OUT_FOR_DELIVERY', method: 'CASH_ON_DELIVERY', driver: 'd1', createdBy: 'sales' },
-    ],
+    orders: [],
     payments: [],
     requisitions: [],
     pos: [],
-    approvals: [
-      { id: 'a1', type: 'CUSTOMER', label: 'New customer: Green Grocers LLC', status: 'PENDING' },
-    ],
+    approvals: [],
     grns: [],
     bills: [],
-    tickets: [
-      { id: 'TK-1001', customerId: 'c1', customerName: 'Al Madina Supermarket', subject: 'Short delivery on last order', body: 'Received 8 of 9 cartons on SO-1042.', type: 'query', status: 'open', replies: [], time: '09:14' },
-    ],
+    tickets: [],
     cash: [],
     documents: [],
     stockMoves: [],
-    assets: [
-      { id: 'AS-1', name: 'Delivery Van DXB-4471', category: 'Vehicle', cost: 65000, salvage: 8000, purchaseDate: inDays(-500), lifeYears: 5 },
-      { id: 'AS-2', name: 'Warehouse racking', category: 'Equipment', cost: 12000, salvage: 500, purchaseDate: inDays(-800), lifeYears: 8 },
-      { id: 'AS-3', name: 'Cold storage unit', category: 'Equipment', cost: 9000, salvage: 500, purchaseDate: inDays(-300), lifeYears: 7 },
-      { id: 'AS-4', name: 'Office laptop & printer', category: 'Devices', cost: 4500, salvage: 0, purchaseDate: inDays(-200), lifeYears: 3 },
-    ],
-    renewals: [
-      { id: 'RN-1', kind: 'visa', holder: 'Musthafa', expiry: inDays(25) },
-      { id: 'RN-2', kind: 'labor_card', holder: 'Tahir', expiry: inDays(72) },
-      { id: 'RN-3', kind: 'emirates_id', holder: 'Haris', expiry: inDays(55) },
-      { id: 'RN-4', kind: 'insurance', holder: 'Van DXB-4471', expiry: inDays(14) },
-      { id: 'RN-5', kind: 'registration', holder: 'Van DXB-4471', expiry: inDays(110) },
-      { id: 'RN-6', kind: 'passport', holder: 'Musthafa', expiry: inDays(240) },
-    ],
+    assets: [],
+    renewals: [],
     shift: { started: false, loadVerified: false },
     driverLoc: { lat: 25.4052, lng: 55.5136, name: 'Warehouse depot · Ajman' },
     eod: [],
@@ -72,7 +58,14 @@ function seed() {
 }
 
 function load() {
-  try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; }
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    // One-time migration: any persisted dataset from before the current seed
+    // (e.g. the old self-seeding demo, which had no seedVersion) is discarded
+    // so this device starts from the clean production seed.
+    if (!s || (s.seedVersion || 0) < SEED_VERSION) return null;
+    return s;
+  } catch (e) { return null; }
 }
 
 const Store = {
@@ -369,7 +362,6 @@ const Store = {
 };
 
 function now() { const d = new Date(); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-function inDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 function round(n) { return Math.round((+n || 0) * 100) / 100; }
 function sum(arr) { return arr.reduce((s, n) => s + (+n || 0), 0); }
 function aed(n) { return 'AED ' + (+n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }

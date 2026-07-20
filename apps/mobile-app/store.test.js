@@ -10,8 +10,10 @@ const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-function makeStore() {
+function makeStore(opts) {
+  opts = opts || {};
   const store = {};
+  if (opts.persisted !== undefined) store['ntbf_app_v1'] = JSON.stringify(opts.persisted);
   const localStorage = {
     getItem: (k) => (k in store ? store[k] : null),
     setItem: (k, v) => { store[k] = String(v); },
@@ -22,24 +24,77 @@ function makeStore() {
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'store.js'), 'utf8'), sandbox);
   const S = sandbox.window.Store;
-  S.reset(); // start from a clean seed each time
+  if (opts.persisted === undefined) {
+    S.reset(); // start from the clean (empty) production seed each time
+    if (!opts.raw) installFixtures(S); // most tests exercise rules over sample records
+  }
   return S;
 }
 
+function inDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+
+// Sample records for exercising the business rules. The production seed itself
+// is empty — these exist only inside the tests.
+function installFixtures(S) {
+  S.state.customers = [
+    { id: 'c1', name: 'Al Madina Supermarket', category: 'RETAIL', credit: 5000, creditDays: 30, status: 'ACTIVE', onHold: false, lat: 25.4052, lng: 55.4750 },
+    { id: 'c2', name: 'Rashid Stores', category: 'WHOLESALE', credit: 8000, creditDays: 15, status: 'ACTIVE', onHold: false, lat: 25.3870, lng: 55.4400 },
+    { id: 'c3', name: 'Corniche Bakery', category: 'RESTAURANT', credit: 3000, creditDays: 15, status: 'ACTIVE', onHold: false, lat: 25.4180, lng: 55.4860 },
+    { id: 'c4', name: 'Ajman Mini Mart', category: 'RETAIL', credit: 2000, creditDays: 7, status: 'ACTIVE', onHold: false, lat: 25.3990, lng: 55.4520 },
+  ];
+  S.state.orders = [
+    { id: 'SO-1042', customerId: 'c1', items: [{ pid: 'p6', qty: 6 }, { pid: 'p1', qty: 3 }], total: 271.41, status: 'OUT_FOR_DELIVERY', method: 'CASH_ON_DELIVERY', driver: 'd1', createdBy: 'sales' },
+    { id: 'SO-1043', customerId: 'c2', items: [{ pid: 'p4', qty: 4 }], total: 289.52, status: 'OUT_FOR_DELIVERY', method: 'CHEQUE_ON_DELIVERY', driver: 'd1', createdBy: 'sales' },
+    { id: 'SO-1044', customerId: 'c3', items: [{ pid: 'p9', qty: 5 }, { pid: 'p10', qty: 3 }], total: 225.23, status: 'OUT_FOR_DELIVERY', method: 'CASH_ON_DELIVERY', driver: 'd1', createdBy: 'sales' },
+  ];
+  S.state.renewals = [
+    { id: 'RN-1', kind: 'visa', holder: 'Musthafa', expiry: inDays(25) },
+    { id: 'RN-2', kind: 'labor_card', holder: 'Tahir', expiry: inDays(72) },
+    { id: 'RN-3', kind: 'emirates_id', holder: 'Haris', expiry: inDays(55) },
+    { id: 'RN-4', kind: 'insurance', holder: 'Van DXB-4471', expiry: inDays(14) },
+    { id: 'RN-5', kind: 'registration', holder: 'Van DXB-4471', expiry: inDays(110) },
+    { id: 'RN-6', kind: 'passport', holder: 'Musthafa', expiry: inDays(240) },
+  ];
+  S.save();
+}
+
 let pass = 0, fail = 0;
-function test(name, fn) {
-  const S = makeStore();
+function test(name, fn, opts) {
+  const S = makeStore(opts);
   try { fn(S); console.log('  ✓ ' + name); pass++; }
   catch (e) { console.log('  ✗ ' + name + '\n      ' + e.message); fail++; }
 }
 
 console.log('store.js — business engine');
 
-test('seed has catalog, customers and live deliveries', (S) => {
-  assert.strictEqual(S.state.products.length, 10);
-  assert.strictEqual(S.state.customers.length, 4);
-  assert.strictEqual(S.driverStops().length, 3);
-});
+test('production seed is versioned and EMPTY (catalog only, no demo data)', (S) => {
+  assert.strictEqual(S.state.seedVersion, 2);
+  assert.strictEqual(S.state.products.length, 10); // fallback catalog (no window.NTBF_CATALOG here)
+  ['customers', 'orders', 'visits', 'payments', 'approvals', 'tickets', 'cash', 'documents', 'stockMoves', 'assets', 'renewals', 'grns', 'bills', 'requisitions', 'pos', 'eod'].forEach((k) => {
+    assert.strictEqual(S.state[k].length, 0, k + ' must seed empty');
+  });
+  assert.strictEqual(S.driverStops().length, 0);
+}, { raw: true });
+
+test('persisted pre-production dataset (no seedVersion) is discarded on load', (S) => {
+  // makeStore pre-wrote an old-style demo blob into localStorage; load() must drop it.
+  assert.strictEqual(S.state.seedVersion, 2);
+  assert.strictEqual(S.state.orders.length, 0);
+  assert.strictEqual(S.state.customers.length, 0);
+}, { persisted: { seq: 1050, products: [], customers: [{ id: 'c1', name: 'Demo' }], orders: [{ id: 'SO-1042', total: 271.41 }], payments: [], visits: [] } });
+
+test('persisted dataset at the current seedVersion is kept on load', (S) => {
+  assert.strictEqual(S.state.orders.length, 1);
+  assert.strictEqual(S.state.orders[0].id, 'SO-9001');
+}, { persisted: { seedVersion: 2, seq: 1050, products: [], customers: [], orders: [{ id: 'SO-9001', total: 10 }], payments: [], visits: [] } });
+
+test('reset() re-produces the empty production seed', (S) => {
+  S.state.orders.push({ id: 'SO-X', customerId: 'c1', items: [], total: 1, status: 'PLACED' });
+  S.reset();
+  assert.strictEqual(S.state.orders.length, 0);
+  assert.strictEqual(S.state.customers.length, 0);
+  assert.strictEqual(S.state.seedVersion, 2);
+}, { raw: true });
 
 test('placeOrder decrements stock and computes total by price', (S) => {
   const p = S.product('p6'); // Coca Cola 2L @ 32.38, stock 150
