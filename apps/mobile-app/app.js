@@ -1182,6 +1182,9 @@ function settingsForm() {
       </div>
       ${isAdmin ? `<div class="btn-row" style="margin-top:9px">
         <button class="btn" data-act="admSuggestions">Suggestions (admin)</button>
+      </div>
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn danger" data-act="clearTestDataForm">Clear test data (admin)</button>
       </div>` : ''}
       <button class="btn danger full" data-act="staffLogout" style="margin-top:9px">Sign out</button>
     </div>` : ''}
@@ -1629,6 +1632,31 @@ const ACT = {
   settings: () => settingsForm(),
   saveSettings: () => { localStorage.setItem('ntbf_api', $('#set_api').value.trim()); const tk = $('#set_token'); if (tk) { const v = tk.value.trim(); if (v) localStorage.setItem('ntbf_token', v); else localStorage.removeItem('ntbf_token'); } const sc = $('#set_cust'); if (sc) localStorage.setItem('ntbf_customer', sc.value); closeSheet(); render(); toast('Settings saved'); },
   resetAll: () => { S.reset(); shopCart = {}; closeSheet(); render(); toast('All data reset'); },
+
+  // ---- Clear test data (admin): wipes ALL transactional records on the SERVER for
+  // ALL users, then resets this device's local demo dataset (same as Reset all data).
+  clearTestDataForm: () => {
+    if (!staff || !staff.roles || staff.roles.indexOf('admin') < 0) return toast('Admins only');
+    openSheet('Clear test data (admin)', `
+      <p style="font-size:13px;line-height:1.55;color:var(--muted)">This permanently deletes <b>ALL transactional records on the server, for ALL users</b> — orders (app &amp; WhatsApp), expenses, advances, receipts, payments, transfers, cheque records, suggestions and the shared synced dataset. Staff accounts, the audit log and app settings are kept. <b>This cannot be undone.</b></p>
+      <label class="fld"><span class="lab">Type CLEAR to confirm</span><input id="ctd_confirm" autocomplete="off" autocapitalize="characters" placeholder="CLEAR" /></label>
+      <button class="btn danger full" data-act="clearTestDataGo">Permanently clear test data</button>`);
+  },
+  clearTestDataGo: async () => {
+    const inp = $('#ctd_confirm');
+    const typed = (inp && inp.value ? inp.value : '').trim();
+    if (typed !== 'CLEAR') return toast('Type CLEAR (in capitals) to confirm');
+    try {
+      const res = await staffApi('/api/admin/clear-test-data', 'POST', { confirm: 'CLEAR' });
+      // Server wiped — clear this device too (same client logic as Reset all data),
+      // and drop the sync revision so the app re-syncs against the fresh server state.
+      S.reset(); shopCart = {};
+      localStorage.removeItem('ntbf_rev');
+      closeSheet();
+      toast('Cleared ' + ((res && res.cleared) || []).length + ' server stores — reloading…');
+      setTimeout(() => location.reload(), 900);
+    } catch (e) { toast(e.message); }
+  },
 
   // admin override
   advanceOrder: (d) => { S.adminAdvance(d.id); render(); const o = S.order(d.id); toast(o.id + ' → ' + o.status.replace(/_/g, ' ').toLowerCase()); },

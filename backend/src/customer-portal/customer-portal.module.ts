@@ -203,6 +203,10 @@ export class CustomerStore {
   allOrders() {
     return this.data.orders.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : '—', customerPhone: c ? c.phone : '' }; });
   }
+  /** Admin "clear test data": drop every order (app + WhatsApp-ingested). Customer accounts and
+   *  seq are preserved — accounts are not transactional records, and new order IDs never reuse
+   *  old ones. Same atomic save as every other write. */
+  clearOrders() { const n = this.data.orders.length; this.data.orders = []; this.save(); return n; }
   /** Production cleanup: snapshot all orders (with customers) to an archive file in the data
    *  dir, then empty the live orders. seq is preserved so new order IDs never reuse old ones.
    *  No-op if there are no orders; never clobbers an existing archive file. */

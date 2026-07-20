@@ -32,6 +32,7 @@ import { MuhammedModule } from './muhammed/muhammed.module';
 import { FinanceModule } from './finance/finance.module';
 import { AuditModule } from './audit/audit.module';
 import { SuggestionsModule } from './suggestions/suggestions.module';
+import { ClearTestDataModule } from './admin/clear-test-data.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { SuggestionsModule } from './suggestions/suggestions.module';
     FinanceModule,
     AuditModule,
     SuggestionsModule,
+    ClearTestDataModule,
   ],
   providers: [
     // Global: authenticate every route (unless @Public), then enforce role/dept/access.

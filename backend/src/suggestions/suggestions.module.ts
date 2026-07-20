@@ -68,6 +68,9 @@ export class SuggestionStore {
   }
   private id() { this.data.seq += 1; return 'SUG-' + this.data.seq; }
 
+  /** Admin "clear test data": drop every suggestion; keep seq so IDs never reuse. */
+  clear() { const n = this.data.items.length; this.data.items = []; this.save(); return n; }
+
   // Newest first: items are unshifted on create, so array order already reflects that.
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
