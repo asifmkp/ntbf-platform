@@ -33,13 +33,25 @@ export class AppStateService {
 
   put(state: any) {
     this.mem = { rev: this.mem.rev + 1, state };
+    this.persist();
+    return { rev: this.mem.rev };
+  }
+
+  /** Admin "clear test data": reset the shared dataset to the empty initial shape
+   *  ({ rev: 0, state: null }) so the next device to sync re-seeds it fresh. */
+  clear() {
+    this.mem = { rev: 0, state: null };
+    this.persist();
+    return { rev: this.mem.rev };
+  }
+
+  private persist() {
     try {
       fs.mkdirSync(path.dirname(this.file), { recursive: true });
       const tmp = this.file + '.tmp';
       fs.writeFileSync(tmp, JSON.stringify(this.mem));
       fs.renameSync(tmp, this.file);
     } catch (e) { /* memory-only fallback */ }
-    return { rev: this.mem.rev };
   }
 }
 

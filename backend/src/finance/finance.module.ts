@@ -138,6 +138,9 @@ class JsonStore {
     } catch (e) { return null; }
   }
 
+  /** Admin "clear test data": drop every record; keep seq (IDs never reuse) and settings (e.g. payment categories). */
+  clear() { const n = this.data.items.length; this.data.items = []; this.save(); return n; }
+
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
   all() { return this.data.items.slice(); }
@@ -680,5 +683,6 @@ export class OversightController {
   ],
   controllers: [FinanceController, OversightController],
   providers: [ReceiptStore, PaymentStore, TransferStore, FinanceService, OversightService, StaffAuthGuard],
+  exports: [ReceiptStore, PaymentStore, TransferStore], // reused by the admin clear-test-data module
 })
 export class FinanceModule {}

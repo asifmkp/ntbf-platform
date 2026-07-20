@@ -86,6 +86,9 @@ export class ExpenseStore {
   }
   private id() { this.data.seq += 1; return 'EXP-' + this.data.seq; }
 
+  /** Admin "clear test data": drop every expense record; keep seq (IDs never reuse) and settings. */
+  clear() { const n = this.data.items.length; this.data.items = []; this.save(); return n; }
+
   threshold() { return this.data.settings.autoApproveThreshold; }
   setThreshold(n: number) { this.data.settings.autoApproveThreshold = round2(n); this.save(); return this.data.settings.autoApproveThreshold; }
 
@@ -149,6 +152,9 @@ export class AdvanceStore {
     } catch (e) { /* ignore */ }
   }
   private id() { this.data.seq += 1; return 'ADV-' + this.data.seq; }
+
+  /** Admin "clear test data": drop every advance record; keep seq so IDs never reuse. */
+  clear() { const n = this.data.items.length; this.data.items = []; this.save(); return n; }
 
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
