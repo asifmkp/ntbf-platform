@@ -7,10 +7,11 @@
 
 1. **This file** — rules of engagement.
 2. **`/ai/STATUS.md`** — what's live, key figures, what's blocked (≈1 screen).
-3. **`/ai/TASK_QUEUE.md`** — pick work only from here.
-4. **`/ai/PROJECT_KNOWLEDGE.md`** — the section relevant to your task (skim the rest).
-5. **`/ai/DECISIONS.md`** — scan the index; never contradict an ACCEPTED decision without a new DEC approved by the owner.
-6. Repo-root `CLAUDE.md` — project hard rules (applies to every agent, not only Claude).
+3. **`/ai/ROADMAP.md`** — business-first execution order + phase gates (DEC-013): pick tasks in this order.
+4. **`/ai/TASK_QUEUE.md`** — pick work only from here (detail/state).
+5. **`/ai/PROJECT_KNOWLEDGE.md`** — the section relevant to your task (skim the rest).
+6. **`/ai/DECISIONS.md`** — scan the index; never contradict an ACCEPTED decision without a new DEC approved by the owner.
+7. Repo-root `CLAUDE.md` — project hard rules (applies to every agent, not only Claude).
 
 ## 1. Identity & environment facts
 

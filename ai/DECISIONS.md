@@ -5,7 +5,7 @@
 > A decision that isn't written here **does not exist** — chat history is not authority. Newest entries appended at the end.
 > Superseding: never edit an old decision's Decision text; add the new DEC and flip the old Status.
 
-**Next free ID: DEC-013**
+**Next free ID: DEC-015**
 
 ---
 
@@ -74,3 +74,15 @@ Consequences: any new write path that clients may retry should adopt the same pa
 Date: 2026-07-19 · Status: ACCEPTED · Decider: agent+owner practice
 Decision: any frontend change staff must receive immediately bumps `apps/sw.js` CACHE (`ntbf-pwa-vNN` + one-line comment). Currently v16.
 Consequences: version history doubles as a frontend changelog; forgetting the bump = one-reload-late rollout (stale-while-revalidate).
+
+### DEC-013 · /ai/ROADMAP.md owns execution order (business-first)
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner (directive) + agent (ordering)
+Context: owner directed re-prioritization of all open work as a business-first roadmap before any orchestrator work.
+Decision: ROADMAP.md is the authority on execution order and category of queue tasks; TASK_QUEUE.md stays the authority on task detail/state. Order: Phase 0 continuity (014→016→015→020/021) → Phase 1 books loop (owner-input batch, 012 sync design→build, 008/010/011) → Phase 2 ops/debt (013, 017/024, 004, 023, 022) → Phase 3 AI automation.
+Consequences: agents pick tasks in roadmap order unless the owner overrides; roadmap updates are docs-only PRs.
+
+### DEC-014 · AI Orchestrator is POSTPONED behind explicit gates
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner (directive to decide) + agent (recommendation)
+Context: an orchestrator would compete with Phase 0–1 delivery; the /ai file protocol + PR template + CI (once active) already coordinates agents with zero runtime; currently ~one primary acting agent.
+Decision: do NOT build TASK-025 until ALL gates in ROADMAP.md §3 fire (G1 sustained multi-agent activity · G2 CI active · G3 backups drilled · G4 sync stable 2 weeks · G5 evidence the file protocol is the bottleneck). When built: queue-watcher over the SAME /ai files, no new state store, read-only over production, writes via PRs + owner gates.
+Consequences: no orchestrator code/runtime now; revisit only with gate evidence recorded in AGENT_LOG.md.

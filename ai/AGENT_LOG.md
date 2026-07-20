@@ -31,3 +31,8 @@ Notes: uncertainties listed in the audit report to owner; security tasks queued,
 What: built /ai collaboration infrastructure per owner architectural decision (repo = source of truth for all AI agents).
 Result: PROJECT_KNOWLEDGE, TASK_QUEUE (22 live tasks), DECISIONS (12), STATUS, HANDOFF, AGENT_LOG + PR template + CI template. Docs-only PR, [skip render].
 Notes: adoption rules + risks reported to owner; enforcement CI left as template pending owner activation (TASK-015).
+
+## 2026-07-21T04:45+04:00 · claude-muhammed · DEC-013/DEC-014 roadmap
+What: owner-directed business-first re-prioritization of all open work; orchestrator decision made.
+Result: /ai/ROADMAP.md added (phases 0–3, role model, immediate order); TASK-023/024/025 queued; DEC-013 (roadmap authority) + DEC-014 (orchestrator postponed behind gates G1–G5); HANDOFF read order updated. Docs-only PR, [skip render].
+Notes: first mover is TASK-014 backups — needs owner answer on off-box destination. Next mission (owner): Claude account audit → CLAUDE_ACCOUNT_AUDIT.md.
