@@ -79,6 +79,10 @@ class CreateReceiptDto {
   @IsOptional() @IsString() narration?: string;
   @IsOptional() @IsString() billPhoto?: string;
   @IsOptional() @IsString() billMediaType?: string;
+  // Offline-outbox idempotency key (optional, client-generated uuid). When present and a
+  // record with the same clientRef already exists, the create returns THAT record instead
+  // of writing a duplicate — a timed-out POST retried from the phone can never double-post.
+  @IsOptional() @IsString() clientRef?: string;
 }
 class CreatePaymentDto {
   @IsString() payee: string;
@@ -90,6 +94,8 @@ class CreatePaymentDto {
   @IsOptional() @IsString() narration?: string;
   @IsOptional() @IsString() billPhoto?: string;
   @IsOptional() @IsString() billMediaType?: string;
+  // Offline-outbox idempotency key — see CreateReceiptDto.clientRef.
+  @IsOptional() @IsString() clientRef?: string;
 }
 class CreateTransferDto {
   @IsString() toStaffId: string;
@@ -98,6 +104,8 @@ class CreateTransferDto {
   @IsOptional() @IsString() narration?: string;
   @IsOptional() @IsString() billPhoto?: string;
   @IsOptional() @IsString() billMediaType?: string;
+  // Offline-outbox idempotency key — see CreateReceiptDto.clientRef.
+  @IsOptional() @IsString() clientRef?: string;
 }
 class NoteDto { @IsOptional() @IsString() note?: string; }
 class RejectDto { @IsString() note: string; }
@@ -166,6 +174,8 @@ class JsonStore {
 
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
+  /** Idempotency lookup for offline-outbox retries. Records without a clientRef never match. */
+  byClientRef(ref: string) { return ref ? this.data.items.find((x) => x.clientRef === ref) : undefined; }
   all() { return this.data.items.slice(); }
   /** Selective unwind for imported history: remove only records matching the predicate. */
   removeWhere(pred: (x: any) => boolean) {
@@ -233,6 +243,9 @@ export class FinanceService {
     };
   }
   createReceipt(staff: Staff, dto: CreateReceiptDto) {
+    // Idempotent retry: a queued/timed-out save re-POSTed with the same clientRef returns
+    // the record that first attempt already created — no duplicate is ever written.
+    if (dto.clientRef) { const dup = this.receipts.byClientRef(dto.clientRef); if (dup) return this.withPhoto(dup); }
     const collected = round2(dto.collectedAmount);
     if (!(collected > 0)) throw new BadRequestException('Collected amount must be greater than 0');
     let orderId: string | null = null;
@@ -261,6 +274,7 @@ export class FinanceService {
       id: '', type: 'CUSTOMER', orderId, customerId, customerName, customerPhone,
       billAmount, billItems, collectedAmount: collected, discount: round2(Math.max(0, discount)),
       method: dto.method, cheque, narration: dto.narration || '', billPhoto: null, billMediaType: null,
+      clientRef: dto.clientRef || null,
       collectedBy: staff.name, collectedById: staff.id, collectedByRole: role,
       status, createdAt: at, updatedAt: at,
       statusHistory: [this.hist(null, status, staff, role, hasDiscount ? `collected AED ${collected} of AED ${billAmount} — discount AED ${round2(discount)} awaiting finance approval` : undefined)],
@@ -343,6 +357,8 @@ export class FinanceService {
   }
   createPayment(staff: Staff, dto: CreatePaymentDto) {
     this.assertFinance(staff); // created by finance (or admin)
+    // Idempotent retry — see createReceipt.
+    if (dto.clientRef) { const dup = this.payments.byClientRef(dto.clientRef); if (dup) return this.withPhoto(dup); }
     const amount = round2(dto.amount);
     if (!(amount > 0)) throw new BadRequestException('Amount must be greater than 0');
     const payee = String(dto.payee || '').trim();
@@ -356,6 +372,7 @@ export class FinanceService {
     const rec: any = {
       id: '', payee, amount, method: dto.method, category, date: dto.date || at.slice(0, 10),
       cheque, narration: dto.narration || '', billPhoto: null, billMediaType: null,
+      clientRef: dto.clientRef || null,
       createdBy: staff.name, createdById: staff.id, createdByRole: role,
       status: 'PENDING_APPROVAL', createdAt: at, updatedAt: at,
       statusHistory: [this.hist(null, 'PENDING_APPROVAL', staff, role, `payment of AED ${amount} to ${payee} awaiting admin approval`)],
@@ -386,6 +403,8 @@ export class FinanceService {
 
   // ===================== STAFF-TO-STAFF TRANSFERS =====================
   createTransfer(staff: Staff, dto: CreateTransferDto) {
+    // Idempotent retry — see createReceipt.
+    if (dto.clientRef) { const dup = this.transfers.byClientRef(dto.clientRef); if (dup) return this.withPhoto(dup); }
     const amount = round2(dto.amount);
     if (!(amount > 0)) throw new BadRequestException('Amount must be greater than 0');
     if (dto.toStaffId === staff.id) throw new BadRequestException('You cannot pay yourself');
@@ -395,6 +414,7 @@ export class FinanceService {
     const rec: any = {
       id: '', fromId: staff.id, fromName: staff.name, toId: to.id, toName: to.name,
       amount, method: dto.method, narration: dto.narration || '', billPhoto: null, billMediaType: null,
+      clientRef: dto.clientRef || null,
       status: 'PENDING_CONFIRM', createdAt: at, updatedAt: at,
       statusHistory: [this.hist(null, 'PENDING_CONFIRM', staff, staff.roles?.[0] || 'staff', `paid AED ${amount} to ${to.name}`)],
     };

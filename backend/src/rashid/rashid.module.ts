@@ -43,6 +43,10 @@ class CreateExpenseDto {
   @IsOptional() @IsString() billPhoto?: string; // base64 data URL; stored on disk, not in the JSON
   @IsOptional() @IsString() billMediaType?: string;
   @IsOptional() @IsObject() ocr?: any; // what Claude prefilled (audit only)
+  // Offline-outbox idempotency key (optional, client-generated uuid). When present and an
+  // expense with the same clientRef already exists, the create returns THAT record instead
+  // of writing a duplicate — a timed-out POST retried from the phone can never double-post.
+  @IsOptional() @IsString() clientRef?: string;
 }
 class NoteDto { @IsOptional() @IsString() note?: string; }
 class RejectDto { @IsString() note: string; } // rejection must carry a reason
@@ -118,6 +122,8 @@ export class ExpenseStore {
 
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
+  /** Idempotency lookup for offline-outbox retries. Records without a clientRef never match. */
+  byClientRef(ref: string) { return ref ? this.data.items.find((x) => x.clientRef === ref) : undefined; }
   /** Selective unwind for imported history: remove only records matching the predicate. */
   removeWhere(pred: (x: any) => boolean) {
     const n = this.data.items.length;
@@ -194,6 +200,9 @@ export class RashidService {
 
   // ---- Expenses ----
   createExpense(staff: Staff, dto: CreateExpenseDto) {
+    // Idempotent retry: a queued/timed-out save re-POSTed with the same clientRef returns
+    // the record that first attempt already created — no duplicate is ever written.
+    if (dto.clientRef) { const dup = this.expenses.byClientRef(dto.clientRef); if (dup) return this.publicExpense(dup); }
     const amount = round2(dto.amount);
     if (!(amount > 0)) throw new BadRequestException('Amount must be greater than 0');
     const at = new Date().toISOString();
@@ -203,6 +212,7 @@ export class RashidService {
       id: '', employeeId: staff.id, employeeName: staff.name,
       date: dto.date, amount, category: dto.category, paidFrom: dto.paidFrom,
       remark: dto.remark || '', billPhoto: null, billMediaType: null, ocr: dto.ocr || null,
+      clientRef: dto.clientRef || null,
       status: autoApproved ? 'APPROVED' : 'SUBMITTED', autoApproved,
       createdAt: at, updatedAt: at,
       statusHistory: [this.histEntry(null, 'SUBMITTED', staff, staff.roles?.[0] || 'staff')],

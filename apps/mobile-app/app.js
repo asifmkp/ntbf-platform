@@ -2002,8 +2002,12 @@ ACT.expSave = async () => {
   const body = { date, amount, category, paidFrom, remark };
   if (expDraft.photo) { body.billPhoto = expDraft.photo; body.billMediaType = expDraft.mediaType || 'image/jpeg'; }
   if (expDraft.ocr) body.ocr = expDraft.ocr;
-  try { const r = await staffApi('/api/expenses', 'POST', body); expDraft = {}; myExpData = null; closeSheet(); render(); toast(r.autoApproved ? 'Expense approved ✓' : 'Expense submitted for approval'); }
-  catch (e) { toast(e.message); }
+  try {
+    const res = await saveMoneyEntry({ kind: 'expense', label: category + (remark ? ' · ' + remark : ''), amount, url: '/api/expenses', body });
+    if (res.tooLarge) return; // keep the sheet open — nothing was saved anywhere
+    expDraft = {}; myExpData = null; closeSheet(); render();
+    if (!res.queued) toast(res.data.autoApproved ? 'Expense approved ✓' : 'Expense submitted for approval');
+  } catch (e) { toast(e.message); }
 };
 ACT.expApprove = async (d) => { try { await staffApi('/api/expenses/' + d.id + '/approve', 'POST', {}); myExpData = null; toast('Approved'); if (isAdminNow()) adminExpenses(); else { closeSheet(); render(); } } catch (e) { toast(e.message); } };
 ACT.expReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/expenses/' + d.id + '/reject', 'POST', { note }); myExpData = null; toast('Rejected'); if (isAdminNow()) adminExpenses(); else { closeSheet(); render(); } } catch (e) { toast(e.message); } };
@@ -2425,8 +2429,12 @@ async function adminSuggestions() {
     else { const cn = ($('#rcpt_customer').value || '').trim(); const bill = parseFloat($('#rcpt_bill').value); if (cn) body.customerName = cn; if (bill > 0) body.billAmount = bill; }
     if (method === 'CHEQUE') { body.cheque = { no: ($('#rcpt_chqno').value || '').trim(), bank: ($('#rcpt_chqbank').value || '').trim(), date: ($('#rcpt_chqdate').value || '').trim() }; }
     if (rcptDraft.photo) { body.billPhoto = rcptDraft.photo; body.billMediaType = rcptDraft.mediaType || 'image/jpeg'; }
-    try { const r = await staffApi('/api/finance/receipts', 'POST', body); rcptDraft = {}; refreshFin(); closeSheet(); render(); toast(r.status === 'PENDING_APPROVAL' ? 'Saved — discount sent to finance for approval' : 'Receipt saved'); }
-    catch (e) { toast(e.message); }
+    try {
+      const res = await saveMoneyEntry({ kind: 'receipt', label: body.customerName || (body.orderId ? 'Order ' + body.orderId : 'Customer receipt'), amount: collected, url: '/api/finance/receipts', body });
+      if (res.tooLarge) return; // keep the sheet open — nothing was saved anywhere
+      rcptDraft = {}; refreshFin(); closeSheet(); render();
+      if (!res.queued) toast(res.data.status === 'PENDING_APPROVAL' ? 'Saved — discount sent to finance for approval' : 'Receipt saved');
+    } catch (e) { toast(e.message); }
   };
   ACT.rcptApprove = async (d) => { try { await staffApi('/api/finance/receipts/' + d.id + '/approve', 'POST', {}); refreshFin(); toast('Discount approved'); closeSheet(); render(); } catch (e) { toast(e.message); } };
   ACT.rcptReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/finance/receipts/' + d.id + '/reject', 'POST', { note }); refreshFin(); toast('Rejected'); closeSheet(); render(); } catch (e) { toast(e.message); } };
@@ -2446,8 +2454,12 @@ async function adminSuggestions() {
     const narration = ($('#pay_narration').value || '').trim(); if (narration) body.narration = narration;
     if (method === 'CHEQUE') { body.cheque = { no: ($('#pay_chqno').value || '').trim(), bank: ($('#pay_chqbank').value || '').trim(), date: ($('#pay_chqdate').value || '').trim() }; }
     if (payDraft.photo) { body.billPhoto = payDraft.photo; body.billMediaType = payDraft.mediaType || 'image/jpeg'; }
-    try { await staffApi('/api/finance/payments', 'POST', body); payDraft = {}; refreshFin(); closeSheet(); render(); toast('Payment submitted for admin approval'); }
-    catch (e) { toast(e.message); }
+    try {
+      const res = await saveMoneyEntry({ kind: 'payment', label: payee, amount, url: '/api/finance/payments', body });
+      if (res.tooLarge) return; // keep the sheet open — nothing was saved anywhere
+      payDraft = {}; refreshFin(); closeSheet(); render();
+      if (!res.queued) toast('Payment submitted for admin approval');
+    } catch (e) { toast(e.message); }
   };
   ACT.payApprove = async (d) => { try { await staffApi('/api/finance/payments/' + d.id + '/approve', 'POST', {}); refreshFin(); toast('Payment approved'); closeSheet(); render(); } catch (e) { toast(e.message); } };
   ACT.payReject = async (d) => { const note = prompt('Reason for rejection:'); if (!note) return; try { await staffApi('/api/finance/payments/' + d.id + '/reject', 'POST', { note }); refreshFin(); toast('Payment rejected'); closeSheet(); render(); } catch (e) { toast(e.message); } };
@@ -2478,8 +2490,13 @@ async function adminSuggestions() {
     const amount = parseFloat($('#trf_amount').value); if (!(amount > 0)) return toast('Enter an amount');
     const body = { toStaffId, amount, method: $('#trf_method').value };
     const narration = ($('#trf_narration').value || '').trim(); if (narration) body.narration = narration;
-    try { await staffApi('/api/finance/transfers', 'POST', body); refreshFin(); closeSheet(); render(); toast('Recorded — waiting for their confirmation'); }
-    catch (e) { toast(e.message); }
+    const toSel = $('#trf_to'); const toName = toSel && toSel.options[toSel.selectedIndex] ? toSel.options[toSel.selectedIndex].text : '';
+    try {
+      const res = await saveMoneyEntry({ kind: 'transfer', label: toName ? 'To ' + toName : 'Colleague transfer', amount, url: '/api/finance/transfers', body });
+      if (res.tooLarge) return; // keep the sheet open — nothing was saved anywhere
+      refreshFin(); closeSheet(); render();
+      if (!res.queued) toast('Recorded — waiting for their confirmation');
+    } catch (e) { toast(e.message); }
   };
   ACT.trfConfirm = async (d) => { try { await staffApi('/api/finance/transfers/' + d.id + '/confirm', 'POST', {}); refreshFin(); toast('Confirmed ✓'); closeSheet(); render(); } catch (e) { toast(e.message); } };
   ACT.trfDecline = async (d) => { try { await staffApi('/api/finance/transfers/' + d.id + '/decline', 'POST', {}); refreshFin(); toast('Declined'); closeSheet(); render(); } catch (e) { toast(e.message); } };
@@ -2829,6 +2846,163 @@ async function adminSuggestions() {
   const origTab = ACT.tab;
   ACT.tab = (d) => { origTab(d); loadAttention(); };
   if (staffToken && staff) startAttention(); // already signed in on load
+})();
+
+// ===========================================================================
+// Offline outbox — money entries (receipts · expenses · payments · transfers)
+// saved on a dead signal are queued in localStorage and uploaded automatically
+// when the network is back. Every submission carries a client-generated
+// clientRef; the server treats a repeated clientRef as the SAME record and
+// returns the original — so a timed-out POST that actually reached the server
+// can be retried safely without ever double-posting money data.
+//   · Queue ONLY on network-type failure (fetch rejection). An HTTP 4xx/5xx is
+//     a real server response and is surfaced to the user exactly as before.
+//   · Flush: every 20s while signed in, on the window 'online' event, and after
+//     any successful manual save. A 4xx during flush marks the entry "failed"
+//     (kept + shown for explicit user discard — money data is never silently
+//     dropped); network / 401 / 5xx keep it queued for the next attempt.
+//   · Indicator: a floating chip above the bottom nav on every tab while
+//     anything is queued; taps open a sheet listing each entry with Discard
+//     (confirm) for failed ones. Purely additive; no existing flow changed.
+// ===========================================================================
+const OUTBOX_KEY = 'ntbf_outbox';
+const OUTBOX_MAX_CHARS = 3500000; // ~3.5MB guard — localStorage is small; photos are base64
+function newClientRef() {
+  try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) { /* fall through */ }
+  return 'cr-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+}
+function outboxAll() { try { const a = JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function outboxWrite(list) { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(list)); } catch (e) { /* quota — entries stay as they were */ } outboxChip(); }
+
+// Raw POST that distinguishes a network failure (err.isNetwork) from a real HTTP
+// error response (err.status). Reads the token AT CALL TIME so flushes after a
+// re-login use the current session token.
+async function moneyPost(path, body) {
+  const base = localStorage.getItem('ntbf_api') || ((location.protocol.startsWith('http') && location.port !== '8080') ? location.origin : 'http://localhost:3000');
+  const headers = { 'content-type': 'application/json' };
+  const tok = localStorage.getItem('ntbf_stafftoken') || staffToken;
+  if (tok) headers['authorization'] = 'Bearer ' + tok;
+  let r;
+  try { r = await fetch(base + path, { method: 'POST', headers, body: JSON.stringify(body) }); }
+  catch (e) { const err = new Error('No connection'); err.isNetwork = true; throw err; }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { const err = new Error((data && data.message) || ('Error ' + r.status)); err.status = r.status; throw err; }
+  return data;
+}
+
+// One user submission = one clientRef (generated here, once; queued retries
+// reuse it). Returns {data} on success, {queued:true} when stored offline,
+// {tooLarge:true} when the entry can't fit in the outbox (caller keeps the
+// sheet open — we never pretend to save). Rethrows real server rejections.
+async function saveMoneyEntry(opts) {
+  const body = Object.assign({}, opts.body, { clientRef: newClientRef() });
+  let data;
+  try { data = await moneyPost(opts.url, body); }
+  catch (err) {
+    if (!err.isNetwork) throw err; // HTTP 4xx/5xx = real server answer → show it, do NOT queue
+    const entry = {
+      clientRef: body.clientRef, url: opts.url, body, kind: opts.kind,
+      label: opts.label || '', amount: opts.amount != null ? opts.amount : null,
+      queuedAt: new Date().toISOString(), status: 'queued',
+    };
+    const list = outboxAll();
+    if (JSON.stringify(list.concat([entry])).length > OUTBOX_MAX_CHARS) {
+      toast(body.billPhoto ? 'No signal — the photo is too large to save offline. Keep this open and retry when you have signal.'
+        : 'No signal — offline storage is full. Keep this open and retry when you have signal.');
+      return { tooLarge: true };
+    }
+    list.push(entry); outboxWrite(list);
+    toast('No signal — saved on this phone, will upload automatically');
+    return { queued: true };
+  }
+  flushOutbox(); // this save reached the server — good moment to push anything queued
+  return { data };
+}
+
+let outboxBusy = false;
+async function flushOutbox() {
+  if (outboxBusy || !staffToken || !staff) return;
+  if (!outboxAll().some((x) => x.status !== 'failed')) return;
+  outboxBusy = true;
+  let uploaded = 0;
+  try {
+    for (const entry of outboxAll().filter((x) => x.status !== 'failed')) {
+      try {
+        await moneyPost(entry.url, entry.body);
+        outboxWrite(outboxAll().filter((x) => x.clientRef !== entry.clientRef));
+        uploaded += 1;
+      } catch (err) {
+        // Still offline, signed out (401 — keep until next login), or server-side
+        // trouble (5xx): stop and keep everything queued for the next flush.
+        if (err.isNetwork || err.status === 401 || err.status >= 500) break;
+        // Other HTTP 4xx: the server REJECTED this money record. Keep it, marked
+        // failed, so the staff member can see it and discard it deliberately.
+        const list = outboxAll();
+        const it = list.find((x) => x.clientRef === entry.clientRef);
+        if (it) { it.status = 'failed'; it.error = err.message || 'Rejected by server'; it.failedAt = new Date().toISOString(); outboxWrite(list); }
+      }
+    }
+  } finally { outboxBusy = false; }
+  outboxChip();
+  if (uploaded) toast('Uploaded ' + uploaded + ' saved ' + (uploaded === 1 ? 'entry' : 'entries'));
+}
+
+// ---- indicator chip (lives on document.body, outside #app, so it survives every render) ----
+function outboxChip() {
+  const list = outboxAll();
+  const failed = list.filter((x) => x.status === 'failed').length;
+  const waiting = list.length - failed;
+  let el = document.getElementById('outbox-chip');
+  if (!list.length || !staffToken || !staff) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'outbox-chip';
+    el.setAttribute('data-act', 'outboxSheet');
+    document.body.appendChild(el);
+  }
+  el.innerHTML = (waiting ? '⏳ ' + waiting + ' waiting to upload' : '⏳ upload issues') + (failed ? ' <span class="fail">· ' + failed + ' failed</span>' : '');
+}
+
+const OUTBOX_ICONS = { receipt: '💵', expense: '🧾', payment: '💸', transfer: '🤝' };
+function outboxSheet() {
+  const list = outboxAll();
+  const rows = list.map((x) => `<div class="li">
+    <div class="ic ${x.status === 'failed' ? 'r' : 'a'}">${OUTBOX_ICONS[x.kind] || '📄'}</div>
+    <div class="m"><b>${esc(x.kind.charAt(0).toUpperCase() + x.kind.slice(1))}${x.amount != null ? ' · ' + aed(x.amount) : ''}</b>
+      <span>${esc(x.label || '')}${x.label ? ' · ' : ''}queued ${esc(uaeTime(x.queuedAt))}${x.status === 'failed' ? ' · ' + esc(x.error || 'rejected by server') : ''}</span></div>
+    <div class="end">${x.status === 'failed'
+      ? `<span class="tag red">failed</span><br><button class="btn danger sm" data-act="outboxDiscard" data-ref="${esc(x.clientRef)}" style="margin-top:6px">Discard</button>`
+      : '<span class="tag amber">waiting</span>'}</div>
+  </div>`).join('');
+  openSheet('Waiting to upload', `
+    <div class="card pad" style="margin-bottom:12px">
+      <div class="muted" style="font-size:12px">These money entries were saved on this phone while there was no signal. They upload automatically when the connection is back — they are safe across app restarts. Entries the server rejected are marked <b>failed</b>: open the record again to re-enter it correctly, then discard the failed copy here.</div>
+      <button class="btn sm" data-act="outboxFlush" style="margin-top:10px">↻ Try upload now</button>
+    </div>
+    <div class="sect">Entries (${list.length})</div>
+    <div class="card">${rows || emptyRow('Nothing waiting — everything is uploaded.')}</div>`);
+}
+ACT.outboxSheet = () => outboxSheet();
+ACT.outboxFlush = async () => { toast('Trying…'); await flushOutbox(); if ($('#sheet').classList.contains('show')) outboxSheet(); };
+ACT.outboxDiscard = (d) => {
+  const x = outboxAll().find((e) => e.clientRef === d.ref);
+  if (!x) return;
+  if (!confirm('Discard this ' + x.kind + (x.amount != null ? ' of ' + aed(x.amount) : '') + (x.label ? ' (' + x.label + ')' : '') + '?\nIt was NOT uploaded and will be permanently lost.')) return;
+  outboxWrite(outboxAll().filter((e) => e.clientRef !== d.ref));
+  toast('Discarded');
+  outboxSheet();
+};
+
+// ---- lifecycle: 20s retry timer while signed in, 'online' event, login/logout ----
+(function outboxLifecycle() {
+  setInterval(() => flushOutbox(), 20000);
+  window.addEventListener('online', () => flushOutbox());
+  const origLogin = ACT.staffLogin;
+  ACT.staffLogin = async (d) => { await origLogin(d); outboxChip(); flushOutbox(); };
+  const origLogout = ACT.staffLogout;
+  ACT.staffLogout = (d) => { origLogout(d); outboxChip(); }; // entries stay queued; chip hides until next login
+  outboxChip();
+  if (staffToken && staff) flushOutbox();
 })();
 
 window.renderApp = render;        // let Muhammed refresh the UI after acting
