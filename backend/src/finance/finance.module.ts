@@ -38,6 +38,29 @@ export const DEFAULT_PAYMENT_CATEGORIES = [
 
 const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 
+// ---- EOD (end-of-day cash-up) helpers ----
+// Records imported by the July 2026 history backfill carry this origin marker and are
+// EXCLUDED from every EOD aggregate: that month is display-only history (it already
+// exists in Zoho) and must never surface as "today's cash" for any staff member.
+const EOD_EXCLUDED_ORIGIN = 'july-import';
+/**
+ * Day window for a calendar date in Asia/Dubai (UTC+4 year-round, no DST):
+ * [00:00 Dubai, next-day 00:00 Dubai) expressed as UTC epoch millis. When no date is
+ * given, "today" is the current Dubai calendar date.
+ */
+function dubaiDayWindow(date?: string) {
+  let d = String(date || '').trim();
+  if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new BadRequestException('date must be YYYY-MM-DD');
+  if (!d) d = new Date(Date.now() + 4 * 3600 * 1000).toISOString().slice(0, 10); // now shifted +4h → Dubai date
+  const startMs = Date.parse(d + 'T00:00:00.000+04:00');
+  if (!isFinite(startMs)) throw new BadRequestException('Invalid date');
+  return { date: d, startMs, endMs: startMs + 24 * 3600 * 1000 };
+}
+function inWindow(iso: string, w: { startMs: number; endMs: number }) {
+  const t = Date.parse(String(iso || ''));
+  return isFinite(t) && t >= w.startMs && t < w.endMs;
+}
+
 type Staff = { id: string; roles: string[]; name: string };
 const hasRole = (s: Staff, r: string) => !!s && (s.roles || []).indexOf(r) >= 0;
 const isAdmin = (s: Staff) => hasRole(s, 'admin');
@@ -186,6 +209,7 @@ export class FinanceService {
     private readonly orders: CustomerStore,
     private readonly staffStore: StaffStore,
     private readonly advances: AdvanceStore, // shared singleton from RashidModule (also feeds balanceFor/ledgerFor)
+    private readonly expenses: ExpenseStore, // read-only: staff cash expenses feed the EOD cash-up
     config: ConfigService,
   ) { this.bounceCharge = Number(config.get('CHEQUE_BOUNCE_CHARGE') ?? 250); }
 
@@ -396,6 +420,111 @@ export class FinanceService {
   /** Colleague picker for transfers — any staff may see names/roles (not passwords) to pay a coworker. */
   colleagues(staff: Staff) { return this.staffStore.list().filter((s: any) => s.id !== staff.id).map((s: any) => ({ id: s.id, name: s.name, roles: s.roles })); }
 
+  // ===================== EOD (END-OF-DAY CASH-UP) =====================
+  /**
+   * One staff member's real cash day, derived READ-ONLY from the live stores
+   * (nothing is written; no existing flow is touched). All aggregates:
+   *   - are scoped to one Asia/Dubai calendar day (see dubaiDayWindow), and
+   *   - EXCLUDE records with origin === 'july-import' (display-only history that
+   *     already exists in Zoho — it must never count as live cash).
+   *
+   * cashOnHand — the physical company cash this person should be holding for the day:
+   *     deliveredCash                  cash (not cheque) collected on orders THEY delivered
+   *   + receiptsCash                   CASH-method receipts they collected (non-rejected)
+   *   − paidOut                        cash they paid out: CASH company payments they created
+   *                                    (non-rejected) + their APPROVED/SUBMITTED expenses paid
+   *                                    from the advance float (own_money / company_card don't
+   *                                    move company cash, so they are excluded)
+   *   − transfersSentConfirmed         handovers they made that the receiver CONFIRMED
+   *   + transfersReceivedConfirmed     cash handed TO them that they confirmed receiving
+   * PENDING_CONFIRM sent transfers are NOT deducted — the cash is still formally theirs
+   * until the receiver confirms; they are listed separately as "awaiting confirmation"
+   * (all pending ones, not date-scoped, since yesterday's unconfirmed handover is still open).
+   * Cheque collections are reported separately and never enter cashOnHand.
+   */
+  private eodCompute(employeeId: string, employeeName: string, dateStr?: string) {
+    const w = dubaiDayWindow(dateStr);
+    const notImported = (x: any) => x.origin !== EOD_EXCLUDED_ORIGIN;
+
+    // ---- Orders delivered by this person today (actor = the statusHistory entry that
+    //      moved the order to DELIVERED with byId === employeeId; cash figures come from
+    //      the `collected` block written by updateStatus, falling back to the order total).
+    const deliveredList: any[] = [];
+    let deliveredCash = 0;
+    let deliveredCheque = 0;
+    for (const o of this.orders.allOrders()) {
+      if (!notImported(o)) continue;
+      if (o.status !== 'DELIVERED') continue;
+      const h = (o.statusHistory || []).find((e: any) => e && e.to === 'DELIVERED' && e.byId === employeeId && inWindow(e.at, w));
+      if (!h) continue;
+      const amount = round2(o.collected && o.collected.amount != null ? o.collected.amount : o.total);
+      const method = (o.collected && o.collected.method) || o.method || 'CASH_ON_DELIVERY';
+      if (method === 'CHEQUE_ON_DELIVERY') deliveredCheque = round2(deliveredCheque + amount);
+      else deliveredCash = round2(deliveredCash + amount);
+      deliveredList.push({ orderId: o.id, customer: o.customerName || '—', total: round2(o.total), cashAmount: amount, cashMethod: method, at: h.at });
+    }
+
+    // ---- Receipts they collected today (all methods reported; REJECTED excluded —
+    //      finance voided the record; only CASH-method receipts enter cashOnHand).
+    const myReceipts = this.receipts.all().filter((x) =>
+      notImported(x) && x.collectedById === employeeId && x.status !== 'REJECTED' && inWindow(x.createdAt, w));
+    const receiptsTotal = round2(myReceipts.reduce((s, x) => s + (Number(x.collectedAmount) || 0), 0));
+    const receiptsCash = round2(myReceipts.filter((x) => x.method === 'CASH').reduce((s, x) => s + (Number(x.collectedAmount) || 0), 0));
+
+    // ---- Cash they paid out today.
+    //      Payments: CASH-method company payments they created (REJECTED excluded); dated
+    //      by their explicit `date` field, falling back to createdAt.
+    const myPayments = this.payments.all().filter((x) =>
+      notImported(x) && x.createdById === employeeId && x.method === 'CASH' && x.status !== 'REJECTED' &&
+      (x.date ? x.date === w.date : inWindow(x.createdAt, w)));
+    const paymentsTotal = round2(myPayments.reduce((s, x) => s + (Number(x.amount) || 0), 0));
+    //      Expenses: their own expenses paid FROM the advance/cash float (paidFrom 'advance');
+    //      REJECTED excluded. own_money / company_card don't reduce company cash held.
+    const myExpenses = this.expenses.list({ employeeId }).filter((x) =>
+      notImported(x) && x.paidFrom === 'advance' && x.status !== 'REJECTED' &&
+      (x.date ? x.date === w.date : inWindow(x.createdAt, w)));
+    const expensesTotal = round2(myExpenses.reduce((s, x) => s + (Number(x.amount) || 0), 0));
+    const paidOutTotal = round2(paymentsTotal + expensesTotal);
+
+    // ---- Staff-to-staff transfers (the existing dual-control handover flow).
+    const allTrf = this.transfers.all().filter(notImported);
+    const sentConfirmed = round2(allTrf.filter((x) => x.fromId === employeeId && x.status === 'CONFIRMED' && inWindow(x.createdAt, w))
+      .reduce((s, x) => s + (Number(x.amount) || 0), 0));
+    const receivedConfirmed = round2(allTrf.filter((x) => x.toId === employeeId && x.status === 'CONFIRMED' && inWindow(x.createdAt, w))
+      .reduce((s, x) => s + (Number(x.amount) || 0), 0));
+    // ALL of their still-pending sent handovers (not date-scoped — still outstanding).
+    const sentPending = allTrf.filter((x) => x.fromId === employeeId && x.status === 'PENDING_CONFIRM')
+      .map((x) => ({ id: x.id, toId: x.toId, toName: x.toName, amount: round2(x.amount), method: x.method, narration: x.narration || '', createdAt: x.createdAt }));
+    const sentPendingTotal = round2(sentPending.reduce((s, x) => s + x.amount, 0));
+
+    // cashOnHand per the formula documented above.
+    const cashOnHand = round2(deliveredCash + receiptsCash - paidOutTotal - sentConfirmed + receivedConfirmed);
+
+    return {
+      date: w.date,
+      employeeId,
+      employeeName,
+      delivered: { count: deliveredList.length, cashTotal: deliveredCash, chequeTotal: deliveredCheque, list: deliveredList },
+      receiptsCollected: { count: myReceipts.length, total: receiptsTotal, cashTotal: receiptsCash },
+      paidOut: {
+        count: myPayments.length + myExpenses.length, total: paidOutTotal,
+        payments: { count: myPayments.length, total: paymentsTotal },
+        expenses: { count: myExpenses.length, total: expensesTotal },
+      },
+      transfers: { sentConfirmedTotal: sentConfirmed, receivedConfirmedTotal: receivedConfirmed, sentPendingTotal, sentPending },
+      cashOnHand,
+    };
+  }
+  /** Any authenticated staff — but ONLY their own day. */
+  eodMine(staff: Staff, date?: string) { return this.eodCompute(staff.id, staff.name, date); }
+  /** Another staff member's day — finance or admin only (same gate as the other finance reads). */
+  eodForEmployee(staff: Staff, employeeId: string, date?: string) {
+    this.assertFinance(staff);
+    const emp = this.staffStore.byId(employeeId);
+    if (!emp) throw new NotFoundException('Employee not found');
+    return this.eodCompute(emp.id, emp.name, date);
+  }
+
   // ===================== FINANCE-ORIGINATED ADVANCE (Stage C) =====================
   /**
    * Finance (or admin) hands a cash float DIRECTLY to a staff member. The record is written
@@ -508,6 +637,13 @@ export class FinanceController {
   confirmTransfer(@Param('id') id: string, @Req() req: any) { return this.svc.confirmTransfer(req.staff, id); }
   @Public() @UseGuards(StaffAuthGuard) @Post('transfers/:id/decline')
   declineTransfer(@Param('id') id: string, @Req() req: any) { return this.svc.declineTransfer(req.staff, id); }
+
+  // ----- EOD (end-of-day cash-up) -----
+  // 'eod/mine' is declared BEFORE 'eod/:employeeId' so the literal wins the route match.
+  @Public() @UseGuards(StaffAuthGuard) @Get('eod/mine')
+  eodMine(@Query('date') date: string, @Req() req: any) { return this.svc.eodMine(req.staff, date); }
+  @Public() @UseGuards(StaffAuthGuard) @Get('eod/:employeeId')
+  eodFor(@Param('employeeId') employeeId: string, @Query('date') date: string, @Req() req: any) { return this.svc.eodForEmployee(req.staff, employeeId, date); }
 
   // ----- advances (finance-originated float, Stage C) -----
   @Public() @UseGuards(StaffAuthGuard) @Post('advances/issue')
