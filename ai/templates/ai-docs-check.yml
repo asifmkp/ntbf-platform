@@ -1,0 +1,43 @@
+# TEMPLATE — not active. To activate: copy to .github/workflows/ai-docs-check.yml (TASK-015).
+# Lints the /ai coordination conventions on every PR. Runs ONLY when /ai changes; never gates Render
+# (Render deploys from main regardless — this is a merge-hygiene signal, not a deploy gate).
+name: ai-docs-check
+on:
+  pull_request:
+    paths: ['ai/**']
+jobs:
+  conventions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Validate /ai conventions
+        run: |
+          set -e
+          fail() { echo "::error::$1"; FAILED=1; }
+          # 1. Required files exist
+          for f in PROJECT_KNOWLEDGE.md TASK_QUEUE.md HANDOFF.md DECISIONS.md STATUS.md AGENT_LOG.md; do
+            [ -f "ai/$f" ] || fail "ai/$f missing"
+          done
+          # 2. Unique TASK ids in queue; well-formed
+          dups=$(grep -oE '^### TASK-[0-9]{3}' ai/TASK_QUEUE.md | sort | uniq -d)
+          [ -z "$dups" ] || fail "Duplicate TASK ids: $dups"
+          # 3. Every task block carries Status and Owner fields
+          n_tasks=$(grep -cE '^### TASK-[0-9]{3}' ai/TASK_QUEUE.md || true)
+          n_status=$(grep -cE '^Status: (OPEN|CLAIMED|IN_PROGRESS|BLOCKED|REVIEW)' ai/TASK_QUEUE.md || true)
+          [ "$n_tasks" -eq "$n_status" ] || fail "TASK blocks ($n_tasks) != valid Status lines ($n_status) — DONE tasks must be removed"
+          # 4. Unique DEC ids
+          dupd=$(grep -oE '^### DEC-[0-9]{3}' ai/DECISIONS.md | sort | uniq -d)
+          [ -z "$dupd" ] || fail "Duplicate DEC ids: $dupd"
+          # 5. AGENT_LOG is append-only (no removed lines vs base branch)
+          git diff --numstat origin/${{ github.base_ref }}...HEAD -- ai/AGENT_LOG.md | awk '{ if ($2 > 0) exit 1 }' \
+            || fail "AGENT_LOG.md lines were deleted/edited — it is append-only (rotation goes to ai/log-archive/)"
+          # 6. STATUS freshness stamp present
+          grep -qE '^\*\*As of: 20[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}\+04:00' ai/STATUS.md \
+            || fail "STATUS.md missing/invalid 'As of' +04:00 stamp"
+          # 7. Crude secret scan on /ai (names-only rule)
+          if grep -rniE '(api[_-]?key|secret|password|token)[^A-Za-z0-9_]{0,3}[:=][^ ]*[A-Za-z0-9]{16,}' ai/ --include='*.md'; then
+            fail "Possible secret VALUE in /ai — env var names only"
+          fi
+          [ -z "$FAILED" ] || exit 1
+          echo "ai-docs conventions OK"
