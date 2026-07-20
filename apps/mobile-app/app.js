@@ -181,6 +181,39 @@ function openSheet(title, body, onMount) {
   if (onMount) onMount(sh);
 }
 function closeSheet() { $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); }
+// July 2026 history backfill — renders the server's dry-run/write report inside the sheet.
+function julyReportHtml(rep, wrote) {
+  const labels = { orders: 'Orders (sales)', receipts: 'Receipts', payments: 'Vendor payments', expenses: 'Expenses', transfers: 'Transfers' };
+  const rows = Object.keys(labels).map((t) => {
+    const r = (rep.types || {})[t] || {};
+    const exp = r.expected || { count: 0, sum: 0 };
+    return `<tr><td style="padding:4px 6px">${labels[t]}</td>
+      <td style="padding:4px 6px;text-align:right">${r.toImport || 0} · ${aed(r.toImportSum || 0)}</td>
+      <td style="padding:4px 6px;text-align:right">${r.alreadyPresent || 0}</td>
+      ${wrote ? `<td style="padding:4px 6px;text-align:right">${r.imported || 0}</td>` : ''}
+      <td style="padding:4px 6px;text-align:right;color:var(--muted)">${exp.count} · ${aed(exp.sum)}</td></tr>`;
+  }).join('');
+  const skipped = Object.keys(labels).reduce((a, t) => a.concat(((rep.types || {})[t] || {}).skipped || []), []);
+  const skippedHtml = skipped.length
+    ? `<div class="sect" style="margin-top:10px">Skipped (${skipped.length})</div>` +
+      skipped.map((s) => `<div style="font-size:12px;color:var(--muted)">${esc(s.ref)} — ${esc(s.reason)}</div>`).join('')
+    : '';
+  const nameOnly = (rep.nameOnlyTransferParties || []).length
+    ? `<p class="muted" style="font-size:12px;margin-top:8px">Transfer parties with no app staff account (kept as display names, no accounts created): <b>${(rep.nameOnlyTransferParties || []).map(esc).join(', ')}</b></p>`
+    : '';
+  const t = rep.totals || {};
+  return `
+    <p style="font-size:13px;line-height:1.55;color:var(--muted)">History-only import of the July 1–20 2026 books into the app's server stores. <b>July already exists in Zoho</b> — imported records carry origin “july-import” and are never sent to Zoho.</p>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <tr style="color:var(--muted)"><th style="text-align:left;padding:4px 6px">Type</th><th style="text-align:right;padding:4px 6px">To import</th><th style="text-align:right;padding:4px 6px">Present</th>${wrote ? '<th style="text-align:right;padding:4px 6px">Imported</th>' : ''}<th style="text-align:right;padding:4px 6px">Expected</th></tr>
+      ${rows}
+    </table></div>
+    <p style="font-size:12.5px;margin-top:8px"><b>${wrote ? 'Imported ' + (t.imported || 0) + ' records this run.' : 'Ready to import ' + (t.toImport || 0) + ' records · ' + aed(t.toImportSum || 0) + '.'}</b> Already present: ${t.alreadyPresent || 0} · skipped: ${t.skipped || 0}</p>
+    ${skippedHtml}${nameOnly}
+    ${wrote ? '' : `<label class="fld" style="margin-top:10px"><span class="lab">Type IMPORT to write</span><input id="jly_confirm" autocomplete="off" autocapitalize="characters" placeholder="IMPORT" /></label>
+    <button class="btn primary full" data-act="julyImportGo">Import July history</button>`}
+    <div class="btn-row" style="margin-top:10px"><button class="btn danger" data-act="julyImportRemoveForm">Remove July import</button></div>`;
+}
 function custOptions(onlyActive) {
   return S.state.customers.filter((c) => !onlyActive || c.status === 'ACTIVE').map((c) => `<option value="${c.id}">${c.name}${c.onHold ? ' (ON HOLD)' : ''}</option>`).join('');
 }
@@ -1188,6 +1221,9 @@ function settingsForm() {
       </div>
       <div class="btn-row" style="margin-top:9px">
         <button class="btn danger" data-act="clearTestDataForm">Clear test data (admin)</button>
+      </div>
+      <div class="btn-row" style="margin-top:9px">
+        <button class="btn" data-act="julyImportForm">Import July history (admin)</button>
       </div>` : ''}
       <button class="btn danger full" data-act="staffLogout" style="margin-top:9px">Sign out</button>
     </div>` : ''}
@@ -1658,6 +1694,41 @@ const ACT = {
       closeSheet();
       toast('Cleared ' + ((res && res.cleared) || []).length + ' server stores — reloading…');
       setTimeout(() => location.reload(), 900);
+    } catch (e) { toast(e.message); }
+  },
+
+  // ---- July 2026 history backfill (admin, server-only) ----
+  julyImportForm: async () => {
+    if (!staff || !staff.roles || staff.roles.indexOf('admin') < 0) return toast('Admins only');
+    openSheet('Import July history (admin)', '<div class="empty"><div class="ei">📚</div>Checking July data…</div>');
+    try {
+      const rep = await staffApi('/api/admin/backfill-july', 'POST', { mode: 'dry-run' });
+      openSheet('Import July history (admin)', julyReportHtml(rep, false));
+    } catch (e) { closeSheet(); toast(e.message); }
+  },
+  julyImportGo: async () => {
+    const inp = $('#jly_confirm');
+    if (((inp && inp.value) || '').trim() !== 'IMPORT') return toast('Type IMPORT (in capitals) to confirm');
+    try {
+      const rep = await staffApi('/api/admin/backfill-july', 'POST', { mode: 'write', confirm: 'IMPORT' });
+      openSheet('July history imported', julyReportHtml(rep, true));
+      toast('Imported ' + ((rep.totals && rep.totals.imported) || 0) + ' July records');
+    } catch (e) { toast(e.message); }
+  },
+  julyImportRemoveForm: () => {
+    if (!staff || !staff.roles || staff.roles.indexOf('admin') < 0) return toast('Admins only');
+    openSheet('Remove July import', `
+      <p style="font-size:13px;line-height:1.55;color:var(--muted)">Deletes <b>only</b> the records imported from the July 2026 books (origin “july-import”) from orders, receipts, payments, expenses and transfers. Everything else is untouched — and July stays safe in Zoho.</p>
+      <label class="fld"><span class="lab">Type REMOVE-JULY to confirm</span><input id="jly_remove" autocomplete="off" autocapitalize="characters" placeholder="REMOVE-JULY" /></label>
+      <button class="btn danger full" data-act="julyImportRemoveGo">Remove July import</button>`);
+  },
+  julyImportRemoveGo: async () => {
+    const inp = $('#jly_remove');
+    if (((inp && inp.value) || '').trim() !== 'REMOVE-JULY') return toast('Type REMOVE-JULY (with the dash) to confirm');
+    try {
+      const res = await staffApi('/api/admin/backfill-july', 'POST', { mode: 'remove', confirm: 'REMOVE-JULY' });
+      closeSheet();
+      toast('Removed ' + ((res && res.total) || 0) + ' imported July records');
     } catch (e) { toast(e.message); }
   },
 

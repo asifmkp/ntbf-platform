@@ -144,6 +144,13 @@ class JsonStore {
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
   all() { return this.data.items.slice(); }
+  /** Selective unwind for imported history: remove only records matching the predicate. */
+  removeWhere(pred: (x: any) => boolean) {
+    const n = this.data.items.length;
+    this.data.items = this.data.items.filter((x) => !pred(x));
+    this.save();
+    return n - this.data.items.length;
+  }
   applyStatus(id: string, to: string, entry: any, extra?: any) {
     const x = this.byId(id); if (!x) return null;
     x.status = to; x.updatedAt = entry.at;

@@ -118,6 +118,13 @@ export class ExpenseStore {
 
   create(rec: any) { rec.id = this.id(); this.data.items.unshift(rec); this.save(); return rec; }
   byId(id: string) { return this.data.items.find((x) => x.id === id); }
+  /** Selective unwind for imported history: remove only records matching the predicate. */
+  removeWhere(pred: (x: any) => boolean) {
+    const n = this.data.items.length;
+    this.data.items = this.data.items.filter((x) => !pred(x));
+    this.save();
+    return n - this.data.items.length;
+  }
   listByEmployee(employeeId: string) { return this.data.items.filter((x) => x.employeeId === employeeId); }
   list(filter?: { status?: string; employeeId?: string }) {
     return this.data.items.filter((x) =>

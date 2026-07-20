@@ -182,6 +182,26 @@ export class CustomerStore {
     this.data.orders.unshift(rec); this.save(); return rec;
   }
   orderById(id: string) { return this.data.orders.find((x) => x.id === id); }
+  // ---- July history backfill support (additive; the ingest pipeline above is untouched) ----
+  /** Raw order records (no customer join) — used for dedupe-by-reference checks. */
+  rawOrders() { return this.data.orders.slice(); }
+  /** Case-insensitive exact-name customer lookup so the backfill can LINK to an existing
+   *  account when one trivially matches — it never creates customer accounts. */
+  findCustomerByExactName(name: string) {
+    const k = String(name || '').trim().toLowerCase();
+    if (!k) return undefined;
+    return this.data.customers.find((c) => String(c.name || '').trim().toLowerCase() === k);
+  }
+  /** Insert a pre-shaped historical order (id assigned here; same atomic save). The caller
+   *  is responsible for an honest statusHistory and an origin marker. */
+  importOrder(rec: any) { rec.id = this.id('ORD'); this.data.orders.unshift(rec); this.save(); return rec; }
+  /** Selective unwind for imported history: remove only orders matching the predicate. */
+  removeOrdersWhere(pred: (o: any) => boolean) {
+    const n = this.data.orders.length;
+    this.data.orders = this.data.orders.filter((o) => !pred(o));
+    this.save();
+    return n - this.data.orders.length;
+  }
   /** Apply a status change with an audit entry and optional extra fields (e.g. collected cash). */
   applyStatus(id: string, toStatus: string, entry: any, extra?: any) {
     const o = this.data.orders.find((x) => x.id === id);
@@ -201,7 +221,9 @@ export class CustomerStore {
     this.save(); return o;
   }
   allOrders() {
-    return this.data.orders.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : '—', customerPhone: c ? c.phone : '' }; });
+    // Fall back to a name/phone stored ON the order (imported July history carries the
+    // customer name directly instead of force-creating customer accounts).
+    return this.data.orders.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : (o.customerName || '—'), customerPhone: c ? c.phone : (o.customerPhone || '') }; });
   }
   /** Admin "clear test data": drop every order (app + WhatsApp-ingested). Customer accounts and
    *  seq are preserved — accounts are not transactional records, and new order IDs never reuse
