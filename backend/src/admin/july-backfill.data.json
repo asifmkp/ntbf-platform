@@ -1,0 +1,5460 @@
+{
+ "generatedAt": "2026-07-20T20:32:20.333Z",
+ "note": "July 1-20 2026 history backfill. Display-only: July already exists in Zoho. Records built from this file carry origin \"july-import\" and must be EXCLUDED from any future app->Zoho sync.",
+ "expected": {
+  "orders": {
+   "count": 255,
+   "sum": 63519.51
+  },
+  "receipts": {
+   "count": 216,
+   "sum": 52349.88
+  },
+  "payments": {
+   "count": 45,
+   "sum": 35380.38
+  },
+  "expenses": {
+   "count": 47,
+   "sum": 10572
+  },
+  "transfers": {
+   "count": 43,
+   "sum": 61390
+  }
+ },
+ "orders": [
+  {
+   "ref": "INV2311",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 120,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2312",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 133.99,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2316",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Abu Yakoob Grocery",
+   "total": 73.5,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2317",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 85,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2318",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Zubaida Grocery",
+   "total": 82,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2319",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Zubaida Grocery",
+   "total": 111.99,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2320",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Ritaj restaurant",
+   "total": 45,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2321",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Star Grocery",
+   "total": 174,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2322",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Star Grocery",
+   "total": 30,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2323",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Al Bayader Grocery",
+   "total": 135.01,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2324",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Kenz Al Madina Supermarket",
+   "total": 113,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2325",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Kenz Al Madina Supermarket",
+   "total": 104.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2327",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Al Madeena Supermarket",
+   "total": 51,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2328",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 170,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2329",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 51,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2333",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 71,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2334",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Bannu Pulao Restaurant",
+   "total": 98.5,
+   "user": "asif"
+  },
+  {
+   "ref": "INV2335",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Abu Yakoob Grocery",
+   "total": 66,
+   "user": "asif"
+  },
+  {
+   "ref": "INV2336",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "Ritaj restaurant",
+   "total": 46,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2331",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Shehnaz Cafeteria",
+   "total": 46,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2332",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Shehnaz Cafeteria",
+   "total": 80,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2337",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 219.02,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2338",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Al Fanar Kitchen",
+   "total": 159.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2339",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 146.5,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2340",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 291.52,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2341",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "al najah Foodstuff",
+   "total": 301.04,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2342",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 450,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2343",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "Al Zahra Supermarket",
+   "total": 143.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2344",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Telal Grocery",
+   "total": 382,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2345",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "AL Arham elaf Grocery",
+   "total": 167,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2346",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "AL Arham elaf Grocery",
+   "total": 68,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2347",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 114.5,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2348",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 68,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2349",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 117.52,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2350",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Al Madeena Supermarket",
+   "total": 100,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2351",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 249.97,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2352",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 94.75,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2353",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 291.52,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2354",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "Al Insaf Foodstuff",
+   "total": 264.5,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2355",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 104,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2356",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 816.6,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2357",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 100,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2358",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 123,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2359",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Bahar Al kashmir Restaurant",
+   "total": 118.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2360",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Al Zahra Supermarket",
+   "total": 197.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2361",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Rabiya Supermarket",
+   "total": 88,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2362",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 153.99,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2363",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 163.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2364",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Nakeel Supermarket",
+   "total": 120,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2365",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Nakeel Supermarket",
+   "total": 22,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2368",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "Bannu Pulao Restaurant",
+   "total": 53,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2366",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Abu Jalal Supermarket",
+   "total": 170.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2367",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Rubell Grocery",
+   "total": 1252.07,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2369",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Al Bayader Grocery",
+   "total": 673.53,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2371",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 78,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2372",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 131.5,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2373",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 68,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2374",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 98.98,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2375",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 85,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2376",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2377",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 72.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2378",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Imami Grocery",
+   "total": 194,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2379",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 306.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2380",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "Al Bayader Grocery",
+   "total": 171.05,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2381",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Sirab Supermarket",
+   "total": 164,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2382",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Al Fanar Kitchen",
+   "total": 175.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2384",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Sadiq Foodstuff Trading",
+   "total": 421.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2385",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 291.96,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2386",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 270.99,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2387",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 55,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2388",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Ghazni Grocery",
+   "total": 252,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2389",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 95,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2390",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 150,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2391",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 53,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2392",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Nawal super market",
+   "total": 164,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2393",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Nawal super market",
+   "total": 272.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2394",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 120.02,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2395",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Dinar Of Canned And Preserved Foodstuff Trading",
+   "total": 614.04,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2397",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 303.99,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2404",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Bannu Pulao Restaurant",
+   "total": 53,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2405",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "Bannu Pulao Restaurant",
+   "total": 92,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2396",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Panoor Supermarket",
+   "total": 410,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2398",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Maha Foodstuff Trading",
+   "total": 82,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2399",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Maha Foodstuff Trading",
+   "total": 100,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2400",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Sanja Punjab restaurant",
+   "total": 54,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2401",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Apna Punjab Restaurant",
+   "total": 126.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2402",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Apna Punjab Restaurant",
+   "total": 94,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2403",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Telal Grocery",
+   "total": 102.5,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2406",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Punjab Restaurant",
+   "total": 427.98,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2407",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 539.52,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2408",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 388.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2409",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 85,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2410",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 104,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2411",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 150,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2412",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Al Rasel Supermarket",
+   "total": 270,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2417",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "Sanja Punjab restaurant",
+   "total": 47,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2415",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 234.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2416",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Shehnaz Cafeteria",
+   "total": 205,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2418",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Star Grocery",
+   "total": 260.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2419",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Rabiya Supermarket",
+   "total": 85,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2420",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Al Bayader Grocery",
+   "total": 946.04,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2421",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 158,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2422",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 106.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2423",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 215,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2424",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 208,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2433",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 664.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2434",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "MM Foodstuff",
+   "total": 90.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2436",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 162,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2441",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Bahar Al kashmir Restaurant",
+   "total": 53,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2442",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Al Wisal Grocery",
+   "total": 135.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2443",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 300.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2447",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "Proxima Supermarket LLC",
+   "total": 597,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2425",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 225.02,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2426",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "MM Foodstuff",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2427",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Bait Al Qamar Grocery",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2428",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2429",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Sadiq Foodstuff Trading",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2430",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Shams Al Jadeed Grocery",
+   "total": 45,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2431",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Shams Al Jadeed Grocery",
+   "total": 105,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2432",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2435",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 140.99,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2437",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Maha Foodstuff Trading",
+   "total": 450.03,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2438",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Maha Foodstuff Trading",
+   "total": 82,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2439",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Karar Al Madina Supermarket",
+   "total": 317,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2440",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Karar Al Madina Supermarket",
+   "total": 170.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2444",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Al Wisal Grocery",
+   "total": 555,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2445",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 188.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2446",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Nakeel Supermarket",
+   "total": 585.04,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2448",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Muhammad Al Rashid Grocery LLC",
+   "total": 225.02,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2449",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 168,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2450",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 51,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2451",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 81.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2452",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Al Zahra Supermarket",
+   "total": 139.48,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2453",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 260.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2454",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 96,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2455",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Bahar Al kashmir Restaurant",
+   "total": 90.01,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2456",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 265.02,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2457",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Al Dia Supermarket",
+   "total": 90.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2458",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "Abu Jalal Supermarket",
+   "total": 482.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2460",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "sanja Punjab restaurant",
+   "total": 139,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2461",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Zubaida Grocery",
+   "total": 130,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2462",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 111.99,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2463",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 103,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2464",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 185,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2465",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Green Basket Grocery",
+   "total": 233,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2466",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Green Basket Grocery",
+   "total": 172,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2467",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Ghazni Grocery",
+   "total": 210,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2468",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 507.02,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2469",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 177.51,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2470",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Blooms Grocery",
+   "total": 316.99,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2471",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Blooms Grocery",
+   "total": 80,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2472",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 265.02,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2473",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 184.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2474",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Al Dia Supermarket",
+   "total": 196,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2476",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 98.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2477",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 71,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2478",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Al karam Supermarket",
+   "total": 534.08,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2479",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 222,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2480",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Tasty Foodstuff",
+   "total": 126,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2481",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Red Zone Supermarket",
+   "total": 294.76,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2482",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 184.52,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2483",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Zubaida Grocery",
+   "total": 110,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2484",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Blooms Grocery br1",
+   "total": 143.99,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2486",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Karachi Darbar Restaurant",
+   "total": 170.76,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2487",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 167.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2488",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Rubel Grocery LLC",
+   "total": 1319.85,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2489",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Dinar Of Canned And Preserved Foodstuff Trading",
+   "total": 327,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2490",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Al Madeena Supermarket",
+   "total": 342.01,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2491",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Al Fanar Kitchen",
+   "total": 249.02,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2492",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 106.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2475",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Al Dia Supermarket",
+   "total": 112,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2493",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 162.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2494",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 255.52,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2495",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 365,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2496",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 81,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2497",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Zahrat Al Reef Foodstuff Trading",
+   "total": 212.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2498",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 278.99,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2499",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Rubel Grocery LLC",
+   "total": 1559.88,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2500",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Al Noon Foodstuff Trading Llc",
+   "total": 205,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2501",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 93,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2502",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 274.51,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2503",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 136.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2504",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 89,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2505",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "Zahrat Al Reef Foodstuff Trading",
+   "total": 80,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2506",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 80,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2507",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 84,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2509",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 226.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2510",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Al Zahra Supermarket",
+   "total": 142.6,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2511",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 575.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2512",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "MM Foodstuff",
+   "total": 238.01,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2513",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Al Rasel Supermarket",
+   "total": 384,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2514",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Ghazni Grocery",
+   "total": 159,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2515",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Al Insaf Foodstuff",
+   "total": 311,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2516",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 353.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2519",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "hybrid general trading LLC",
+   "total": 9399.6,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2508",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 215.96,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2517",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 81,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2518",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 219,
+   "user": "tahir"
+  },
+  {
+   "ref": "INV2520",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 67,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2521",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 30,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2522",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 68.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2524",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "Zahrat Al Reef Foodstuff Trading",
+   "total": 316,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2525",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 182.51,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2526",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "Ghazni Grocery",
+   "total": 210,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2527",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "Al Nadhi Grocery",
+   "total": 145,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2528",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 646.04,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2529",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 198,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2530",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 64.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2531",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 147.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2532",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 164.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2533",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Al Haq Grocery LLC",
+   "total": 110,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2534",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Al Dia Supermarket",
+   "total": 235.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2535",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 409.02,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2536",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Proxima Supermarket LLC",
+   "total": 240,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2537",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 116.51,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2538",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 149.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2539",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Bannu Pulao Restaurant",
+   "total": 169.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2540",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "Dinar Of Canned And Preserved Foodstuff Trading",
+   "total": 344.53,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2541",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Muzamil Supermarket",
+   "total": 105.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2542",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 72,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2544",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 113.5,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2545",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Ashik Supermarket",
+   "total": 353.51,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2546",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Mozamil adil Supermarket",
+   "total": 185.51,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2547",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Star Grocery",
+   "total": 258.02,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2548",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Cumilla Grocery",
+   "total": 124.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2549",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Azza Foodstuff Trading",
+   "total": 95.52,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2550",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 311.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2552",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 165,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2543",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Al Dia Supermarket",
+   "total": 346.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2553",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 123.01,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2554",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Azza Foodstuff Trading",
+   "total": 35.99,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2555",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Rocky Grocery",
+   "total": 232,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2556",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 91.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2557",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Al Fanar Kitchen",
+   "total": 159.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2558",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 295.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2559",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 177.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2560",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 88.49,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2561",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 132.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2562",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Zahrat Al Reef Foodstuff Trading",
+   "total": 278,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2563",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Apna Punjab Restaurant",
+   "total": 35.99,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2564",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Al karam Supermarket",
+   "total": 2399.98,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2565",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Nakeel Supermarket",
+   "total": 70.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2566",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "Al Wathan Foodstuff Trading",
+   "total": 90.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2551",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 200,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2567",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Al Zahra Supermarket",
+   "total": 264.52,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2568",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Shaheen Supermarket",
+   "total": 140,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2569",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Firdous Supermarket",
+   "total": 175.51,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2570",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Abdul Ghani Grocery",
+   "total": 67,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2571",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Muzamil Al Madeena Supermarket LLC",
+   "total": 101.01,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2572",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Al Mutakamal Grocery",
+   "total": 47.5,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2573",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Friends Supermarket",
+   "total": 434.02,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2574",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Punjab Restaurant",
+   "total": 153.48,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2575",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Aflatoon Restaurant",
+   "total": 286,
+   "user": "haris"
+  },
+  {
+   "ref": "INV2576",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Halima Foodstuff",
+   "total": 200,
+   "user": "musthafa"
+  },
+  {
+   "ref": "INV2578",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "Zahrat Al Reef Foodstuff Trading",
+   "total": 70.5,
+   "user": "musthafa"
+  }
+ ],
+ "receipts": [
+  {
+   "ref": "RCV1893",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 120,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1937",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 199.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1950",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 120.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1996",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2028",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 71,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2030",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 162.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2062",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 164.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2081",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "rocky grocery",
+   "amount": 232,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1903",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 133.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1935",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 183.98,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1945",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 150,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1962",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 104,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1992",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 140.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2040",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 93,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2045",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 164,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2068",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "al haq grocery llc",
+   "amount": 110,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1902",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "abu yakoob grocery",
+   "amount": 139.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1897",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 85,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1928",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 123,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1951",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 325.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1965",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 388.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1975",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 423,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2032",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 274.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2069",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "cumilla grocery",
+   "amount": 124.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1892",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "zubaida grocery",
+   "amount": 193.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1981",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "zubaida grocery",
+   "amount": 130,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2018",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "zubaida grocery",
+   "amount": 110,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1891",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "al madeena supermarket",
+   "amount": 51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2016",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "al madeena supermarket",
+   "amount": 342.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1900",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "aflatoon restaurant",
+   "amount": 221,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1924",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "aflatoon restaurant",
+   "amount": 104,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1985",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "aflatoon restaurant",
+   "amount": 219,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2014",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "aflatoon restaurant",
+   "amount": 222,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2051",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "aflatoon restaurant",
+   "amount": 300,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2099",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "aflatoon restaurant",
+   "amount": 286,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1895",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "ritaj restaurant",
+   "amount": 91,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1899",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "star grocery",
+   "amount": 204,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1973",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "star grocery",
+   "amount": 260.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2074",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "star grocery",
+   "amount": 106.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1894",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "al bayader grocery",
+   "amount": 135.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1936",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "al bayader grocery",
+   "amount": 844.05,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1972",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "al bayader grocery",
+   "amount": 946.04,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1898",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "kenz al madina supermarket",
+   "amount": 217.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1901",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 71,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1905",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 450,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1932",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 306.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1944",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 294,
+   "cashLabel": "(As Per Details)",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1971",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 826.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1986",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 96,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1982",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 184.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2025",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 106.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2036",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 89,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2043",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 353.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2054",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 198,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2064",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 149.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2085",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 607.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2090",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "firdous supermarket",
+   "amount": 132.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1896",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "bannu pulao restaurant",
+   "amount": 151.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1929",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "bannu pulao restaurant",
+   "amount": 53,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1953",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "bannu pulao restaurant",
+   "amount": 145,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2059",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "bannu pulao restaurant",
+   "amount": 169.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1911",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "shehnaz cafeteria",
+   "amount": 126,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1966",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "shehnaz cafeteria",
+   "amount": 205,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1904",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 219.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1913",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 94.75,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1923",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 100,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1931",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 72.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1967",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 234,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1979",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 81.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2015",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 98.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2034",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 446,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2050",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 68.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2063",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 64.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2076",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 72,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2082",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 91.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2088",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 88.49,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2098",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "abdul ghani grocery",
+   "amount": 67,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1908",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "al fanar kitchen",
+   "amount": 159.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1947",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "al fanar kitchen",
+   "amount": 175.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2019",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "al fanar kitchen",
+   "amount": 249.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2079",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "al fanar kitchen",
+   "amount": 159.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1910",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 146.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1918",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 94,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1938",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1948",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 95,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2022",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 184.52,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2056",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 182.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2073",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "mozamil adil supermarket",
+   "amount": 185.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1909",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "ashik supermarket",
+   "amount": 291.52,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1919",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "ashik supermarket",
+   "amount": 291.52,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1977",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "ashik supermarket",
+   "amount": 300.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2000",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "ashik supermarket",
+   "amount": 265.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2005",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "ashik supermarket",
+   "amount": 265.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2075",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "ashik supermarket",
+   "amount": 353.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1887",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "al zahra supermarket",
+   "amount": 146.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1906",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "al zahra supermarket",
+   "amount": 116,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1922",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "al zahra supermarket",
+   "amount": 197.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1990",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "al zahra supermarket",
+   "amount": 139.48,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2044",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "al zahra supermarket",
+   "amount": 142.6,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1915",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "telal grocery",
+   "amount": 175,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1959",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "telal grocery",
+   "amount": 102.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1917",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "al arham elaf grocery",
+   "amount": 235,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1907",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 150,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1912",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 249.97,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1941",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 291.96,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1955",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 150,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1980",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 111.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2029",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 278.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2052",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 215.96,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2094",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "shaheen supermarket",
+   "amount": 340,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1914",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "al insaf foodstuff",
+   "amount": 264.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2049",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "al insaf foodstuff",
+   "amount": 311,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1916",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 117.52,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1933",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 78,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1943",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 53,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2011",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 188.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1983",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 177.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2026",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 167.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2037",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 136.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2065",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 116.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2077",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 113.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2084",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "al mutakamal grocery",
+   "amount": 123.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1927",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 763,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1964",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 539,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2006",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 507.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2046",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 575.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2057",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 646.04,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2061",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 409.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2095",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "friends supermarket",
+   "amount": 434.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1920",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "rabiya supermarket",
+   "amount": 88,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1968",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "rabiya supermarket",
+   "amount": 85,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1886",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "halima foodstuff",
+   "amount": 113,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1921",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "halima foodstuff",
+   "amount": 163.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1970",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "halima foodstuff",
+   "amount": 264.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2038",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "halima foodstuff",
+   "amount": 255,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2066",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "halima foodstuff",
+   "amount": 147.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2086",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "halima foodstuff",
+   "amount": 177.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1930",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "nakeel supermarket",
+   "amount": 142,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2004",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "nakeel supermarket",
+   "amount": 585.04,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2091",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "nakeel supermarket",
+   "amount": 70.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1926",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 153,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2002",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 260.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2007",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 204,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2047",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 226.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2053",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 97,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2070",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 165,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2096",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "muzamil al madeena supermarket llc",
+   "amount": 101.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1925",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "customer": "bahar al kashmir restaurant",
+   "amount": 118.5,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1974",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "bahar al kashmir restaurant",
+   "amount": 53,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1997",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "bahar al kashmir restaurant",
+   "amount": 45,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1939",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "rubell grocery",
+   "amount": 954,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1940",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "imami grocery",
+   "amount": 194,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1934",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "customer": "abu jalal supermarket",
+   "amount": 170.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1989",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "abu jalal supermarket",
+   "amount": 482.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1946",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "sirab supermarket",
+   "amount": 164,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1952",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "ghazni grocery",
+   "amount": 252,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2008",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "ghazni grocery",
+   "amount": 210,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2048",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "ghazni grocery",
+   "amount": 159,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2058",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "ghazni grocery",
+   "amount": 210,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1954",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "dinar of canned and preserved foodstuff trading",
+   "amount": 614.04,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2012",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "dinar of canned and preserved foodstuff trading",
+   "amount": 327,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2078",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "dinar of canned and preserved foodstuff trading",
+   "amount": 344.53,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1942",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "nawal super market",
+   "amount": 436.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1949",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "customer": "sadiq foodstuff trading",
+   "amount": 421.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1998",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "sadiq foodstuff trading",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1957",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "panoor supermarket",
+   "amount": 410,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1961",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "maha foodstuff trading",
+   "amount": 182,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1993",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "maha foodstuff trading",
+   "amount": 270,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1994",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "maha foodstuff trading",
+   "amount": 82,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1888",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "sanja punjab restaurant",
+   "amount": 295,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1960",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "sanja punjab restaurant",
+   "amount": 101,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1987",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "sanja punjab restaurant",
+   "amount": 139,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1956",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "apna punjab restaurant",
+   "amount": 220.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2089",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "apna punjab restaurant",
+   "amount": 35.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1958",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "al rasel supermarket",
+   "amount": 270,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2042",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "al rasel supermarket",
+   "amount": 384,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1963",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "customer": "punjab restaurant",
+   "amount": 427.98,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2097",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "customer": "punjab restaurant",
+   "amount": 153.48,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1969",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "mm foodstuff",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1988",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "mm foodstuff",
+   "amount": 45,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2041",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "customer": "mm foodstuff",
+   "amount": 238.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1978",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "al wisal grocery",
+   "amount": 135.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2010",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "al wisal grocery",
+   "amount": 555,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1976",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "customer": "proxima supermarket llc",
+   "amount": 597,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2060",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "proxima supermarket llc",
+   "amount": 240,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2001",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "bait al qamar grocery",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1991",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "shams al jadeed grocery",
+   "amount": 150,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2003",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "karar al madina supermarket",
+   "amount": 487.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1984",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "muhammad al rashid grocery llc",
+   "amount": 225.02,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1995",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "customer": "al dia supermarket",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2024",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "al dia supermarket",
+   "amount": 196,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2035",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "al dia supermarket",
+   "amount": 112,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2067",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "customer": "al dia supermarket",
+   "amount": 235.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2083",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "al dia supermarket",
+   "amount": 346.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2009",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "blooms grocery",
+   "amount": 396.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1999",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "customer": "green basket grocery",
+   "amount": 405,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2020",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "blooms grocery br1",
+   "amount": 143.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2017",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "red zone supermarket",
+   "amount": 294.76,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2027",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "karachi darbar restaurant",
+   "amount": 170.76,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2021",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "rubel grocery llc",
+   "amount": 1319.85,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2031",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "rubel grocery llc",
+   "amount": 1559.88,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2013",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "al karam supermarket",
+   "amount": 534.08,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2087",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "al karam supermarket",
+   "amount": 2399.98,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2023",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "customer": "tasty foodstuff",
+   "amount": 126,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2039",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "al noon foodstuff trading llc",
+   "amount": 205,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1890",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "zahrat al reef foodstuff trading",
+   "amount": 124.51,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2033",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "customer": "zahrat al reef foodstuff trading",
+   "amount": 80,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2093",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "zahrat al reef foodstuff trading",
+   "amount": 278,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2055",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "customer": "al nadhi grocery",
+   "amount": 145,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2072",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "azza foodstuff trading",
+   "amount": 95.52,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2080",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "customer": "azza foodstuff trading",
+   "amount": 35.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2071",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "customer": "muzamil supermarket",
+   "amount": 105.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV2092",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "customer": "al wathan foodstuff trading",
+   "amount": 90.01,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1885",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "palm discount centre",
+   "amount": 90,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1884",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "moideen grocery llc",
+   "amount": 415,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  },
+  {
+   "ref": "RCV1889",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "customer": "aya supermarket",
+   "amount": 123.85,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa"
+  }
+ ],
+ "payments": [
+  {
+   "ref": "PAY653",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "payee": "Al sahab Al Mudiah Foodstuff Trading llc",
+   "amount": 284,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY654",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "payee": "Al Maha General Trading LLC Purchase",
+   "amount": 285,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY670",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 979,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY647",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 58,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY648",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 365,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY671",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 912,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY667",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 872,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY668",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 102,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY676",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 729.93,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY677",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 146.98,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY684",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 1733,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY673",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "payee": "Al sahab Al Mudiah Foodstuff Trading llc",
+   "amount": 866,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY675",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 1209.9,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY678",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "payee": "Al Maha General Trading LLC Purchase",
+   "amount": 1229,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY679",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "payee": "SHABAAN FOODSTUFF TRADING LLC-PUR A/C",
+   "amount": 113,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY682",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 1657.94,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY685",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 2255,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY687",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 228.49,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY688",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 1867,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY690",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 1559.96,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY691",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 205,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY692",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "payee": "Al sahab Al Mudiah Foodstuff Trading llc",
+   "amount": 287,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY693",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 225,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY696",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 2287.97,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY694",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "payee": "Al sahab Al Mudiah Foodstuff Trading llc",
+   "amount": 454,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY695",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 18,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY699",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 477.48,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY731",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 19,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY732",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 3526,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY698",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 849.89,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY722",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 2138,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY728",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "payee": "Al sahab Al Mudiah Foodstuff Trading llc",
+   "amount": 220,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY730",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 412,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY701",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 647.48,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY704",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 516.97,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY726",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 288,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY727",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "payee": "Sonas Wholesale Point",
+   "amount": 11,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY725",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 1024,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY715",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 649.49,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY729",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "payee": "Urban nest foodstuff",
+   "amount": 1234,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY719",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 420,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY721",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 852.91,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY736",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 493.99,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY741",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 630,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  },
+  {
+   "ref": "PAY746",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "payee": "Al Zahra foodstuff",
+   "amount": 40,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": ""
+  }
+ ],
+ "expenses": [
+  {
+   "ref": "PAY641",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "label": "petrol expens -55910",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "busthan"
+  },
+  {
+   "ref": "PAY642",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "label": "Food Expense",
+   "category": "Food",
+   "amount": 70,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "food 40 drill bit player 30"
+  },
+  {
+   "ref": "PAY643",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "label": "Petrol Expense-76127",
+   "category": "Fuel",
+   "amount": 100,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "rashi uaq shifting time"
+  },
+  {
+   "ref": "PAY644",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "label": "Haris Salary Payable",
+   "category": "Salary",
+   "amount": 500,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY646",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 180,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "45559"
+  },
+  {
+   "ref": "PAY655",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "label": "Petrol Expenses-47133",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY656",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "label": "Petrol Expense-46507",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "haris",
+   "narration": "506"
+  },
+  {
+   "ref": "PAY657",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "label": "Petrol expense-54638",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "quisais"
+  },
+  {
+   "ref": "PAY672",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 180,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "16297"
+  },
+  {
+   "ref": "PAY674",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 180,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "17852"
+  },
+  {
+   "ref": "PAY683",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "label": "Other Charge",
+   "category": "Other",
+   "amount": 60,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "reacharge"
+  },
+  {
+   "ref": "PAY686",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 170,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "16450"
+  },
+  {
+   "ref": "PAY689",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "label": "petrol expens -55910",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "rashi for company service"
+  },
+  {
+   "ref": "PAY697",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 170,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "16032"
+  },
+  {
+   "ref": "PAY700",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 170,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "15283"
+  },
+  {
+   "ref": "PAY702",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "label": "Petrol expense-54638",
+   "category": "Fuel",
+   "amount": 150,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY703",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 170,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "19270"
+  },
+  {
+   "ref": "PAY705",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "label": "Petrol expense-54638",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "ware house time"
+  },
+  {
+   "ref": "PAY706",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "label": "Food Expense",
+   "category": "Food",
+   "amount": 100,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": ""
+  },
+  {
+   "ref": "PAY707",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "label": "Warehouse Rent Expence",
+   "category": "Rent",
+   "amount": 1650,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "asif",
+   "narration": "one month rent generator"
+  },
+  {
+   "ref": "PAY734",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "label": "Petrol expense-54638",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "ware house time"
+  },
+  {
+   "ref": "PAY709",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "label": "Warehouse Rent Expence",
+   "category": "Rent",
+   "amount": 100,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": "asif paid vehicle rent to carry generator"
+  },
+  {
+   "ref": "PAY710",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "label": "(As Per Details)",
+   "category": "Other",
+   "amount": 250,
+   "cashLabel": "",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY724",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "label": "Petrol Expense-76127",
+   "category": "Fuel",
+   "amount": 170,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "23971"
+  },
+  {
+   "ref": "PAY708",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "Rashid Salary Expense",
+   "category": "Salary",
+   "amount": 50,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "asif",
+   "narration": "rashi took balance of 2k"
+  },
+  {
+   "ref": "PAY711",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "Forklift Charges",
+   "category": "Forklift",
+   "amount": 350,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY712",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 370,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY713",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 500,
+   "cashLabel": "Rashid-cash in hand",
+   "user": "asif",
+   "narration": "electric expense"
+  },
+  {
+   "ref": "PAY714",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "(As Per Details)",
+   "category": "Other",
+   "amount": 150,
+   "cashLabel": "",
+   "user": "asif",
+   "narration": "rashi cleared bill"
+  },
+  {
+   "ref": "PAY716",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 170,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "599421"
+  },
+  {
+   "ref": "PAY718",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 114,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": "Internet charges"
+  },
+  {
+   "ref": "PAY723",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "label": "petrol expens -55910",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "emarat 879836"
+  },
+  {
+   "ref": "PAY717",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 1000,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "bangali painting advance"
+  },
+  {
+   "ref": "PAY720",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 180,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "70184"
+  },
+  {
+   "ref": "PAY733",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 445,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "Item        Description                                      Qty        Unit Price       Amount\n\n012598      800-20L MATT EMULSION WHITE 18LTR NATIONAL       3          120.00           360.00\n\n01299       ROLLER STAN COMPLETE 9 STG HD                  1 PCS      10.00            10.00"
+  },
+  {
+   "ref": "PAY735",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "label": "(As Per Details)",
+   "category": "Other",
+   "amount": 130,
+   "cashLabel": "",
+   "user": "asif",
+   "narration": "generator petrol"
+  },
+  {
+   "ref": "PAY737",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "label": "Haris Salary Payable",
+   "category": "Salary",
+   "amount": 1000,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY738",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "label": "Petrol expense-54638",
+   "category": "Fuel",
+   "amount": 100,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY739",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "label": "generator petrol",
+   "category": "Fuel",
+   "amount": 85,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY740",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 160,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": "water tank charge -2000ltr"
+  },
+  {
+   "ref": "PAY742",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 36,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": "hardwares"
+  },
+  {
+   "ref": "PAY743",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 240,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": "for pacha cleaning wages"
+  },
+  {
+   "ref": "PAY749",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 192,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "Tax Invoice\n\nAL IMDAD COMPANY SALE OF ELECTRICITY EQUIPMENT AND FITTINGS LLC\nMobile: 0527696301, 0557077138\nP.O. Box: 1069\nAjman, UAE\nEmail: emdad616@gmail.com\nTRN: 104216476200003\n\nTo: NATIONAL TRADING\nIssue date: 19-Jul-26\nInvoice number: 52990\n\nItem      Description                                          Qty   Unit Price   Amount\n012598    800-20L MATT EMULSION WHITE 18LTR NATIONAL             1    125.00       125.00\n011750    4264L - NATIONAL BLUE 3.6 LTR WATER PAINT (EMULSION)   1     20.00        20.00\n01131     4401L - ROYAL BLUE 0.9 LTR OIL PAINT (SYNTHETIC ENAMEL) 1    20.00        20.00\n0112      0001L - 0.9 LTR LACQUER THINNER NATIONAL               1     18.00        18.00\n\nSub-total:        AED 183.00\nPDV 5%:            AED 9.15\nTotal:            AED 192.15\nAmount credited:  AED 192.15\nBalance due:      AED 0.00\n\nReceiver's Sign: ___________________\n\n{Sold Goods will not be returned}\n{Paint not returned and not ax change}\n\n[PAID IN FULL]"
+  },
+  {
+   "ref": "PAY747",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "label": "Rashid Salary Payable",
+   "category": "Salary",
+   "amount": 100,
+   "cashLabel": "asif cash-in-hand",
+   "user": "asif",
+   "narration": ""
+  },
+  {
+   "ref": "PAY748",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "label": "petrol expens -55910",
+   "category": "Fuel",
+   "amount": 50,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "Emarat\nAl Reyadah\n043434444\nTRN: 100293326300003\n\nTax Invoice\nDate: 19.07.2026 17:27:36\nTerminal ID: 4.0.0.26\nReceipt No: 887235\nPump No: 4\n\nPayment: Cash\nPaid Amount: 50.0\nProduct: Special\nQuantity: 15.2 Ltr\nUnit Price: 3.29 AED\nVehicle No: 55910\n\nInv No: 20250719766004887235\nCODE C\nVAT SUMMARY\nPERCENT: 5\nVAT: 2.38 AED\n\nTotal Amount: 50.00 AED\nPayment: Cash 50.00 AED\n\nThank you. Have a safe journey."
+  },
+  {
+   "ref": "PAY750",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "label": "Petrol Expense-48074",
+   "category": "Fuel",
+   "amount": 100,
+   "cashLabel": "Musthafa-Cash In Hand",
+   "user": "musthafa",
+   "narration": "23185"
+  },
+  {
+   "ref": "PAY751",
+   "date": "2026-07-20",
+   "at": "2026-07-20T08:00:00.000Z",
+   "label": "big warehouse expenses",
+   "category": "Warehouse",
+   "amount": 280,
+   "cashLabel": "Vansale Uaq-Cash in hand -Haris",
+   "user": "haris",
+   "narration": "AL ANIQA TYPING SERVICES (S.P.S - L.L.C)\nNear GCC Exchange Opposite Side, New Ind. Area - 2, Ajman, U.A.E\nPhone: +971 54 423 2346\nEmail: alaniqatypingservices@gmail.com\n\nRECEIPT VOUCHER\n\nNo: 0257\nDate: 28-07-26\nDhs: 280\n\nReceived From Mr./M/s: M/s. Food Start Trading\nThe sum of Dhs: Two hundred eighty\nBeing: Sewerage bill + Noc + typing fees\n\nCash/Cheque No.: ___________________\nBank: ___________________\n\nAccountant Signature: [Signed]\nReceiver's Signature: ___________________"
+  }
+ ],
+ "transfers": [
+  {
+   "ref": "CON202",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "Cash in Hand-Office",
+   "toUser": null,
+   "amount": 200,
+   "user": "haris"
+  },
+  {
+   "ref": "CON203",
+   "date": "2026-07-01",
+   "at": "2026-07-01T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1190,
+   "user": "haris"
+  },
+  {
+   "ref": "CON204",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 50,
+   "user": "haris"
+  },
+  {
+   "ref": "CON205",
+   "date": "2026-07-02",
+   "at": "2026-07-02T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1490,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON207",
+   "date": "2026-07-03",
+   "at": "2026-07-03T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 535,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON206",
+   "date": "2026-07-04",
+   "at": "2026-07-04T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1820,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON208",
+   "date": "2026-07-05",
+   "at": "2026-07-05T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1660,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON213",
+   "date": "2026-07-06",
+   "at": "2026-07-06T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1915,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON214",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "Musthafa-Cash In Hand",
+   "toUser": "musthafa",
+   "amount": 100,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON215",
+   "date": "2026-07-07",
+   "at": "2026-07-07T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 2515,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON216",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "asif cash-in-hand",
+   "toUser": "asif",
+   "amount": 100,
+   "user": "haris"
+  },
+  {
+   "ref": "CON217",
+   "date": "2026-07-08",
+   "at": "2026-07-08T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 2830,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON218",
+   "date": "2026-07-09",
+   "at": "2026-07-09T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1885,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON219",
+   "date": "2026-07-10",
+   "at": "2026-07-10T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 2540,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON220",
+   "date": "2026-07-11",
+   "at": "2026-07-11T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 3600,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON221",
+   "date": "2026-07-12",
+   "at": "2026-07-12T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 2875,
+   "user": "haris"
+  },
+  {
+   "ref": "CON224",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "asif cash-in-hand",
+   "toUser": "asif",
+   "amount": 150,
+   "user": "asif"
+  },
+  {
+   "ref": "CON225",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 150,
+   "user": "asif"
+  },
+  {
+   "ref": "CON226",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 300,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON231",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1575,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON232",
+   "date": "2026-07-13",
+   "at": "2026-07-13T08:00:00.000Z",
+   "fromLabel": "Dhanish Cash in Hand",
+   "fromUser": null,
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 2000,
+   "user": "asif"
+  },
+  {
+   "ref": "CON227",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Rashid-cash in hand",
+   "fromUser": null,
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 200,
+   "user": "asif"
+  },
+  {
+   "ref": "CON228",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Cash in Hand-Office",
+   "fromUser": null,
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 10000,
+   "user": "haris"
+  },
+  {
+   "ref": "CON229",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "asif cash-in-hand",
+   "toUser": "asif",
+   "amount": 25,
+   "user": "haris"
+  },
+  {
+   "ref": "CON230",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "Musthafa-Cash In Hand",
+   "toUser": "musthafa",
+   "amount": 65,
+   "user": "haris"
+  },
+  {
+   "ref": "CON233",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Rashid-cash in hand",
+   "fromUser": null,
+   "toLabel": "Dhanish Cash in Hand",
+   "toUser": null,
+   "amount": 300,
+   "user": "asif"
+  },
+  {
+   "ref": "CON234",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "asif cash-in-hand",
+   "toUser": "asif",
+   "amount": 1000,
+   "user": "asif"
+  },
+  {
+   "ref": "CON235",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 250,
+   "user": "asif"
+  },
+  {
+   "ref": "CON236",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 1000,
+   "user": "asif"
+  },
+  {
+   "ref": "CON239",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 580,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON243",
+   "date": "2026-07-14",
+   "at": "2026-07-14T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "Musthafa-Cash In Hand",
+   "toUser": "musthafa",
+   "amount": 1000,
+   "user": "haris"
+  },
+  {
+   "ref": "CON237",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Rashid-cash in hand",
+   "toUser": null,
+   "amount": 200,
+   "user": "asif"
+  },
+  {
+   "ref": "CON238",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "fromLabel": "Vansale Uaq-Cash in hand -Haris",
+   "fromUser": "haris",
+   "toLabel": "asif cash-in-hand",
+   "toUser": "asif",
+   "amount": 7000,
+   "user": "asif"
+  },
+  {
+   "ref": "CON240",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1000,
+   "user": "asif"
+  },
+  {
+   "ref": "CON241",
+   "date": "2026-07-15",
+   "at": "2026-07-15T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 555,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON242",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "fromLabel": "Cash in Hand-Office",
+   "fromUser": null,
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1000,
+   "user": "haris"
+  },
+  {
+   "ref": "CON244",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Musthafa-Cash In Hand",
+   "toUser": "musthafa",
+   "amount": 420,
+   "user": "asif"
+  },
+  {
+   "ref": "CON245",
+   "date": "2026-07-16",
+   "at": "2026-07-16T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1610,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON246",
+   "date": "2026-07-17",
+   "at": "2026-07-17T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 270,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON247",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 500,
+   "user": "asif"
+  },
+  {
+   "ref": "CON248",
+   "date": "2026-07-18",
+   "at": "2026-07-18T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 1255,
+   "user": "musthafa"
+  },
+  {
+   "ref": "CON249",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "fromLabel": "asif cash-in-hand",
+   "fromUser": "asif",
+   "toLabel": "Musthafa-Cash In Hand",
+   "toUser": "musthafa",
+   "amount": 630,
+   "user": "asif"
+  },
+  {
+   "ref": "CON250",
+   "date": "2026-07-19",
+   "at": "2026-07-19T08:00:00.000Z",
+   "fromLabel": "Musthafa-Cash In Hand",
+   "fromUser": "musthafa",
+   "toLabel": "Vansale Uaq-Cash in hand -Haris",
+   "toUser": "haris",
+   "amount": 3050,
+   "user": "musthafa"
+  }
+ ]
+}
