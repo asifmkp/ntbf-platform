@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-21T03:30+04:00 · main @ `2d3179f` · updated by: claude-muhammed**
+**As of: 2026-07-21T04:45+04:00 · main @ `7648a6a` · updated by: claude-muhammed**
 
 ## Systems
 
@@ -23,8 +23,8 @@ Staff cash floats (Zoho): Vansale-Haris 11,095 · Musthafa 4,812.50 · Asif 3,19
 
 ## In-flight
 
-- AI collaboration infrastructure (/ai) — this PR.
-- Nothing else building; feature work paused by owner (audit-first directive).
+- Claude account/workspace capability audit → /ai/CLAUDE_ACCOUNT_AUDIT.md (owner mission; docs-only).
+- Nothing building; feature work paused by owner. Execution order now lives in /ai/ROADMAP.md (DEC-013); orchestrator postponed behind gates (DEC-014).
 
 ## Blocked on owner (see TASK_QUEUE for details)
 
@@ -32,6 +32,8 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 ## Recently completed
 
+- 2026-07-21 · Business-first roadmap (/ai/ROADMAP.md) + TASK-023/024/025 queued + DEC-013/014
+- 2026-07-21 · /ai collaboration infrastructure shipped (PR #23)
 - 2026-07-21 · Full 3-way repository audit (backend/frontend/infra) → /ai/PROJECT_KNOWLEDGE.md
 - 2026-07-21 · PR #22 offline outbox + clientRef idempotency (v16)
 - 2026-07-21 · PR #21 attention badges + order aging (v15)

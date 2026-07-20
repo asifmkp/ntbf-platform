@@ -1,5 +1,6 @@
 # TASK_QUEUE.md — unfinished work only
 
+> **ORDERING** · Execution order and category live in `/ai/ROADMAP.md` (DEC-013); this file owns task detail + state only.
 > **FORMAT** · One task = one `###` block with a stable ID `TASK-###` (never reuse; next free ID at the top).
 > Fields (exact names): `Status:` OPEN | CLAIMED | IN_PROGRESS | BLOCKED | REVIEW · `Owner:` agent/human id or `—` ·
 > `Priority:` P1..P4 · `Created:`/`Updated:` ISO 8601 +04:00 · `Blocker:` · `Depends-on:` TASK/DEC ids · `Done-when:` acceptance criteria.
@@ -7,7 +8,7 @@
 > **Finishing**: move the block OUT of this file; record completion in STATUS.md + AGENT_LOG.md (same PR as the work). DONE tasks do not live here.
 > Owner (Asif) inputs are tasks too — marked `Owner: owner`.
 
-**Next free ID: TASK-023**
+**Next free ID: TASK-026**
 
 ---
 
@@ -118,3 +119,20 @@ Done-when: staff JWT (or set token) required in prod without breaking sync.js cl
 Status: OPEN · Owner: — · Priority: P3 · Created: 2026-07-21T02:00+04:00
 Context: dormant endpoints 500 raw / open-by-default RolesGuard holes (audit §10.3-4)
 Done-when: owner decision (delete vs feature-flag) in DECISIONS.md, implemented.
+
+### TASK-023 · Config/env hygiene — purge wrong Zoho org from repo configs
+Status: OPEN · Owner: — · Priority: P3 · Created: 2026-07-21T04:30+04:00
+Context: render.yaml + .env.example still ship org 170000198188 / .ae values (WRONG per DEC-003); latent trap for any future env rebuild (KNOWLEDGE §10.9)
+Blocker: owner to confirm intended env values before edit (config touches deploy)
+Done-when: no wrong-org value anywhere in repo; .env.example documents correct names (values env-only); owner confirms Render env matches.
+
+### TASK-024 · Frontend consolidation bundle
+Status: OPEN · Owner: — · Priority: P3 · Created: 2026-07-21T04:30+04:00
+Context: bundled debt from audit — apiBase/headers duplicated across app.js call sites; legacy S-fed demo views (custody/cash/acash) wired but empty since DEC-009; catalog drift unguarded; Leaflet loaded from CDN (breaks offline)
+Done-when: single apiBase/auth-headers helper; legacy views retired or hidden; catalog-drift guard added; Leaflet vendored or gracefully degraded; `node --check` + on-device verification; sw.js CACHE bumped (DEC-012).
+
+### TASK-025 · AI Orchestrator — POSTPONED behind gates
+Status: BLOCKED · Owner: — · Priority: P4 · Created: 2026-07-21T04:30+04:00
+Blocker: gates G1–G5 in ROADMAP.md §3 (DEC-014) — do not build until ALL fire
+Depends-on: TASK-014, TASK-015, TASK-012 (gates G2–G4)
+Done-when: gates verified true in AGENT_LOG evidence; then scope per DEC-014 (queue-watcher over the SAME /ai files, read-only over production, all writes via PRs + owner gates).
