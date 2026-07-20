@@ -208,7 +208,7 @@ const views = {
   },
   customers() {
     return `<div class="sect">Customers (${S.state.customers.length})</div>
-      <div class="card">${S.state.customers.map((c) => row(c.name.slice(0, 2).toUpperCase(), c.onHold ? 'r' : 'g', c.name, c.category + ' · credit ' + aed(c.credit), c.onHold ? '<span class="tag red">On hold</span>' : statusTag(c.status))).join('')}</div>
+      <div class="card">${S.state.customers.length ? S.state.customers.map((c) => row(c.name.slice(0, 2).toUpperCase(), c.onHold ? 'r' : 'g', c.name, c.category + ' · credit ' + aed(c.credit), c.onHold ? '<span class="tag red">On hold</span>' : statusTag(c.status))).join('') : emptyRow('No customers yet — add your first one below.')}</div>
       <button class="btn primary full" data-act="newCustomer">＋ New customer</button>`;
   },
   orders() {
@@ -652,7 +652,7 @@ const views = {
   },
   acustomers() {
     return `<div class="sect">Customers (${S.state.customers.length}) · manage</div>
-      <div class="card">${S.state.customers.map((c) => {
+      <div class="card">${S.state.customers.length ? S.state.customers.map((c) => {
       const out = S.state.orders.filter((o) => o.customerId === c.id && o.status !== 'DELIVERED' && o.status !== 'CANCELLED').reduce((s, o) => s + o.total, 0);
       const act = c.status === 'PENDING'
         ? `<button class="btn green sm" data-act="approveCustomer" data-id="${c.id}">Approve</button>`
@@ -660,7 +660,7 @@ const views = {
           : `<button class="btn danger sm" data-act="hold" data-id="${c.id}">Hold</button>`;
       return `<div class="li"><div class="ic ${c.onHold ? 'r' : 'g'}">${c.name.slice(0, 2).toUpperCase()}</div><div class="m"><b>${c.name}</b><span>${c.category} · A/R ${aed(out)} · credit ${aed(c.credit)}</span>
         <div class="btn-row">${c.onHold ? '<span class="tag red" style="align-self:center">On hold</span>' : statusTag(c.status)} ${act}</div></div></div>`;
-    }).join('')}</div>`;
+    }).join('') : emptyRow('No customers yet.')}</div>`;
   },
   astock() {
     const cls = (p) => (!p.price ? ['missing', 'No sale price'] : !p.cost ? ['missing', 'No cost'] : p.price < p.cost ? ['loss', 'Below cost'] : ['ok', 'Healthy']);
@@ -931,6 +931,9 @@ function checkinForm() {
     <button class="btn primary full" data-act="saveVisit">Check in</button>`, () => captureGps('v_gps'));
 }
 function specialPriceForm() {
+  // With no active customers the select would submit an empty id and the store
+  // would crash resolving the customer — guard like newOrderForm does.
+  if (!S.state.customers.some((c) => c.status === 'ACTIVE')) { toast('No active customers — add & approve one first'); return; }
   openSheet('Special price request', `
     <label class="fld"><span class="lab">Customer</span><select id="sp_cust">${custOptions(true)}</select></label>
     <label class="fld"><span class="lab">Product</span><select id="sp_prod">${S.state.products.map((p) => `<option value="${p.id}">${p.name} (std ${aed(p.price)})</option>`).join('')}</select></label>
