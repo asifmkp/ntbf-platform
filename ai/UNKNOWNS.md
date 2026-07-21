@@ -1,0 +1,18 @@
+# UNKNOWNS.md — open questions (no guessing allowed)
+
+> **PROTOCOL (DEC-015)** · Anything the business/plan depends on that is not FACT-registered goes here. An unknown is NEVER answered by inference in downstream docs — it is resolved (interview, direct verification) and promoted to FACT_REGISTER with the proper evidence level, then closed here (`Status: RESOLVED(FACT-###, date)`).
+> Fields: `Asked-of:` who can answer · `Blocks:` what cannot conclude until resolved. IDs `UNK-###` stable, never reused.
+> Next free ID: **UNK-011**
+
+| ID | Question | Asked-of | Blocks | Source/context | Status |
+|---|---|---|---|---|---|
+| UNK-001 | Is PUBLIC_API_TOKEN actually set in the Render production environment? | owner (Render dashboard) | RISK-003 severity; TASK-021 design | ai/PROJECT_KNOWLEDGE.md §10.5 | OPEN |
+| UNK-002 | Does WhatsApp voice transcription work end-to-end live (Groq key present + real voice note transcribed)? | owner (health=voice URL) + agent (wa_messages check) | TASK-003, TASK-018 | ai/TASK_QUEUE.md TASK-003 (secret "added" is unverified) | OPEN |
+| UNK-003 | hybrid general trading AED 9,399.60 — paid (when/how/by whom) or genuinely due? | owner | TASK-002; receivables conclusions (84% of open AR) | ai/TASK_QUEUE.md TASK-002 | OPEN |
+| UNK-004 | Opening staff cash floats as at 1 Jul 2026 (6 amounts) | owner (bookkeeper figures) | TASK-001; all staff-cash reconciliation | ai/TASK_QUEUE.md TASK-001 | OPEN |
+| UNK-005 | Vehicle-loan liability figures (per-vehicle principal/schedule) | CA (accountant) | TASK-008; Shanu Capital accuracy (~1,004,062 Cr overstated) | ai/TASK_QUEUE.md TASK-008 | OPEN |
+| UNK-006 | Supplier payables 907.71 (Al sahab 621.57, Al Maha 285.30) — real open payables or paid after 20 Jul? | owner | TASK-009; payables conclusions | ai/TASK_QUEUE.md TASK-009 | OPEN |
+| UNK-007 | System B (Prisma ERP) — delete or feature-flag? Is any future use intended? | owner | TASK-022; architecture map completeness | ai/TASK_QUEUE.md TASK-022 | OPEN |
+| UNK-008 | Org-level auth state of each installed connector (API returned installState "unknown" for all 17) | claude.ai UI (owner) | ENTERPRISE_SYSTEM_MAP auth columns; account plan conclusions | ai/CLAUDE_ACCOUNT_AUDIT.md §0 | OPEN |
+| UNK-009 | claude.ai UI feature state: Projects in use? Memory enabled? Team/workspace members? Betas? Plan/billing tier? | owner (claude.ai Settings) | account-layer rows of system map; master-plan cost model | ai/CLAUDE_ACCOUNT_AUDIT.md §0 | OPEN |
+| UNK-010 | Supplier TRNs (6 vendors) for VAT-correct vendor records | owner (ask suppliers) | TASK-010; VAT compliance posture | ai/TASK_QUEUE.md TASK-010 | OPEN |

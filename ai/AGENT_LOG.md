@@ -41,3 +41,8 @@ Notes: first mover is TASK-014 backups — needs owner answer on off-box destina
 What: owner-directed evidence-only audit of the Claude account/workspace (connectors, plugins, skills, Routines, environments, artifacts, orchestration, security).
 Result: /ai/CLAUDE_ACCOUNT_AUDIT.md added — 17 connectors mapped, gaps + safe enablement steps + token-efficiency + security notes. Nothing changed/enabled/connected. Docs-only PR, [skip render].
 Notes: visibility limits documented (claude.ai UI Projects/Memory/settings not inspectable from Code sandbox; list_repos denied by classifier). Top recommendations: NTBF Project knowledge, Drive report inbox, disable redundant generic Zoho connector in NTBF chats.
+
+## 2026-07-21T06:15+04:00 · claude-muhammed · DEC-015 evidence protocol
+What: owner-mandated enterprise-discovery evidence protocol; master-plan/architecture work paused.
+Result: created FACT_REGISTER (15 facts), UNKNOWNS (10), ASSUMPTIONS (3), RISKS (8), ENTERPRISE_SYSTEM_MAP (6 systems, 9 integrations); HANDOFF/TASK_QUEUE/DECISIONS/STATUS updated to enforce. Seeds cite /ai docs only; chat-only claims excluded (e.g. package.json start:prod quirk — not in docs, not seeded). Docs-only PR, [skip render].
+Notes: one known config-vs-decision conflict recorded, NOT a blocking contradiction: render.yaml/.env.example wrong Zoho org (FACT-004) vs DEC-003 — resolved by DEC-003 declaring configs wrong; cleanup tracked as TASK-023 + RISK-007. No CONTESTED facts at seed time.
