@@ -1,7 +1,7 @@
 # UX_AUDIT.md — owner-facing UX findings & rulings
 
 > **Scope note (honest):** the full new-staff live UX audit the owner once commissioned was superseded before execution and has NOT been performed — this file does not pretend otherwise. It records owner-observed UX findings and their rulings, one entry per finding, under the DEC-015 evidence protocol.
-> IDs `UXF-###` stable. Next free ID: **UXF-006**
+> IDs `UXF-###` stable. Next free ID: **UXF-007**
 
 ---
 
@@ -57,3 +57,11 @@ Traceability: TRACE-001 in ai/TRACEABILITY.md carries this finding's full chain 
 - **Root cause (FACT-029):** the finance segment LIST endpoints (`/api/finance/receipts`, `/payments`, `/transfers/mine`) predate the view convention and were outside PR #31's scope AND its regression suite — the suite tested the summary KPIs and orders feed, not these lists. Client caps "Recent" at 40, exactly matching the observed counts. Actionable queues are structurally clean (imported records are terminal).
 - **Provenance:** the observed rows trace to backfill refs RCV2093/RCV2033/RCV2087/RCV2031 — "these are imported" upgraded from INFERRED to VERIFIED.
 - **Status:** RESOLVED — owner chose "GO 028 A"; all finance list endpoints now live-default with labelled controls (FACT-030, v18, suite 32/32 ×2). TRACE-001 Business Validation remains PENDING until the owner's live re-check + Codex cross-role audit.
+
+---
+
+## UXF-006 · Role-switch carries Sales Historical view into Driver route — POST-v18 CONTRADICTION (FACT-031/032, RISK-012)
+
+- **Observed (owner, live, 2026-07-21, exact 5-step reproduction):** Sales Historical (Completed 255) → in-session switch to Driver → Route shows Delivered 255 unlabelled; hard reload → Delivered 0. Backend fresh-load default verified clean by the same reproduction.
+- **Root cause (FACT-032):** shared client cache (onlineOrders/onlineLoaded/onlineView) not reset by role-switch handlers; driver renders the stale historical dataset. Warehouse structurally immune; collect/EOD safe (server EOD).
+- **Status:** reported under owner STOP #2; no production change; fix options in TASK-029 (owner picks). TRACE-001 Business Validation remains HELD.

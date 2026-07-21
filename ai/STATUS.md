@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-21T12:10+04:00 · main @ `83966eb` · updated by: claude-muhammed**
+**As of: 2026-07-21T13:00+04:00 · main @ `018c45c` · updated by: claude-muhammed**
 
 ## Systems
 
@@ -32,6 +32,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 ## Recently completed
 
+- 2026-07-21 · **STOP #2**: role-switch view-state contamination found by owner (Sales Historical → Driver shows Delivered 255 until reload) — FACT-031/032, RISK-012, TASK-029 awaits owner option; TRACE-001 still HELD
 - 2026-07-21 · **Finance-list gap CLOSED (GO 028 A)**: all 5 finance list endpoints live-default + hub view controls, suite 32/32 ×2, v18 (FACT-030) — owner live re-check + Codex audit pending
 - 2026-07-21 · **Post-deploy contradiction found by owner (STOP)**: finance Receipts/Payments/Transfers LISTS still show imported history (FACT-028/029, RISK-011) — fix TASK-028 awaits owner option A/B; TRACE-001 validation HELD
 - 2026-07-21 · **Live Operations vs Historical Import standard SHIPPED** (DEC-017/FACT-026/027): TASK-026+027 in one PR, 21/21 regression checks ×2, v17. Owner live validation pending

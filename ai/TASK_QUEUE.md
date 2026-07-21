@@ -9,7 +9,7 @@
 > **Finishing**: move the block OUT of this file; record completion in STATUS.md + AGENT_LOG.md (same PR as the work). DONE tasks do not live here.
 > Owner (Asif) inputs are tasks too — marked `Owner: owner`.
 
-**Next free ID: TASK-029**
+**Next free ID: TASK-030**
 
 ---
 
@@ -137,3 +137,9 @@ Status: BLOCKED · Owner: — · Priority: P4 · Created: 2026-07-21T04:30+04:00
 Blocker: gates G1–G5 in ROADMAP.md §3 (DEC-014) — do not build until ALL fire
 Depends-on: TASK-014, TASK-015, TASK-012 (gates G2–G4)
 Done-when: gates verified true in AGENT_LOG evidence; then scope per DEC-014 (queue-watcher over the SAME /ai files, read-only over production, all writes via PRs + owner gates).
+
+### TASK-029 · Fix role-switch view-state contamination (FACT-031/032)
+Status: BLOCKED · Owner: owner (choose option) · Priority: P2 · Created: 2026-07-21T13:00+04:00
+Context: shared online-orders cache carries a Sales Historical selection into Driver route after in-session role switch (RISK-012). Options: **A (recommended, ~4 lines)** reset onlineView='live' + onlineLoaded=false in ACT.pick/ACT.switchRole AND render-time guard (non-salesman online tab with onlineView!=='live' forces live refetch — protects any transition path); **A+B (belt-and-braces)** A plus client-side origin filter in route()/dispatch() renderers as defense-in-depth; **C** per-role scoped view state (invasive, unnecessary). Regression gap: add UI-lifecycle coverage — Playwright smoke (Chromium available: login → Sales → Historical → switch Driver → assert Delivered 0) or documented manual role-transition checklist if Playwright is declined.
+Blocker: owner picks A / A+B and whether to add the Playwright test (no production change until then, per STOP)
+Done-when: chosen fix shipped; sw.js bump; suite/manual coverage for role transitions in place and green; owner live re-check of the exact 5-step reproduction passes; FACT-032/RISK-012/UXF-006/TRACE-001 updated with history.
