@@ -39,11 +39,11 @@ Next free ID: **TRACE-002**
 
 ## 4. Trace records
 
-### TRACE-001 · Owner Overview live-vs-historical separation
-- Objective: owner can trust dashboards — live figures mean live business, history is deliberate, not accidental
-- Requirement: Overview KPIs reflect only live operations; imported history visible only in labeled, separate views
-- Rule: FACT-016
-- Evidence: owner directive message 2026-07-21 (USER CONFIRMED); technical baseline DEC-008/FACT-008 (VERIFIED); live-audit + code-trace evidence FACT-018/019/020/021 (VERIFIED 2026-07-21 — one compliance gap found on the finance summary surface → TASK-027)
+### TRACE-001 · Live-vs-historical separation (platform-wide standard)
+- Objective: owner and staff can trust every screen — live figures mean live business, history is deliberate, not accidental
+- Requirement: ALL operational KPIs and default lists reflect only live operations; imported history visible only in labeled, separate views (Combined only by explicit choice). *Change history: 2026-07-21 — widened from "Owner Overview" to platform-wide per FACT-022/023/024/025 (old evidence: owner-Overview directive only; new: sales+driver live observations, confirmed sales rule, full surface trace)*
+- Rule: FACT-016 + FACT-023
+- Evidence: owner directives 2026-07-21 (USER CONFIRMED); technical baseline DEC-008/FACT-008 (VERIFIED); live-audit + code-trace evidence FACT-018/019/020/021/022/024/025 (VERIFIED 2026-07-21 — gaps: finance summary → TASK-027; salesman Completed list + driver Delivered tile → TASK-026 scope)
 - System(s): SYS-01
 - Data Owner: Asif
 - Implementation: TASK-026 — pending (build gated on separate owner approval)

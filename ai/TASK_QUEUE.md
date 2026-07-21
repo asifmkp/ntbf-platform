@@ -138,11 +138,11 @@ Blocker: gates G1–G5 in ROADMAP.md §3 (DEC-014) — do not build until ALL fi
 Depends-on: TASK-014, TASK-015, TASK-012 (gates G2–G4)
 Done-when: gates verified true in AGENT_LOG evidence; then scope per DEC-014 (queue-watcher over the SAME /ai files, read-only over production, all writes via PRs + owner gates).
 
-### TASK-026 · Owner Overview: live/historical/combined data views (UX feature)
-Status: BLOCKED · Owner: owner (approval to build) · Priority: P3 · Created: 2026-07-21T06:45+04:00
-Context: implements FACT-016 rule per ai/UX_AUDIT.md UXF-001 spec; Overview KPIs are already live-only by construction (DEC-008, FACT-008) — this adds the labeling, Historical Imported Data card, and view switcher. Trace: TRACE-001
+### TASK-026 · Platform-wide "Live Operations vs Historical Import" standard (UX feature)
+Status: BLOCKED · Owner: owner (approval to build) · Priority: **P2** · Created: 2026-07-21T06:45+04:00 · Updated: 2026-07-21T08:30+04:00
+Context: implements FACT-016 + FACT-023 across ALL surfaces (owner direction: one standard, not isolated fixes). Scope now: (a) Owner Overview labeling + Historical Imported Data card + view switcher (UXF-001 spec); (b) Sales → Online → Completed default Live-only + Historical Import filter + labelled Combined View (UXF-003/FACT-023); (c) driver route "Delivered" tile live-only (UXF-004/RISK-010); (d) align with TASK-027 finance summary fix. Trace: TRACE-001. *Change history: 2026-07-21 — scope extended from Owner Overview to platform-wide per FACT-022/023/024/025 evidence; priority P3→P2 (live-observed on two operational screens).*
 Blocker: separate owner approval required before build (owner directive 2026-07-21)
-Done-when: period labeled "Live Operations / Since Go-Live"; Historical card shows imported period, record count, revenue, collections, import date; Live/Historical/Combined views with no KPI mixing unless Combined selected; sw.js CACHE bumped (DEC-012); TRACE-001 links completed through Business Validation.
+Done-when: every operational list/KPI surface defaults to live-only; historical reachable via dedicated labelled views; Combined View explicit; hostile check = imported refs absent from all default operational surfaces; sw.js CACHE bumped (DEC-012); TRACE-001 links completed through Business Validation.
 
 ### TASK-027 · Fix FACT-016 compliance gap: finance summary KPIs include imported history
 Status: BLOCKED · Owner: owner (decision on fix approach) · Priority: P2 · Created: 2026-07-21T07:45+04:00
