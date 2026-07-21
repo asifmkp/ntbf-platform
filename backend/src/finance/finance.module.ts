@@ -43,6 +43,12 @@ const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 // EXCLUDED from every EOD aggregate: that month is display-only history (it already
 // exists in Zoho) and must never surface as "today's cash" for any staff member.
 const EOD_EXCLUDED_ORIGIN = 'july-import';
+// Live Operations vs Historical Import standard (DEC-017/FACT-026): EVERY operational
+// list/summary endpoint defaults to live-only; 'historical'/'combined' must be asked
+// for explicitly. Shared by summary + all finance list endpoints (TASK-028).
+const viewOf = (view?: string) => (view === 'historical' || view === 'combined' ? view : 'live');
+const inView = (v: string) => (x: any) =>
+  v === 'combined' ? true : v === 'historical' ? x.origin === EOD_EXCLUDED_ORIGIN : x.origin !== EOD_EXCLUDED_ORIGIN;
 /**
  * Day window for a calendar date in Asia/Dubai (UTC+4 year-round, no DST):
  * [00:00 Dubai, next-day 00:00 Dubai) expressed as UTC epoch millis. When no date is
@@ -283,8 +289,8 @@ export class FinanceService {
     if (dto.billPhoto) this.receipts.attachPhoto(created.id, dto.billPhoto, dto.billMediaType);
     return this.withPhoto(this.receipts.byId(created.id));
   }
-  listMyReceipts(staff: Staff) { return this.receipts.all().filter((x) => x.collectedById === staff.id).map((x) => this.withPhoto(x)); }
-  listReceipts(staff: Staff, status?: string) { this.assertFinance(staff); return this.receipts.all().filter((x) => !status || x.status === status).map((x) => this.withPhoto(x)); }
+  listMyReceipts(staff: Staff, view?: string) { return this.receipts.all().filter(inView(viewOf(view))).filter((x) => x.collectedById === staff.id).map((x) => this.withPhoto(x)); }
+  listReceipts(staff: Staff, status?: string, view?: string) { this.assertFinance(staff); return this.receipts.all().filter(inView(viewOf(view))).filter((x) => !status || x.status === status).map((x) => this.withPhoto(x)); }
   receiptPhoto(staff: Staff, id: string) {
     const x = this.receipts.byId(id); if (!x) throw new NotFoundException('Receipt not found');
     if (!isFinance(staff) && x.collectedById !== staff.id) throw new ForbiddenException('Not your receipt');
@@ -334,15 +340,18 @@ export class FinanceService {
   }
   receiptCheque(staff: Staff, id: string, action: string, note?: string) { return this.chequeAdvance(this.receipts, id, action, staff, note); }
   paymentCheque(staff: Staff, id: string, action: string, note?: string) { return this.chequeAdvance(this.payments, id, action, staff, note); }
-  listCheques(staff: Staff, status?: string) {
+  listCheques(staff: Staff, status?: string, view?: string) {
     this.assertFinance(staff);
+    // Imported July records are CASH with cheque:null so they never match, but the
+    // view filter is applied anyway — uniform convention across every list endpoint.
+    const f = inView(viewOf(view));
     const tag = (x: any, kind: string) => ({
       id: x.id, kind, party: kind === 'in' ? (x.customerName || '—') : (x.payee || '—'),
       amount: x.collectedAmount != null ? x.collectedAmount : x.amount,
       cheque: x.cheque, chequeStatus: (x.cheque && x.cheque.status) || 'RECEIVED', createdAt: x.createdAt,
     });
-    const inC = this.receipts.all().filter((x) => x.method === 'CHEQUE' && x.cheque).map((x) => tag(x, 'in'));
-    const outC = this.payments.all().filter((x) => x.method === 'CHEQUE' && x.cheque).map((x) => tag(x, 'out'));
+    const inC = this.receipts.all().filter(f).filter((x) => x.method === 'CHEQUE' && x.cheque).map((x) => tag(x, 'in'));
+    const outC = this.payments.all().filter(f).filter((x) => x.method === 'CHEQUE' && x.cheque).map((x) => tag(x, 'out'));
     const list = inC.concat(outC);
     return status ? list.filter((c) => c.chequeStatus === status) : list;
   }
@@ -381,7 +390,7 @@ export class FinanceService {
     if (dto.billPhoto) this.payments.attachPhoto(created.id, dto.billPhoto, dto.billMediaType);
     return this.withPhoto(this.payments.byId(created.id));
   }
-  listPayments(staff: Staff, status?: string) { this.assertFinance(staff); return this.payments.all().filter((x) => !status || x.status === status).map((x) => this.withPhoto(x)); }
+  listPayments(staff: Staff, status?: string, view?: string) { this.assertFinance(staff); return this.payments.all().filter(inView(viewOf(view))).filter((x) => !status || x.status === status).map((x) => this.withPhoto(x)); }
   paymentPhoto(staff: Staff, id: string) {
     this.assertFinance(staff);
     const x = this.payments.byId(id); if (!x) throw new NotFoundException('Payment not found');
@@ -422,7 +431,7 @@ export class FinanceService {
     if (dto.billPhoto) this.transfers.attachPhoto(created.id, dto.billPhoto, dto.billMediaType);
     return this.withPhoto(this.transfers.byId(created.id));
   }
-  listMyTransfers(staff: Staff) { return this.transfers.all().filter((x) => x.fromId === staff.id || x.toId === staff.id).map((x) => this.withPhoto(x)); }
+  listMyTransfers(staff: Staff, view?: string) { return this.transfers.all().filter(inView(viewOf(view))).filter((x) => x.fromId === staff.id || x.toId === staff.id).map((x) => this.withPhoto(x)); }
   transferPhoto(staff: Staff, id: string) {
     const x = this.transfers.byId(id); if (!x) throw new NotFoundException('Transfer not found');
     if (x.fromId !== staff.id && x.toId !== staff.id && !isFinance(staff)) throw new ForbiddenException('Not your transfer');
@@ -581,11 +590,9 @@ export class FinanceService {
     // DEFAULT is live-only — imported July records (origin:'july-import') were written with
     // exactly the statuses summed here (CONFIRMED/APPROVED) and must not read as live cash
     // flow. 'historical' = imported only; 'combined' = both, only on explicit request.
-    const v = view === 'historical' || view === 'combined' ? view : 'live';
-    const inView = (x: any) =>
-      v === 'combined' ? true : v === 'historical' ? x.origin === EOD_EXCLUDED_ORIGIN : x.origin !== EOD_EXCLUDED_ORIGIN;
-    const receipts = this.receipts.all().filter(inView);
-    const payments = this.payments.all().filter(inView);
+    const v = viewOf(view);
+    const receipts = this.receipts.all().filter(inView(v));
+    const payments = this.payments.all().filter(inView(v));
     const moneyIn = round2(receipts.filter((x) => x.status === 'CONFIRMED').reduce((s, x) => s + (Number(x.collectedAmount) || 0), 0));
     const moneyOut = round2(payments.filter((x) => x.status === 'APPROVED').reduce((s, x) => s + (Number(x.amount) || 0), 0));
     const chequesOutstanding = receipts.concat(payments)
@@ -616,9 +623,9 @@ export class FinanceController {
   @Public() @UseGuards(StaffAuthGuard) @Post('receipts')
   createReceipt(@Body() dto: CreateReceiptDto, @Req() req: any) { return this.svc.createReceipt(req.staff, dto); }
   @Public() @UseGuards(StaffAuthGuard) @Get('receipts/mine')
-  myReceipts(@Req() req: any) { return this.svc.listMyReceipts(req.staff); }
+  myReceipts(@Req() req: any, @Query('view') view?: string) { return this.svc.listMyReceipts(req.staff, view); }
   @Public() @UseGuards(StaffAuthGuard) @Get('receipts')
-  allReceipts(@Query('status') status: string, @Req() req: any) { return this.svc.listReceipts(req.staff, status); }
+  allReceipts(@Query('status') status: string, @Req() req: any, @Query('view') view?: string) { return this.svc.listReceipts(req.staff, status, view); }
   @Public() @UseGuards(StaffAuthGuard) @Get('receipts/:id/photo')
   receiptPhoto(@Param('id') id: string, @Req() req: any) { return this.svc.receiptPhoto(req.staff, id); }
   @Public() @UseGuards(StaffAuthGuard) @Post('receipts/:id/approve')
@@ -632,7 +639,7 @@ export class FinanceController {
 
   // ----- cheques -----
   @Public() @UseGuards(StaffAuthGuard) @Get('cheques')
-  cheques(@Query('status') status: string, @Req() req: any) { return this.svc.listCheques(req.staff, status); }
+  cheques(@Query('status') status: string, @Req() req: any, @Query('view') view?: string) { return this.svc.listCheques(req.staff, status, view); }
 
   // ----- payments -----
   @Public() @UseGuards(StaffAuthGuard) @Get('payments/categories')
@@ -642,7 +649,7 @@ export class FinanceController {
   @Public() @UseGuards(StaffAuthGuard) @Post('payments')
   createPayment(@Body() dto: CreatePaymentDto, @Req() req: any) { return this.svc.createPayment(req.staff, dto); }
   @Public() @UseGuards(StaffAuthGuard) @Get('payments')
-  allPayments(@Query('status') status: string, @Req() req: any) { return this.svc.listPayments(req.staff, status); }
+  allPayments(@Query('status') status: string, @Req() req: any, @Query('view') view?: string) { return this.svc.listPayments(req.staff, status, view); }
   @Public() @UseGuards(StaffAuthGuard) @Get('payments/:id/photo')
   paymentPhoto(@Param('id') id: string, @Req() req: any) { return this.svc.paymentPhoto(req.staff, id); }
   @Public() @UseGuards(StaffAuthGuard) @Post('payments/:id/approve')
@@ -658,7 +665,7 @@ export class FinanceController {
   @Public() @UseGuards(StaffAuthGuard) @Post('transfers')
   createTransfer(@Body() dto: CreateTransferDto, @Req() req: any) { return this.svc.createTransfer(req.staff, dto); }
   @Public() @UseGuards(StaffAuthGuard) @Get('transfers/mine')
-  myTransfers(@Req() req: any) { return this.svc.listMyTransfers(req.staff); }
+  myTransfers(@Req() req: any, @Query('view') view?: string) { return this.svc.listMyTransfers(req.staff, view); }
   @Public() @UseGuards(StaffAuthGuard) @Get('transfers/:id/photo')
   transferPhoto(@Param('id') id: string, @Req() req: any) { return this.svc.transferPhoto(req.staff, id); }
   @Public() @UseGuards(StaffAuthGuard) @Post('transfers/:id/confirm')

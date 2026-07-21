@@ -4,13 +4,13 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-21T11:00+04:00 · main @ `a1376ea` · updated by: claude-muhammed**
+**As of: 2026-07-21T12:00+04:00 · main @ `4ab48d3`+PR#34 · updated by: claude-muhammed**
 
 ## Systems
 
 | System | State |
 |---|---|
-| Field app (app.ntbfllc.com) | LIVE · PWA cache **v17** · production data · **Live-vs-Historical standard enforced (DEC-017/FACT-026)** — July history only in Documents/Historical/Combined views |
+| Field app (app.ntbfllc.com) | LIVE · PWA cache **v18** · production data · **Live-vs-Historical standard enforced (DEC-017/FACT-026)** — July history only in Documents/Historical/Combined views |
 | Backend (Render, auto-deploy from main) | LIVE · persistent disk /var/data · **no CI gate** |
 | WhatsApp bot (Supabase, outside repo) | LIVE · **v41** · customer+staff routing OK · voice notes wired, key verification pending (TASK-003) |
 | Zoho Books 928751913 (.com) | July 1–20 fully imported & reconciled (grand recon PASS) · writes env-locked |
@@ -32,6 +32,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 ## Recently completed
 
+- 2026-07-21 · **Finance-list gap CLOSED (GO 028 A)**: all 5 finance list endpoints live-default + hub view controls, suite 32/32 ×2, v18 (FACT-030) — owner live re-check + Codex audit pending
 - 2026-07-21 · **Post-deploy contradiction found by owner (STOP)**: finance Receipts/Payments/Transfers LISTS still show imported history (FACT-028/029, RISK-011) — fix TASK-028 awaits owner option A/B; TRACE-001 validation HELD
 - 2026-07-21 · **Live Operations vs Historical Import standard SHIPPED** (DEC-017/FACT-026/027): TASK-026+027 in one PR, 21/21 regression checks ×2, v17. Owner live validation pending
 - 2026-07-21 · Ops-surface audit: sales rule FACT-023 confirmed; salesman Completed(255) + driver Delivered(255) mixing live-observed & code-confirmed (FACT-022/024/025, RISK-010); TASK-026 now platform-wide standard, P2
