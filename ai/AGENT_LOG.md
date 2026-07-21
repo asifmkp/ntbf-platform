@@ -56,3 +56,8 @@ Notes: honest scope kept — UX_AUDIT states the full staff UX audit was never p
 What: recorded owner's first-hand live-audit observation (app.ntbfllc.com/mobile-app/, Owner → Documents): 351 imported records, AED 159,692.26, five money categories, July references visible.
 Result: FACT-018 (VERIFIED) linked to FACT-016/DEC-008/SYS-01; UX_AUDIT UXF-001 + system map evidence lines added; UNK-011 opened (KPI non-mixing end-to-end check + 351-vs-606 scope relation). No duplicate rule created; no production code touched.
 Notes: per owner instruction, availability-in-Documents is the ONLY thing asserted; KPI non-mixing remains unverified until UNK-011 resolves.
+
+## 2026-07-21T07:45+04:00 · claude-muhammed · audit (KPI surface trace) FACT-019/020/021
+What: recorded owner's assistant observation (Today's sales all-zero, FACT-019) + owner-directed READ-ONLY repo trace of Overview/assistant/Documents/other metric surfaces; reconciled 351-vs-606.
+Result: reconciliation EXACT (351 = 216+45+47+43 money docs = AED 159,692.26; +255 orders = 606; FACT-020). Clean surfaces verified: owner home KPIs + assistant (client appstate, structural), EOD + attention (origin filters). CONTRADICTION FOUND: /api/finance/summary has no origin filter and sums imported statuses — finance/admin Overview segment mixes July history into Money in/out/Net (FACT-021, RISK-009, UXF-002). UNK-011 RESOLVED. TASK-027 queued BLOCKED on owner fix decision. No production code modified.
+Notes: Δ0.12 orders-sum variance (63,519.51 app vs 63,519.63 Zoho) noted in FACT-020, immaterial but recorded. Assistant "Today's sales" actually computes since-go-live (labeling nuance, in FACT-019).
