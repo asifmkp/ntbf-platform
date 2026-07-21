@@ -64,4 +64,4 @@ Traceability: TRACE-001 in ai/TRACEABILITY.md carries this finding's full chain 
 
 - **Observed (owner, live, 2026-07-21, exact 5-step reproduction):** Sales Historical (Completed 255) → in-session switch to Driver → Route shows Delivered 255 unlabelled; hard reload → Delivered 0. Backend fresh-load default verified clean by the same reproduction.
 - **Root cause (FACT-032):** shared client cache (onlineOrders/onlineLoaded/onlineView) not reset by role-switch handlers; driver renders the stale historical dataset. Warehouse structurally immune; collect/EOD safe (server EOD).
-- **Status:** reported under owner STOP #2; no production change; fix options in TASK-029 (owner picks). TRACE-001 Business Validation remains HELD.
+- **Status:** RESOLVED — owner GO 029 A+B (v19, FACT-033): render-time guard + role-switch reset + unconditional origin filter in onlineByStatus (also covers the legacy dead-code views). Owner's 5-step reproduction is the live re-check; TRACE-001 validation pending that + Codex audit.

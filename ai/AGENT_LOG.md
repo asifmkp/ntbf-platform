@@ -95,3 +95,8 @@ Result: main @ 83966eb (Render auto-deploy, PWA v18 after one reload). TRACE-001
 What: owner STOP #2 with exact 5-step reproduction; traced read-only.
 Result: root cause FACT-032 — shared onlineOrders/onlineView cache not reset by ACT.pick/switchRole (:1481-1482); load trigger (:120) skips refetch when onlineLoaded; driver route renders stale historical cache. Affected: Sales(hist/combined)→Driver Delivered tile (observed); warehouse structurally immune; collect/EOD safe; reverse paths clean. Severity LOW-MED, display-only, reload-resets. Coverage gap named: server-endpoint suite cannot catch client lifecycle — Playwright smoke proposed. TASK-029 queued (owner picks A / A+B / +Playwright). NO production change; PR #34/#35 preserved; TRACE-001 HELD.
 Notes: v18 server defaults verified clean BY the owner's own reproduction (fresh reload → 0) — backend standard holds; this is purely client state lifecycle.
+
+## 2026-07-21T14:00+04:00 · claude-muhammed · TASK-029 A+B shipped
+What: owner GO 029 A+B (Playwright deferred to TASK-015 CI on my recommendation, owner-accepted).
+Result: render-time live guard on non-salesman online tabs + view reset in pick/switchRole + unconditional origin filter in onlineByStatus (defense-in-depth; also mitigates FACT-025 latent dead-code risk). Client-only change, sw.js v19; node --check clean; backend untouched (32/32 suite unchanged-valid). FACT-033; RISK-012 closed; TASK-029 done; UXF-006 resolved.
+Notes: owner's exact 5-step reproduction = the live re-check. Section-3 interview continues (engineering handover in progress); owner identity formally recorded as Asif (Muhammed Asif Abdulla), Project Owner.
