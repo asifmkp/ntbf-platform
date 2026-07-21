@@ -2201,14 +2201,15 @@ async function adminSuggestions() {
   let myRcptData = null, allRcptData = null, allPayData = null, chqData = null, myTrfData = null, sumData = null, payCats = null;
   let rcptDraft = {}, payDraft = {}, trfDraft = {};
   let finSeg = localStorage.getItem('ntbf_finseg') || 'receipts';
-  async function loadMyRcpt() { try { myRcptData = await staffApi('/api/finance/receipts/mine', 'GET'); } catch (e) { myRcptData = []; toast(e.message); } render(); }
-  async function loadAllRcpt() { try { allRcptData = await staffApi('/api/finance/receipts', 'GET'); } catch (e) { allRcptData = []; toast(e.message); } render(); }
-  async function loadAllPay() { try { allPayData = await staffApi('/api/finance/payments', 'GET'); } catch (e) { allPayData = []; toast(e.message); } render(); }
-  async function loadCheques() { try { chqData = await staffApi('/api/finance/cheques', 'GET'); } catch (e) { chqData = []; toast(e.message); } render(); }
-  async function loadMyTrf() { try { myTrfData = await staffApi('/api/finance/transfers/mine', 'GET'); } catch (e) { myTrfData = []; toast(e.message); } render(); }
-  // Live Operations vs Historical Import standard: summary defaults to live-only
-  // server-side; historical/combined are explicit, labelled choices here.
+  // Live Operations vs Historical Import standard (DEC-017): one hub-wide view state.
+  // Default live; historical/combined are explicit labelled choices (Receipts, Payments,
+  // Transfers, Overview segments). Collector views + queue sheets stay live (server default).
   let finView = 'live';
+  async function loadMyRcpt() { try { myRcptData = await staffApi('/api/finance/receipts/mine', 'GET'); } catch (e) { myRcptData = []; toast(e.message); } render(); }
+  async function loadAllRcpt() { try { allRcptData = await staffApi('/api/finance/receipts?view=' + encodeURIComponent(finView), 'GET'); } catch (e) { allRcptData = []; toast(e.message); } render(); }
+  async function loadAllPay() { try { allPayData = await staffApi('/api/finance/payments?view=' + encodeURIComponent(finView), 'GET'); } catch (e) { allPayData = []; toast(e.message); } render(); }
+  async function loadCheques() { try { chqData = await staffApi('/api/finance/cheques', 'GET'); } catch (e) { chqData = []; toast(e.message); } render(); }
+  async function loadMyTrf() { try { myTrfData = await staffApi('/api/finance/transfers/mine?view=' + encodeURIComponent(finView), 'GET'); } catch (e) { myTrfData = []; toast(e.message); } render(); }
   async function loadSummary() { try { sumData = await staffApi('/api/finance/summary?view=' + encodeURIComponent(finView), 'GET'); } catch (e) { sumData = {}; toast(e.message); } render(); }
   async function ensureCats() { if (payCats) return payCats; try { payCats = (await staffApi('/api/finance/payments/categories', 'GET')).categories; } catch (e) { payCats = []; } return payCats; }
   const isFinanceView = () => role === 'finance' || role === 'admin';
@@ -2280,13 +2281,7 @@ async function adminSuggestions() {
   }
   function overviewBody(s) {
     s = s || {};
-    const seg = `<div class="seg" style="margin-bottom:12px;overflow-x:auto">${[['live', 'Live Operations'], ['historical', 'Historical Import'], ['combined', 'Combined View']].map(([id, l]) => `<button class="${finView === id ? 'on' : ''}" data-act="finView" data-id="${id}">${l}</button>`).join('')}</div>`;
-    const banner = finView === 'historical'
-      ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">📦 Historical Import — July 2026</b><div class="muted" style="font-size:12px;margin-top:3px">Imported money records only — audit/reconciliation reference, not current cash flow.</div></div>`
-      : finView === 'combined'
-        ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">Combined View — live + historical</b><div class="muted" style="font-size:12px;margin-top:3px">Includes imported July history. Switch to Live Operations for today's position.</div></div>`
-        : `<div class="muted" style="font-size:11.5px;margin:0 2px 10px">Live Operations only — imported July history excluded (see Documents for history).</div>`;
-    return seg + banner + `<div class="mkpis">
+    return `<div class="mkpis">
         ${kpi('Money in', aed(s.moneyIn || 0), 'green')}
         ${kpi('Money out', aed(s.moneyOut || 0), 'red')}
         ${kpi('Net', aed(s.net || 0), (s.net || 0) < 0 ? 'red' : 'green')}
@@ -2299,6 +2294,18 @@ async function adminSuggestions() {
       </div>
       <div class="card pad"><div class="muted" style="font-size:12px">Money in = confirmed customer receipts. Money out = approved company payments. Cheques out = received/deposited, not yet cleared.</div></div>`;
   }
+  // Shared Live/Historical/Combined controls (DEC-017) for Receipts, Payments,
+  // Transfers and Overview segments. Cheques is live-only (imported records are
+  // CASH with no cheque — nothing historical to show).
+  function finViewControls() {
+    const seg = `<div class="seg" style="margin-bottom:12px;overflow-x:auto">${[['live', 'Live Operations'], ['historical', 'Historical Import'], ['combined', 'Combined View']].map(([id, l]) => `<button class="${finView === id ? 'on' : ''}" data-act="finView" data-id="${id}">${l}</button>`).join('')}</div>`;
+    const banner = finView === 'historical'
+      ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">📦 Historical Import — July 2026</b><div class="muted" style="font-size:12px;margin-top:3px">Imported records only — audit, reconciliation and reference. Not today's workload.</div></div>`
+      : finView === 'combined'
+        ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">Combined View — live + historical</b><div class="muted" style="font-size:12px;margin-top:3px">Includes imported July 2026 history. Switch to Live Operations for day-to-day work.</div></div>`
+        : `<div class="muted" style="font-size:11.5px;margin:0 2px 10px">Live Operations only — imported July history is under Historical Import.</div>`;
+    return seg + banner;
+  }
   function finSegBar() {
     const segs = [['receipts', 'Receipts'], ['payments', 'Payments'], ['cheques', 'Cheques'], ['transfers', 'Transfers'], ['overview', 'Overview']];
     return `<div class="seg" style="margin-bottom:12px;overflow-x:auto">${segs.map(([id, l]) => `<button class="${finSeg === id ? 'on' : ''}" data-act="finSeg" data-id="${id}">${l}</button>`).join('')}</div>`;
@@ -2306,11 +2313,11 @@ async function adminSuggestions() {
   views.receipts = function () {
     if (isFinanceView()) {
       let sub = '';
-      if (finSeg === 'receipts') sub = allRcptData === null ? (setTimeout(loadAllRcpt, 0), loadingCard('Loading…')) : queueBody(allRcptData);
-      else if (finSeg === 'payments') sub = allPayData === null ? (setTimeout(loadAllPay, 0), loadingCard('Loading…')) : paymentsBody(allPayData);
+      if (finSeg === 'receipts') sub = finViewControls() + (allRcptData === null ? (setTimeout(loadAllRcpt, 0), loadingCard('Loading…')) : queueBody(allRcptData));
+      else if (finSeg === 'payments') sub = finViewControls() + (allPayData === null ? (setTimeout(loadAllPay, 0), loadingCard('Loading…')) : paymentsBody(allPayData));
       else if (finSeg === 'cheques') sub = chqData === null ? (setTimeout(loadCheques, 0), loadingCard('Loading…')) : chequesBody(chqData);
-      else if (finSeg === 'transfers') sub = myTrfData === null ? (setTimeout(loadMyTrf, 0), loadingCard('Loading…')) : transfersBlock(myTrfData, true);
-      else sub = sumData === null ? (setTimeout(loadSummary, 0), loadingCard('Loading…')) : overviewBody(sumData);
+      else if (finSeg === 'transfers') sub = finViewControls() + (myTrfData === null ? (setTimeout(loadMyTrf, 0), loadingCard('Loading…')) : transfersBlock(myTrfData, true));
+      else sub = finViewControls() + (sumData === null ? (setTimeout(loadSummary, 0), loadingCard('Loading…')) : overviewBody(sumData));
       return finSegBar() + sub;
     }
     if (myRcptData === null) { setTimeout(loadMyRcpt, 0); return loadingCard('Loading your receipts…'); }
@@ -2521,7 +2528,7 @@ async function adminSuggestions() {
 
   // ---- segment switch ----
   ACT.finSeg = (d) => { finSeg = d.id; localStorage.setItem('ntbf_finseg', d.id); render(); };
-  ACT.finView = (d) => { finView = d.id === 'historical' || d.id === 'combined' ? d.id : 'live'; sumData = null; render(); };
+  ACT.finView = (d) => { finView = d.id === 'historical' || d.id === 'combined' ? d.id : 'live'; sumData = allRcptData = allPayData = myTrfData = null; render(); };
 
   // ---- payments ----
   ACT.payAdd = () => paymentForm();

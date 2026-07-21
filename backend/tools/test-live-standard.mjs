@@ -85,5 +85,39 @@ ok(h.totals.documentsTotal === round2(EXP.receipts.sum + EXP.payments.sum + EXP.
 const docs = await j('/api/finance/documents', { headers: H });
 ok(Array.isArray(docs) && docs.length >= 352, `documents dashboard still lists imported history (${Array.isArray(docs) ? docs.length : '?'} rows >= 352)`);
 
+// 9. FINANCE LIST ENDPOINTS (TASK-028) — full enumeration: every operational list
+//    defaults live-only; historical contains exactly the imports; combined = both.
+const imported = (xs) => xs.filter((x) => x.origin === 'july-import').length;
+
+const rl = await j('/api/finance/receipts', { headers: H });
+ok(imported(rl) === 0 && rl.length === 1, `finance/receipts default: 1 live row, 0 imported (was: 216 leaked)`);
+const rh = await j('/api/finance/receipts?view=historical', { headers: H });
+ok(rh.length === EXP.receipts.count && imported(rh) === rh.length, `finance/receipts historical: ${rh.length} == 216, all imported`);
+const rc2 = await j('/api/finance/receipts?view=combined', { headers: H });
+ok(rc2.length === EXP.receipts.count + 1, `finance/receipts combined: ${rc2.length} == 217`);
+
+const pl = await j('/api/finance/payments', { headers: H });
+ok(imported(pl) === 0 && pl.length === 0, `finance/payments default: 0 rows, 0 imported (was: 45 leaked)`);
+const ph = await j('/api/finance/payments?view=historical', { headers: H });
+ok(ph.length === EXP.payments.count && imported(ph) === ph.length, `finance/payments historical: ${ph.length} == 45, all imported`);
+
+const cl = await j('/api/finance/cheques', { headers: H });
+const ch = await j('/api/finance/cheques?view=historical', { headers: H });
+ok(cl.length === 0 && ch.length === 0, `finance/cheques: live ${cl.length} / historical ${ch.length} == 0/0 (imports are CASH — structurally clean)`);
+
+// Per-role: musthafa collected ALL 216 imported receipts and is party to imported transfers.
+const mLogin = await j('/api/staff/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'musthafa', password: 'Drive@2026' }) });
+const MH = { authorization: 'Bearer ' + mLogin.token, 'content-type': 'application/json' };
+const mr = await j('/api/finance/receipts/mine', { headers: MH });
+ok(imported(mr) === 0, `receipts/mine (musthafa) default: 0 imported of ${mr.length} (was: 216 leaked)`);
+const mrh = await j('/api/finance/receipts/mine?view=historical', { headers: MH });
+ok(mrh.length === EXP.receipts.count && imported(mrh) === mrh.length, `receipts/mine historical (musthafa): ${mrh.length} == 216`);
+const mt = await j('/api/finance/transfers/mine', { headers: MH });
+ok(imported(mt) === 0, `transfers/mine (musthafa) default: 0 imported of ${mt.length}`);
+const mth = await j('/api/finance/transfers/mine?view=historical', { headers: MH });
+ok(mth.length > 0 && imported(mth) === mth.length, `transfers/mine historical (musthafa): ${mth.length} rows, all imported`);
+const mtc = await j('/api/finance/transfers/mine?view=combined', { headers: MH });
+ok(mtc.length === mt.length + mth.length, `transfers/mine combined: ${mtc.length} == live ${mt.length} + hist ${mth.length}`);
+
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);
