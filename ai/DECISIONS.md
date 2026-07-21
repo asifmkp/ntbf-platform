@@ -5,7 +5,7 @@
 > A decision that isn't written here **does not exist** — chat history is not authority. Newest entries appended at the end.
 > Superseding: never edit an old decision's Decision text; add the new DEC and flip the old Status.
 
-**Next free ID: DEC-018**
+**Next free ID: DEC-020**
 
 ---
 
@@ -104,3 +104,15 @@ Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
 Context: imported July history leaked into operational query paths (finance summary, salesman Completed, driver Delivered — FACT-021/022/024/025); owner declared one enterprise rule instead of isolated fixes.
 Decision: every role, dashboard, KPI, queue, operational list, workflow, AI assistant response and default operational screen displays LIVE OPERATIONS ONLY. Historical imported data exists solely for audit, reconciliation, migration validation and historical reporting; reachable only via a Historical Import view/filter, an explicitly selected Combined View (never default), or audit/reporting modules. Registered as FACT-026 — the single authoritative rule; FACT-016/FACT-023 are subsumed into it. Implemented platform-wide as TASK-026+027 in one PR (server-side live-default `view=live|historical|combined` convention + labelled UI views + regression suite).
 Consequences: any new surface MUST default live-only and use the shared view convention; regression suite backend/tools/test-live-standard.mjs guards it; RISK-009/010 closed on merge (owner live validation pending in TRACE-001).
+
+### DEC-018 · System B (Prisma ERP) will be retired and removed
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
+Context: dormant dead-but-routable ERP (DEC-002, TASK-022, UNK-007); owner's 1–3y vision is an AI-first enterprise OS built by evolving System A's patterns (multi-warehouse/branch/company-ready, commercialization-possible), not resurrecting the unmaintained skeleton.
+Decision: retire and REMOVE System B, conditional on a pre-removal verification that no production dependency exists; anything historically valuable is documented before deletion. Sequenced per the owner's priority order (after backups, security hardening, CI, sync).
+Consequences: TASK-022 unblocked (decision made); UNK-007 resolved; removal PR must include the dependency-verification evidence and a salvage note.
+
+### DEC-019 · Backups: Supabase Storage destination; "done" = demonstrated restore
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
+Context: /var/data is a single unbacked disk (RISK-001); owner criteria = reliable, simple, easy restore, verifiable.
+Decision: nightly encrypted archive of /var/data to Supabase Storage (Option 1 — existing vendor, MCP-verifiable, ~free at ≤1GB). Implementation must present BEFORE build: backup architecture, retention policy, encryption approach, restore procedure, disaster-recovery test plan, storage-growth estimate, verification method. A backup is complete ONLY after a successful, documented restore drill.
+Consequences: TASK-014 unblocked into design-first mode; secrets by env-var name only; nightly landing verifiable via Supabase MCP.

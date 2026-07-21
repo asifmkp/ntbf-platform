@@ -100,3 +100,8 @@ Notes: v18 server defaults verified clean BY the owner's own reproduction (fresh
 What: owner GO 029 A+B (Playwright deferred to TASK-015 CI on my recommendation, owner-accepted).
 Result: render-time live guard on non-salesman online tabs + view reset in pick/switchRole + unconditional origin filter in onlineByStatus (defense-in-depth; also mitigates FACT-025 latent dead-code risk). Client-only change, sw.js v19; node --check clean; backend untouched (32/32 suite unchanged-valid). FACT-033; RISK-012 closed; TASK-029 done; UXF-006 resolved.
 Notes: owner's exact 5-step reproduction = the live re-check. Section-3 interview continues (engineering handover in progress); owner identity formally recorded as Asif (Muhammed Asif Abdulla), Project Owner.
+
+## 2026-07-21T15:00+04:00 · claude-muhammed · Section-3 decisions recorded (handover interview)
+What: owner (Asif — identity formally confirmed) decided: backups Option 1 Supabase Storage design-first with restore-drill done-definition (DEC-019); Monday Weekly Owner Review approved (9 sections); System B retire+remove (DEC-018, verification-conditional); no register removals without case-by-case approval; Playwright bundled into TASK-015; Muhammed pending-decisions tool queued (TASK-030); owner training program queued (TASK-031, 5 end-to-end scenarios).
+Result: DEC-018/019; TASK-014/015/022 updated, TASK-030/031 added; weekly Routine to be created (self-bind, Mon 09:00 UAE). Docs-only PR.
+Notes: handover interview continues at Section 4 (Architecture). Owner vision recorded for handover doc: AI-first enterprise OS, multi-warehouse/branch/company/country-ready, commercialization possible but not current objective.

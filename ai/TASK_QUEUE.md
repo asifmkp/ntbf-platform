@@ -9,7 +9,7 @@
 > **Finishing**: move the block OUT of this file; record completion in STATUS.md + AGENT_LOG.md (same PR as the work). DONE tasks do not live here.
 > Owner (Asif) inputs are tasks too — marked `Owner: owner`.
 
-**Next free ID: TASK-030**
+**Next free ID: TASK-032**
 
 ---
 
@@ -79,15 +79,15 @@ Status: OPEN · Owner: — · Priority: P3 · Created: 2026-07-21T00:00+04:00
 Context: 0/1,490 Zoho items have barcodes; blocks image/enrichment workstream (other AI session)
 Done-when: staff can scan a product barcode against a catalog item; export path for enrichment exists. Needs owner go.
 
-### TASK-014 · Backups for /var/data
-Status: OPEN · Owner: — · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00
-Context: single 1 GB Render disk = only copy of all business data + photos; no backup exists (audit §10.6)
-Done-when: automated periodic backup to off-box storage, restore procedure documented + tested. Design needs owner approval (it exports business data off-box).
+### TASK-014 · Backups for /var/data → Supabase Storage (DEC-019)
+Status: OPEN · Owner: — · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-21T15:00+04:00
+Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design-first: architecture, retention, encryption, restore procedure, DR test plan, growth estimate, verification method — presented to owner before build.
+Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated — not before.
 
 ### TASK-015 · Activate CI (build + tests + /ai docs check)
 Status: OPEN · Owner: — · Priority: P2 · Created: 2026-07-21T02:00+04:00
 Context: no CI exists; `docs/ci.workflow.txt` never wired; lint script broken; main auto-deploys ungated
-Done-when: workflow runs on PRs (backend build, store.test.js, ai-docs conventions per /ai/templates/ai-docs-check.yml); owner informed it does NOT gate Render.
+Done-when: workflow runs on PRs (backend build, store.test.js, ai-docs conventions per /ai/templates/ai-docs-check.yml) + Playwright role-transition smoke (owner-approved 2026-07-21, bundled here from TASK-029); owner informed it does NOT gate Render.
 
 ### TASK-016 · Rotate seeded staff passwords + enforce first-login change
 Status: OPEN · Owner: — · Priority: **P1 (security)** · Created: 2026-07-21T02:00+04:00
@@ -116,10 +116,10 @@ Status: OPEN · Owner: — · Priority: P2 (security) · Created: 2026-07-21T02:
 Context: whole shared dataset writable with only ApiGateGuard (open when PUBLIC_API_TOKEN unset) — audit §10.5
 Done-when: staff JWT (or set token) required in prod without breaking sync.js clients; verified on device.
 
-### TASK-022 · Retire or gate System B (Prisma ERP) routable surface
-Status: OPEN · Owner: — · Priority: P3 · Created: 2026-07-21T02:00+04:00
-Context: dormant endpoints 500 raw / open-by-default RolesGuard holes (audit §10.3-4)
-Done-when: owner decision (delete vs feature-flag) in DECISIONS.md, implemented.
+### TASK-022 · Remove System B (Prisma ERP) — decision made: DELETE (DEC-018)
+Status: OPEN · Owner: — · Priority: P3 (sequenced after 014/016/020/021/015/012) · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-21T15:00+04:00
+Context: owner approved retirement + removal (DEC-018), conditional on verified zero production dependencies; document anything historically valuable first (salvage note)
+Done-when: dependency-verification evidence in the PR; salvage note committed; System B modules/routes removed; app boots + suite green.
 
 ### TASK-023 · Config/env hygiene — purge wrong Zoho org from repo configs
 Status: OPEN · Owner: — · Priority: P3 · Created: 2026-07-21T04:30+04:00
@@ -137,3 +137,14 @@ Status: BLOCKED · Owner: — · Priority: P4 · Created: 2026-07-21T04:30+04:00
 Blocker: gates G1–G5 in ROADMAP.md §3 (DEC-014) — do not build until ALL fire
 Depends-on: TASK-014, TASK-015, TASK-012 (gates G2–G4)
 Done-when: gates verified true in AGENT_LOG evidence; then scope per DEC-014 (queue-watcher over the SAME /ai files, read-only over production, all writes via PRs + owner gates).
+
+### TASK-030 · Muhammed assistant: read-only "Pending Decisions" tool (owner feature)
+Status: BLOCKED · Owner: — · Priority: P3 (Phase 3) · Created: 2026-07-21T15:00+04:00
+Context: owner-approved concept — assistant gains a server-fed read-only view of pending owner decisions/tasks (from TASK_QUEUE + ping list) so "what's pending?" works in-app. Part of the Muhammed → intelligent business assistant evolution.
+Blocker: Phase 3 opening + owner go on design
+Done-when: admin-role tool returns the current pending/decision list read-only; no write path; trace chain complete.
+
+### TASK-031 · Owner training program — 5 end-to-end business scenarios
+Status: OPEN · Owner: claude-muhammed · Priority: P2 (after handover doc) · Created: 2026-07-21T15:00+04:00
+Context: owner-commissioned training (owner directive 2026-07-21): teach the business through the software — WhatsApp → App → Backend → Zoho, with realistic data. Scenarios: (1) WhatsApp order→delivery→Zoho; (2) van sale cash→EOD reco→Zoho; (3) credit sale→payment→reco; (4) supplier purchase→stock→payment; (5) return/damage→inventory+financial impact. Each: customer view, staff actions, app automation, DB writes, Zoho entries, accounting/inventory impact, reports, audit trail, common mistakes, validation checks, independent owner verification.
+Done-when: training document delivered (ai/ or PDF per owner preference) + owner walks scenarios live; treated as owner training, not software docs.
