@@ -34,6 +34,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 - 2026-07-21 · Section-3 owner decisions: backups→Supabase (DEC-019, design-first), System B delete (DEC-018), weekly Monday owner review approved, Playwright→TASK-015, training program queued (TASK-031)
 - 2026-07-21 · **Role-switch fix SHIPPED (GO 029 A+B)**: guard + reset + defense filter, v19 (FACT-033) — owner 5-step re-check pending; Playwright deferred to TASK-015
+- 2026-07-21 · **Lane B: AI Ops Center foundation shell** (isolated `foundation/ai-ops-center/`): typed contracts + mock adapter + 4 dashboard layouts + 16/16 isolation & contract checks; NOT in Docker image, NOT served, NOT imported; draft PR only, no merge (TRACE-002, UNK-013 opened)
 - 2026-07-21 · **STOP #2**: role-switch view-state contamination found by owner (Sales Historical → Driver shows Delivered 255 until reload) — FACT-031/032, RISK-012, TASK-029 awaits owner option; TRACE-001 still HELD
 - 2026-07-21 · **Finance-list gap CLOSED (GO 028 A)**: all 5 finance list endpoints live-default + hub view controls, suite 32/32 ×2, v18 (FACT-030) — owner live re-check + Codex audit pending
 - 2026-07-21 · **Post-deploy contradiction found by owner (STOP)**: finance Receipts/Payments/Transfers LISTS still show imported history (FACT-028/029, RISK-011) — fix TASK-028 awaits owner option A/B; TRACE-001 validation HELD
@@ -41,18 +42,6 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 - 2026-07-21 · Ops-surface audit: sales rule FACT-023 confirmed; salesman Completed(255) + driver Delivered(255) mixing live-observed & code-confirmed (FACT-022/024/025, RISK-010); TASK-026 now platform-wide standard, P2
 - 2026-07-21 · KPI-surface trace: UNK-011 resolved, 351-vs-606 reconciled exactly; **finance summary KPI compliance gap found** (FACT-021, RISK-009, TASK-027 awaiting owner)
 - 2026-07-21 · Traceability standard (DEC-016) + Overview live-vs-historical rule (FACT-016, UXF-001, TASK-026 queued)
-- 2026-07-21 · Evidence protocol scaffolding (DEC-015): 5 registers seeded from /ai docs, 15 facts / 10 unknowns / 3 assumptions / 8 risks
-- 2026-07-21 · Claude account/workspace audit → /ai/CLAUDE_ACCOUNT_AUDIT.md (evidence-only; nothing enabled)
-- 2026-07-21 · Business-first roadmap (/ai/ROADMAP.md) + TASK-023/024/025 queued + DEC-013/014 (PR #24)
-- 2026-07-21 · /ai collaboration infrastructure shipped (PR #23)
-- 2026-07-21 · Full 3-way repository audit (backend/frontend/infra) → /ai/PROJECT_KNOWLEDGE.md
-- 2026-07-21 · PR #22 offline outbox + clientRef idempotency (v16)
-- 2026-07-21 · PR #21 attention badges + order aging (v15)
-- 2026-07-21 · PR #20 server-backed driver EOD + confirmed handovers (v14)
-- 2026-07-21 · PR #19 July history backfill → owner ran live import, verified (606 records)
-- 2026-07-20 · PR #18 empty production seed (demo removed) · PR #17 clear-test-data
-- 2026-07-20 · July Zoho import complete, grand reconciliation PASS
-- 2026-07-20 · Ops dashboard artifact + management report PDF + staff handbook v2
 
 ## Standing cautions
 

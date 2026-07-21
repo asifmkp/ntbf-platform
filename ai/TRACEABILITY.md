@@ -35,7 +35,7 @@ When new evidence invalidates a recorded conclusion:
 ## 3. Where records live
 
 Trace records: in this file, §4, newest last. IDs `TRACE-###`, stable, never reused. Small changes may share one trace record per task; don't fragment.
-Next free ID: **TRACE-002**
+Next free ID: **TRACE-003**
 
 ## 4. Trace records
 
@@ -51,3 +51,16 @@ Next free ID: **TRACE-002**
 - Deployment: PR #31 `cdc3ef3` + correction PR #34 `83966eb` (2026-07-21, Render auto-deploy, FACT-002)
 - Business Validation: **PENDING — HELD (owner STOP #2, 2026-07-21)**: v18 fresh-load defaults verified clean by owner reproduction, but role-switch contamination found (FACT-031/032 → TASK-029). Previous hold note:  post-deploy live regression passed Sales + Driver but found the finance Receipts default list showing imported history (FACT-028) — contradiction traced (FACT-029), fix queued (TASK-028). Validation completes only after TASK-028 ships and the owner re-checks the Finance hub. *Change history: 2026-07-21 — was a simple pending-owner check; held on contradiction evidence (old: PR #31 checks green; new: FACT-028 live observation).*
 - KB Update: FACT_REGISTER (FACT-026/027 + change histories) · DECISIONS (DEC-017) · UX_AUDIT (UXF-001..004 implemented) · ENTERPRISE_SYSTEM_MAP (compliance matrix) · RISKS (009/010 closed) · UNKNOWNS (UNK-012 opened) · TASK_QUEUE (026/027 done, removed) — PRs #27/#29/#30 + implementation PR
+
+### TRACE-002 · AI Operations Center foundation shell (Lane B, isolated)
+- Objective: give the owner a future single pane of glass over AI agent work (tasks, owner gates, deliverables, activity) without adding any production risk today
+- Requirement: a foundation (UI shell + typed contracts + mock adapter + tests) that provably cannot affect live routes, data, auth, deployment or integrations; no orchestrator/worker; mock data only
+- Rule: DEC-014 (orchestrator postponed behind gates — this build deliberately ships no runtime/automation)
+- Evidence: Lane B task text (USER CONFIRMED 2026-07-21); Dockerfile COPY audit + repo scan (VERIFIED 2026-07-21, machine-checked by the suite below); governance-doc gap → UNK-013 (referenced DEC-018–022 / EXECUTION_PLAN.md etc. absent from /ai)
+- System(s): none live — new isolated path `foundation/ai-ops-center/` (outside SYS boundaries by construction; candidate SYS entry only at integration time)
+- Data Owner: Asif
+- Implementation: feature branch `claude/ai-ops-center-foundation-qyf9td` (draft PR; no merge/deploy per task)
+- Test Evidence: `node foundation/ai-ops-center/tests/run-tests.mjs` — 16/16 PASS (7 isolation proofs incl. Dockerfile/app.module/apps scans + 9 contract checks); UI rendered light+dark, 4 views, zero console errors (screenshots in PR)
+- Deployment: N/A (explicitly non-deployable: directory excluded from the Docker image; PR stays draft, no merge)
+- Business Validation: pending — owner review of the shell + decision on integration step 1 (CODEX_HANDOFF.md §5)
+- KB Update: AGENT_LOG (2026-07-21T14:30 entry) · UNKNOWNS (UNK-013) · STATUS (Recently completed) · this record — same PR
