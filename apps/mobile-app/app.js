@@ -117,7 +117,14 @@ function render() {
     </div>`;
   mountMaps();
   if (window.applyAttentionBadges) window.applyAttentionBadges(); // additive: tab badges + handover banner
-  if ((ONLINE_TABS[role] || []).indexOf(tab) >= 0 && !onlineLoaded) loadOnlineOrders();
+  if ((ONLINE_TABS[role] || []).indexOf(tab) >= 0) {
+    // Live-vs-Historical guard (DEC-017, FACT-032): only the salesman Online tab may
+    // hold a historical/combined view. Any other role reaching an online tab forces
+    // the cache back to live before rendering — a Sales Historical selection can
+    // never leak across an in-session role switch.
+    if (role !== 'salesman' && onlineView !== 'live') { onlineView = 'live'; onlineLoaded = false; }
+    if (!onlineLoaded) loadOnlineOrders();
+  }
 }
 
 function loginScreen() {
@@ -830,7 +837,7 @@ function reviewNote(o) {
   const r = (o.reviewReasons && o.reviewReasons.length) ? ': ' + o.reviewReasons.map(esc).join('; ') : '';
   return `<div class="muted" style="font-size:11.5px;color:var(--amber);margin-top:4px">⚠ Needs review${r}</div>`;
 }
-function onlineByStatus(sts) { return onlineOrders.filter((o) => sts.indexOf(o.status) >= 0); }
+function onlineByStatus(sts) { return onlineOrders.filter((o) => o.origin !== 'july-import' && sts.indexOf(o.status) >= 0); }
 function orderLinesText(o) { return (o.items || []).map((l) => esc((l.qty || 1) + '× ' + (l.name || '') + (l.unmatched ? ' ⚠' : ''))).join(', '); }
 function isCash(o) { return (o.method || 'CASH_ON_DELIVERY') === 'CASH_ON_DELIVERY'; }
 function collectedAmount(o) { return o.collected && o.collected.amount != null ? Number(o.collected.amount) : Number(o.total) || 0; }
@@ -1478,8 +1485,8 @@ const ACT = {
     ['ntbf_staff', 'ntbf_stafftoken', 'ntbf_role', 'ntbf_tab'].forEach((k) => localStorage.removeItem(k));
     closeSheet(); render();
   },
-  pick: (d) => { if (allowedRoles().indexOf(d.id) < 0) return toast('Not permitted'); role = d.id; tab = ''; localStorage.setItem('ntbf_role', role); render(); },
-  switchRole: () => { if (allowedRoles().length <= 1) return; role = ''; localStorage.removeItem('ntbf_role'); render(); },
+  pick: (d) => { if (allowedRoles().indexOf(d.id) < 0) return toast('Not permitted'); role = d.id; tab = ''; localStorage.setItem('ntbf_role', role); onlineView = 'live'; onlineLoaded = false; render(); },
+  switchRole: () => { if (allowedRoles().length <= 1) return; role = ''; localStorage.removeItem('ntbf_role'); onlineView = 'live'; onlineLoaded = false; render(); },
   changePwForm: () => changePwForm(),
   saveChangePw: async () => {
     const o = $('#cp_old').value, n = $('#cp_new').value, c = $('#cp_confirm').value;
