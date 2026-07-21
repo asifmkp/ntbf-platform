@@ -76,3 +76,8 @@ Notes: cross-role certification = code trace (all roles) + endpoint regression a
 What: merged the Live-vs-Historical standard after all 5 owner pre-merge checks passed.
 Result: main @ cdc3ef3 (Render auto-deploy). Certification: 21/21 regression checks x2, nest build exit 0, node --check clean, cross-role trace green. Remaining link in TRACE-001: owner Business Validation on live screens (Sales Completed live-only, driver Delivered no longer 255, Finance Overview live-only, Owner home historical card).
 Notes: staff get v17 after one reload (stale-while-revalidate, DEC-012).
+
+## 2026-07-21T11:00+04:00 · claude-muhammed · incident (FACT-028) — finance-list gap
+What: owner STOP after post-deploy live regression: finance Receipts default list showed 40 imported receipts (Sales+Driver regressions passed). Traced read-only.
+Result: root cause FACT-029 — /api/finance/receipts, /payments, /transfers/mine were never origin-filtered and were OUTSIDE PR #31 scope + test suite (suite gap acknowledged); client .slice(0,40) explains "Done 40/Recent(40)"; provenance of observed rows confirmed in backfill data (RCV2093/2033/2087/2031). Actionable queues + all KPIs verified still clean. FACT-027 corrected in place with change history (platform-wide claim retracted); RISK-011 + UXF-005 + TASK-028 (owner picks option A/B). NO production change; TRACE-001 Business Validation HELD; PR #31/#32 history preserved.
+Notes: process lesson — "every operational query" must mean an endpoint inventory, not just the endpoints the finding pointed at; TASK-028 Done-when requires suite coverage of ALL finance list endpoints.

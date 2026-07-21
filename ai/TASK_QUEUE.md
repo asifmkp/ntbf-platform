@@ -9,7 +9,7 @@
 > **Finishing**: move the block OUT of this file; record completion in STATUS.md + AGENT_LOG.md (same PR as the work). DONE tasks do not live here.
 > Owner (Asif) inputs are tasks too — marked `Owner: owner`.
 
-**Next free ID: TASK-028**
+**Next free ID: TASK-029**
 
 ---
 
@@ -137,3 +137,9 @@ Status: BLOCKED · Owner: — · Priority: P4 · Created: 2026-07-21T04:30+04:00
 Blocker: gates G1–G5 in ROADMAP.md §3 (DEC-014) — do not build until ALL fire
 Depends-on: TASK-014, TASK-015, TASK-012 (gates G2–G4)
 Done-when: gates verified true in AGENT_LOG evidence; then scope per DEC-014 (queue-watcher over the SAME /ai files, read-only over production, all writes via PRs + owner gates).
+
+### TASK-028 · Close finance-list gap in the Live-vs-Historical standard (DEC-017)
+Status: BLOCKED · Owner: owner (choose correction option) · Priority: P2 · Created: 2026-07-21T11:00+04:00
+Context: FACT-028 (owner live regression) + FACT-029 (root cause) — finance segment LIST endpoints (/api/finance/receipts, /payments, /transfers/mine) predate the view convention and were outside PR #31 scope+tests; RISK-011; TRACE-001 Business Validation held pending. Options: **A (recommended)** same server-side view=live|historical|combined default on the three endpoints + reuse the existing labelled switcher on those segments + extend test-live-standard.mjs with list checks; **B (smallest)** server-side live-only default, no new UI (history via Documents only); C client-only filter — rejected (violates server-default convention).
+Blocker: owner picks A or B (no production change until then, per STOP directive)
+Done-when: chosen option implemented; regression suite extended to cover ALL finance list endpoints and passing; owner live re-check of the Finance hub passes; FACT-027/029, RISK-011, UXF-005, TRACE-001 updated with change history.
