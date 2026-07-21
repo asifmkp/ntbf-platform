@@ -51,3 +51,8 @@ Notes: one known config-vs-decision conflict recorded, NOT a blocking contradict
 What: recorded two owner directives (docs-only): (1) business rule — Owner Overview = live operations only, historical imports never mix into live KPIs except explicit Combined View; (2) permanent traceability standard — /ai KB single source of truth, full Objective→…→KB-Update chain per change.
 Result: FACT-016/017 registered (USER CONFIRMED, source = owner directive messages this date); UX_AUDIT.md created (UXF-001 discrepancy resolved-by-rule + future-feature spec); TRACEABILITY.md protocol + worked example TRACE-001; TASK-026 queued (BLOCKED on separate owner build approval); system map SYS-01 data-view semantics; DEC-016; HANDOFF DoD extended. No production code touched.
 Notes: honest scope kept — UX_AUDIT states the full staff UX audit was never performed; only the owner-confirmed finding is recorded.
+
+## 2026-07-21T07:15+04:00 · claude-muhammed · FACT-018 live-audit evidence
+What: recorded owner's first-hand live-audit observation (app.ntbfllc.com/mobile-app/, Owner → Documents): 351 imported records, AED 159,692.26, five money categories, July references visible.
+Result: FACT-018 (VERIFIED) linked to FACT-016/DEC-008/SYS-01; UX_AUDIT UXF-001 + system map evidence lines added; UNK-011 opened (KPI non-mixing end-to-end check + 351-vs-606 scope relation). No duplicate rule created; no production code touched.
+Notes: per owner instruction, availability-in-Documents is the ONLY thing asserted; KPI non-mixing remains unverified until UNK-011 resolves.

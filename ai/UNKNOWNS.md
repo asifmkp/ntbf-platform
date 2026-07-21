@@ -2,7 +2,7 @@
 
 > **PROTOCOL (DEC-015)** · Anything the business/plan depends on that is not FACT-registered goes here. An unknown is NEVER answered by inference in downstream docs — it is resolved (interview, direct verification) and promoted to FACT_REGISTER with the proper evidence level, then closed here (`Status: RESOLVED(FACT-###, date)`).
 > Fields: `Asked-of:` who can answer · `Blocks:` what cannot conclude until resolved. IDs `UNK-###` stable, never reused.
-> Next free ID: **UNK-011**
+> Next free ID: **UNK-012**
 
 | ID | Question | Asked-of | Blocks | Source/context | Status |
 |---|---|---|---|---|---|
@@ -16,3 +16,4 @@
 | UNK-008 | Org-level auth state of each installed connector (API returned installState "unknown" for all 17) | claude.ai UI (owner) | ENTERPRISE_SYSTEM_MAP auth columns; account plan conclusions | ai/CLAUDE_ACCOUNT_AUDIT.md §0 | OPEN |
 | UNK-009 | claude.ai UI feature state: Projects in use? Memory enabled? Team/workspace members? Betas? Plan/billing tier? | owner (claude.ai Settings) | account-layer rows of system map; master-plan cost model | ai/CLAUDE_ACCOUNT_AUDIT.md §0 | OPEN |
 | UNK-010 | Supplier TRNs (6 vendors) for VAT-correct vendor records | owner (ask suppliers) | TASK-010; VAT compliance posture | ai/TASK_QUEUE.md TASK-010 | OPEN |
+| UNK-011 | Do `origin:'july-import'` records affect ANY live KPI surface end-to-end (Overview tiles, EOD, attention, any other view)? Code-level exclusions are documented (DEC-008/FACT-008) but a live end-to-end verification has not been performed; also: relation of the Documents-view count (351, FACT-018) to the 606-record server backfill | agent (verification pass) + owner (live screens) | full FACT-016 compliance claim; TASK-026 Business Validation (TRACE-001) | ai/FACT_REGISTER.md FACT-018 scope limits | OPEN |
