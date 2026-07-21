@@ -34,7 +34,7 @@
 // (null → terminal status, by "July import", at the record's real July date).
 // ---------------------------------------------------------------------------
 import {
-  BadRequestException, Body, Controller, ForbiddenException, Injectable, Module, Post, Req, UseGuards,
+  BadRequestException, Body, Controller, ForbiddenException, Get, Injectable, Module, Post, Req, UseGuards,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -59,6 +59,7 @@ const REMOVE_TOKEN = 'REMOVE-JULY';
 
 type Staff = { id: string; roles: string[]; name: string };
 const isAdmin = (s: Staff) => !!s && (s.roles || []).indexOf('admin') >= 0;
+const isFinanceOrAdmin = (s: Staff) => !!s && (s.roles || []).some((r) => r === 'admin' || r === 'finance');
 const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 
 class BackfillDto {
@@ -86,6 +87,41 @@ export class JulyBackfillService {
   ) {}
 
   private assertAdmin(s: Staff) { if (!isAdmin(s)) throw new ForbiddenException('Admins only'); }
+
+  /**
+   * Read-only aggregates of the imported July history (origin === JULY_IMPORT_ORIGIN)
+   * across all five stores — feeds the owner's "Historical Imported Data" card
+   * (Live-vs-Historical standard, FACT-026). Computed live from the stores, never
+   * from the bundled JSON, so it stays honest if history is ever removed.
+   */
+  historySummary(staff: Staff) {
+    if (!isFinanceOrAdmin(staff)) throw new ForbiddenException('Finance or admin only');
+    const byOrigin = (x: any) => x && x.origin === JULY_IMPORT_ORIGIN;
+    const orders = this.orders.rawOrders().filter(byOrigin);
+    const receipts = this.receipts.all().filter(byOrigin);
+    const payments = this.payments.all().filter(byOrigin);
+    const expenses = this.expenses.list().filter(byOrigin);
+    const transfers = this.transfers.all().filter(byOrigin);
+    const sum = (xs: any[], f: string) => round2(xs.reduce((s, x) => s + (Number(x[f]) || 0), 0));
+    const dates = [...orders, ...receipts, ...payments, ...expenses, ...transfers]
+      .map((x) => String(x.createdAt || '')).filter(Boolean).sort();
+    const documents = receipts.length + payments.length + expenses.length + transfers.length;
+    return {
+      origin: JULY_IMPORT_ORIGIN,
+      period: dates.length ? { from: dates[0].slice(0, 10), to: dates[dates.length - 1].slice(0, 10) } : null,
+      // Live import executed 2026-07-21 (owner-run, PR #19 — recorded in /ai STATUS/AGENT_LOG).
+      importDate: '2026-07-21',
+      counts: { orders: orders.length, receipts: receipts.length, payments: payments.length, expenses: expenses.length, transfers: transfers.length, documents, total: orders.length + documents },
+      totals: {
+        revenue: sum(orders, 'total'),
+        collections: sum(receipts, 'collectedAmount'),
+        supplierPayments: sum(payments, 'amount'),
+        expenses: sum(expenses, 'amount'),
+        transfers: sum(transfers, 'amount'),
+        documentsTotal: round2(sum(receipts, 'collectedAmount') + sum(payments, 'amount') + sum(expenses, 'amount') + sum(transfers, 'amount')),
+      },
+    };
+  }
 
   /** One honest audit entry: null → terminal status, dated the record's real July date. */
   private hist(to: string, adminId: string, at: string, ref: string) {
@@ -294,6 +330,11 @@ export class JulyBackfillController {
   // AuditInterceptor records this POST (actor + outcome) in the audit log.
   @Public() @UseGuards(StaffAuthGuard) @Post('backfill-july')
   backfill(@Body() dto: BackfillDto, @Req() req: any) { return this.svc.backfill(req.staff, dto); }
+
+  // GET /api/admin/july-history/summary — finance/admin. Read-only aggregates of the
+  // imported history for the Historical Imported Data card (FACT-026 standard).
+  @Public() @UseGuards(StaffAuthGuard) @Get('july-history/summary')
+  historySummary(@Req() req: any) { return this.svc.historySummary(req.staff); }
 }
 
 @Module({

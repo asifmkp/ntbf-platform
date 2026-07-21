@@ -42,12 +42,12 @@ Next free ID: **TRACE-002**
 ### TRACE-001 · Live-vs-historical separation (platform-wide standard)
 - Objective: owner and staff can trust every screen — live figures mean live business, history is deliberate, not accidental
 - Requirement: ALL operational KPIs and default lists reflect only live operations; imported history visible only in labeled, separate views (Combined only by explicit choice). *Change history: 2026-07-21 — widened from "Owner Overview" to platform-wide per FACT-022/023/024/025 (old evidence: owner-Overview directive only; new: sales+driver live observations, confirmed sales rule, full surface trace)*
-- Rule: FACT-016 + FACT-023
-- Evidence: owner directives 2026-07-21 (USER CONFIRMED); technical baseline DEC-008/FACT-008 (VERIFIED); live-audit + code-trace evidence FACT-018/019/020/021/022/024/025 (VERIFIED 2026-07-21 — gaps: finance summary → TASK-027; salesman Completed list + driver Delivered tile → TASK-026 scope)
+- Rule: **FACT-026 (authoritative, DEC-017)** — subsumes FACT-016 + FACT-023
+- Evidence: owner directives 2026-07-21 (USER CONFIRMED, incl. the "GO 026+027" authorization); technical baseline DEC-008/FACT-008 (VERIFIED); live-audit + code-trace evidence FACT-018/019/020/021/022/024/025 (VERIFIED 2026-07-21)
 - System(s): SYS-01
 - Data Owner: Asif
-- Implementation: TASK-026 — pending (build gated on separate owner approval)
-- Test Evidence: pending
-- Deployment: pending
-- Business Validation: pending
-- KB Update: FACT_REGISTER (FACT-016/017) · UX_AUDIT (UXF-001) · ENTERPRISE_SYSTEM_MAP (SYS-01 data-view semantics) · this file — PR #27
+- Implementation: TASK-026 + TASK-027, one feature PR (`feature/live-vs-historical-standard`) — server `view=live|historical|combined` convention on /api/portal/orders/all + /api/finance/summary, new /api/admin/july-history/summary, Owner Overview label + Historical Imported Data card + view switcher, salesman Online + finance Overview labelled views, assistant live-only declarations, sw.js v17 (FACT-027)
+- Test Evidence: backend/tools/test-live-standard.mjs — 21/21 PASS twice (fresh state + idempotent re-run), local boot 2026-07-21; output pasted in the PR body
+- Deployment: merged to main 2026-07-21 (auto-deploy, FACT-002) — sha in AGENT_LOG certification entry
+- Business Validation: **pending owner** — re-check live screens after deploy: Sales → Online Completed shows live-only by default, driver Delivered no longer 255, Finance Overview live-only, Owner home shows the Historical Imported Data card
+- KB Update: FACT_REGISTER (FACT-026/027 + change histories) · DECISIONS (DEC-017) · UX_AUDIT (UXF-001..004 implemented) · ENTERPRISE_SYSTEM_MAP (compliance matrix) · RISKS (009/010 closed) · UNKNOWNS (UNK-012 opened) · TASK_QUEUE (026/027 done, removed) — PRs #27/#29/#30 + implementation PR

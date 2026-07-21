@@ -137,14 +137,14 @@ export const MUHAMMED_TOOLS: MuhammedTool[] = [
   {
     name: 'company_sales',
     roles: ['admin'],
-    description: 'Company-wide sales snapshot: revenue (all non-cancelled orders), order count, cash collected, and total outstanding.',
+    description: 'Company-wide sales snapshot: revenue (all non-cancelled orders), order count, cash collected, and total outstanding. Live operations only — imported July 2026 history is excluded (it lives in Documents / historical views).',
     input_schema: obj({}),
     run: (state) => ({
       revenue: revenue(state),
       orders: arr(state, 'orders').length,
       collected: sum(arr(state, 'payments').map((p) => p.amount)),
       outstanding: sum(collectionsView(state).map((c) => c.outstanding)),
-      note: 'Orders carry no date yet, so this is the current live snapshot, not a day/range total.',
+      note: 'Live operations since go-live only (imported July history excluded). Orders carry no date yet, so this is the current live snapshot, not a day/range total.',
     }),
   },
   {
@@ -217,7 +217,7 @@ export const MUHAMMED_TOOLS: MuhammedTool[] = [
   {
     name: 'my_sales',
     roles: ['salesman'],
-    description: 'Your sales snapshot: total value of your orders (non-cancelled) and the order count.',
+    description: 'Your sales snapshot: total value of your orders (non-cancelled) and the order count. Live operations only — imported July history excluded.',
     input_schema: obj({}),
     run: (state) => ({ revenue: revenue(state), orders: arr(state, 'orders').length, note: 'Current live snapshot (orders are not date-stamped yet).' }),
   },

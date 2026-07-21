@@ -575,16 +575,24 @@ export class FinanceService {
   }
 
   // ===================== OVERVIEW =====================
-  summary(staff: Staff) {
+  summary(staff: Staff, view?: string) {
     this.assertFinance(staff);
-    const receipts = this.receipts.all();
-    const payments = this.payments.all();
+    // Live Operations vs Historical Import standard (FACT-026, closes FACT-021/RISK-009):
+    // DEFAULT is live-only — imported July records (origin:'july-import') were written with
+    // exactly the statuses summed here (CONFIRMED/APPROVED) and must not read as live cash
+    // flow. 'historical' = imported only; 'combined' = both, only on explicit request.
+    const v = view === 'historical' || view === 'combined' ? view : 'live';
+    const inView = (x: any) =>
+      v === 'combined' ? true : v === 'historical' ? x.origin === EOD_EXCLUDED_ORIGIN : x.origin !== EOD_EXCLUDED_ORIGIN;
+    const receipts = this.receipts.all().filter(inView);
+    const payments = this.payments.all().filter(inView);
     const moneyIn = round2(receipts.filter((x) => x.status === 'CONFIRMED').reduce((s, x) => s + (Number(x.collectedAmount) || 0), 0));
     const moneyOut = round2(payments.filter((x) => x.status === 'APPROVED').reduce((s, x) => s + (Number(x.amount) || 0), 0));
-    const chequesOutstanding = this.receipts.all().concat(this.payments.all())
+    const chequesOutstanding = receipts.concat(payments)
       .filter((x) => x.method === 'CHEQUE' && x.cheque && (x.cheque.status === 'RECEIVED' || x.cheque.status === 'DEPOSITED'));
-    const chequesBounced = this.receipts.all().concat(this.payments.all()).filter((x) => x.cheque && x.cheque.status === 'BOUNCED').length;
+    const chequesBounced = receipts.concat(payments).filter((x) => x.cheque && x.cheque.status === 'BOUNCED').length;
     return {
+      view: v,
       moneyIn, moneyOut, net: round2(moneyIn - moneyOut),
       receiptsPendingApproval: receipts.filter((x) => x.status === 'PENDING_APPROVAL').length,
       receiptsToConfirm: receipts.filter((x) => x.status === 'COLLECTED').length,
@@ -671,7 +679,7 @@ export class FinanceController {
 
   // ----- overview -----
   @Public() @UseGuards(StaffAuthGuard) @Get('summary')
-  summary(@Req() req: any) { return this.svc.summary(req.staff); }
+  summary(@Req() req: any, @Query('view') view?: string) { return this.svc.summary(req.staff, view); }
 }
 
 // ---------------------------------------------------------------------------
