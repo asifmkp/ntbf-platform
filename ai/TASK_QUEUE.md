@@ -1,6 +1,7 @@
 # TASK_QUEUE.md — unfinished work only
 
 > **ORDERING** · Execution order and category live in `/ai/ROADMAP.md` (DEC-013); this file owns task detail + state only.
+> **EVIDENCE (DEC-015)** · Task context lines must cite FACT/UNK/ASM/RISK ids where they exist; a task resting on a CONTESTED fact is BLOCKED until the contradiction resolves. Facts discovered while working a task are registered in FACT_REGISTER.md in the same PR.
 > **FORMAT** · One task = one `###` block with a stable ID `TASK-###` (never reuse; next free ID at the top).
 > Fields (exact names): `Status:` OPEN | CLAIMED | IN_PROGRESS | BLOCKED | REVIEW · `Owner:` agent/human id or `—` ·
 > `Priority:` P1..P4 · `Created:`/`Updated:` ISO 8601 +04:00 · `Blocker:` · `Depends-on:` TASK/DEC ids · `Done-when:` acceptance criteria.

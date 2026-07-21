@@ -1,0 +1,15 @@
+# RISKS.md — risk register
+
+> **PROTOCOL (DEC-015)** · Business/technical risks with evidence-linked basis. `Basis:` cites FACT/UNK/ASM IDs — a risk built on a CONTESTED fact is itself CONTESTED. `Mitigation:` the queued task or owner action; `Owner:` who acts. Severity: CRITICAL / HIGH / MED / LOW (impact × likelihood, judged conservatively).
+> IDs `RISK-###` stable, never reused. Next free ID: **RISK-009**
+
+| ID | Risk | Severity | Basis | Mitigation | Owner | Status |
+|---|---|---|---|---|---|---|
+| RISK-001 | Total loss of live business data: /var/data is a single unbacked disk; any disk/platform failure is unrecoverable | CRITICAL | FACT-006 | TASK-014 backups (Phase 0 first mover; blocked on owner destination answer) | owner + agent | OPEN |
+| RISK-002 | Credential abuse: weak seeded staff passwords in source control could grant app access incl. finance actions | HIGH | FACT-007 | TASK-016 rotation + forced first-login change | agent build, owner rotates | OPEN |
+| RISK-003 | Unauthorized full-dataset write via open PUT /api/appstate if PUBLIC_API_TOKEN unset in prod | HIGH (severity confirmed/downgraded by UNK-001) | FACT-015, UNK-001 | TASK-021 lock-down; owner answers UNK-001 | agent + owner | OPEN |
+| RISK-004 | Bad merge ships straight to production: no CI, merge = deploy | HIGH | FACT-002 | TASK-015 activate CI (template exists) | agent wires, owner flips on | OPEN |
+| RISK-005 | July double-posting: a future app→Zoho sync that fails to exclude `origin:'july-import'` reposts the whole month | HIGH | FACT-008 | DEC-007 contract + TASK-012 design must include exclusion tests + Gemini adversarial review (ROADMAP 1.3) | agent + owner design gate | OPEN |
+| RISK-006 | Stored XSS via unescaped customer/product names in staff views (esc() misses `>`) | MED | ai/PROJECT_KNOWLEDGE.md §7.7 (VERIFIED audit finding) | TASK-017 esc() fix + hostile-name test | agent | OPEN |
+| RISK-007 | Wrong-Zoho-org config trap: a future env rebuild from render.yaml/.env.example would target the wrong org (write-lock + org guard currently neutralize) | MED | FACT-003, FACT-004, ASM-001 | TASK-023 config hygiene after owner confirms intent | agent + owner | OPEN |
+| RISK-008 | Stored Routine prompts from the July-15 bot incident embed a dashboard review-token value (account-visible); token flagged for rotation but rotation unconfirmed | MED | ai/CLAUDE_ACCOUNT_AUDIT.md §7 | owner rotates Supabase `bot_settings.review_token`; practice = secrets by name only in prompts | owner | OPEN |

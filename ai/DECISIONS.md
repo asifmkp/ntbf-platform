@@ -5,7 +5,7 @@
 > A decision that isn't written here **does not exist** — chat history is not authority. Newest entries appended at the end.
 > Superseding: never edit an old decision's Decision text; add the new DEC and flip the old Status.
 
-**Next free ID: DEC-015**
+**Next free ID: DEC-016**
 
 ---
 
@@ -86,3 +86,9 @@ Date: 2026-07-21 · Status: ACCEPTED · Decider: owner (directive to decide) + a
 Context: an orchestrator would compete with Phase 0–1 delivery; the /ai file protocol + PR template + CI (once active) already coordinates agents with zero runtime; currently ~one primary acting agent.
 Decision: do NOT build TASK-025 until ALL gates in ROADMAP.md §3 fire (G1 sustained multi-agent activity · G2 CI active · G3 backups drilled · G4 sync stable 2 weeks · G5 evidence the file protocol is the bottleneck). When built: queue-watcher over the SAME /ai files, no new state store, read-only over production, writes via PRs + owner gates.
 Consequences: no orchestrator code/runtime now; revisit only with gate evidence recorded in AGENT_LOG.md.
+
+### DEC-015 · Enterprise-discovery evidence protocol (mandatory)
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
+Context: master-plan/architecture work risks building on unverified claims; owner mandates an evidence discipline before strategic conclusions.
+Decision: five registers are canonical — FACT_REGISTER.md, UNKNOWNS.md, ASSUMPTIONS.md, RISKS.md, ENTERPRISE_SYSTEM_MAP.md. Every durable statement carries exactly one evidence level (VERIFIED / USER CONFIRMED / INFERRED with linked FACT ids / ASSUMED with validation owner), stable IDs and timestamps. Unknown fields stay explicitly UNKNOWN — never guessed. Contradictions mark facts CONTESTED and block all downstream conclusions citing them until resolved. Chat history is never a VERIFIED source. Strategic docs (BUSINESS_AI_MASTER_PLAN and architecture recommendations) are PAUSED until grounded in these registers.
+Consequences: HANDOFF §0/§2.8 + TASK_QUEUE header enforce the protocol; seed facts cite only repository /ai docs; register maintenance is part of every task's Definition of Done where facts change.

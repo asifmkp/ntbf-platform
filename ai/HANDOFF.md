@@ -9,6 +9,7 @@
 2. **`/ai/STATUS.md`** — what's live, key figures, what's blocked (≈1 screen).
 3. **`/ai/ROADMAP.md`** — business-first execution order + phase gates (DEC-013): pick tasks in this order.
 4. **`/ai/TASK_QUEUE.md`** — pick work only from here (detail/state).
+   *Evidence layer (DEC-015):* **`FACT_REGISTER.md` · `UNKNOWNS.md` · `ASSUMPTIONS.md` · `RISKS.md` · `ENTERPRISE_SYSTEM_MAP.md`** — consult before relying on any business/system claim; see rule 8 below.
 5. **`/ai/PROJECT_KNOWLEDGE.md`** — the section relevant to your task (skim the rest).
 6. **`/ai/DECISIONS.md`** — scan the index; never contradict an ACCEPTED decision without a new DEC approved by the owner.
 7. Repo-root `CLAUDE.md` — project hard rules (applies to every agent, not only Claude).
@@ -29,6 +30,7 @@
 5. **statusHistory is honest** — never fabricate a staff member's action.
 6. Verify before merge: `cd backend && npx nest build` (exit 0) and `node --check apps/mobile-app/app.js`. Frontend changes staff need immediately ⇒ bump `apps/sw.js` CACHE version (DEC-012).
 7. When unsure whether something needs the owner: it does. Add it to TASK_QUEUE as `Owner: owner` instead of acting.
+8. **Evidence protocol (DEC-015):** every durable statement carries exactly one level — VERIFIED (direct source+date) · USER CONFIRMED (response+date) · INFERRED (linked FACT ids) · ASSUMED (validation owner). New facts go to FACT_REGISTER.md; open questions to UNKNOWNS.md (never answered by guessing); assumptions to ASSUMPTIONS.md; risks to RISKS.md. Chat memory is never VERIFIED. **A contradiction between registered facts marks them CONTESTED and blocks every downstream conclusion citing them until resolved.** System-map fields you can't evidence stay literally `UNKNOWN`.
 
 ## 3. Working protocol (the coordination loop)
 
