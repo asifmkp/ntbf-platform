@@ -86,3 +86,7 @@ Notes: process lesson — "every operational query" must mean an endpoint invent
 What: owner "GO 028 A" — finance-list correction under DEC-017/FACT-026.
 Result: shared viewOf/inView filter on listReceipts/listMyReceipts/listPayments/listCheques/listMyTransfers (+summary refactored to it); ?view= on all five routes; hub-wide finView with labelled controls on Receipts/Payments/Transfers/Overview (Cheques live-only, structurally clean); queue sheets + collector views ride the server default (incl. newly-caught receipts/mine leak — musthafa collected all 216). Suite extended to full endpoint enumeration + per-role checks: 32/32 PASS twice. sw.js v18. FACT-030; FACT-027/TRACE-001 corrected with history preserved; RISK-011 closed; TASK-028 done.
 Notes: merged only after full green per owner condition. Owner live re-check checklist reported for Codex cross-role audit; TRACE-001 Business Validation still pending.
+
+## 2026-07-21T12:10+04:00 · claude-muhammed · TASK-028 deployment certification
+What: merged PR #34 after full extended regression green (owner condition).
+Result: main @ 83966eb (Render auto-deploy, PWA v18 after one reload). TRACE-001 Deployment link updated. STOPPED per owner directive — live validation checklist reported to owner/Codex; Business Validation remains the only open link.
