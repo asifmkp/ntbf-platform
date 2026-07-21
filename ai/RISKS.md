@@ -1,7 +1,7 @@
 # RISKS.md — risk register
 
 > **PROTOCOL (DEC-015)** · Business/technical risks with evidence-linked basis. `Basis:` cites FACT/UNK/ASM IDs — a risk built on a CONTESTED fact is itself CONTESTED. `Mitigation:` the queued task or owner action; `Owner:` who acts. Severity: CRITICAL / HIGH / MED / LOW (impact × likelihood, judged conservatively).
-> IDs `RISK-###` stable, never reused. Next free ID: **RISK-009**
+> IDs `RISK-###` stable, never reused. Next free ID: **RISK-010**
 
 | ID | Risk | Severity | Basis | Mitigation | Owner | Status |
 |---|---|---|---|---|---|---|
@@ -13,3 +13,4 @@
 | RISK-006 | Stored XSS via unescaped customer/product names in staff views (esc() misses `>`) | MED | ai/PROJECT_KNOWLEDGE.md §7.7 (VERIFIED audit finding) | TASK-017 esc() fix + hostile-name test | agent | OPEN |
 | RISK-007 | Wrong-Zoho-org config trap: a future env rebuild from render.yaml/.env.example would target the wrong org (write-lock + org guard currently neutralize) | MED | FACT-003, FACT-004, ASM-001 | TASK-023 config hygiene after owner confirms intent | agent + owner | OPEN |
 | RISK-008 | Stored Routine prompts from the July-15 bot incident embed a dashboard review-token value (account-visible); token flagged for rotation but rotation unconfirmed | MED | ai/CLAUDE_ACCOUNT_AUDIT.md §7 | owner rotates Supabase `bot_settings.review_token`; practice = secrets by name only in prompts | owner | OPEN |
+| RISK-009 | Misleading finance KPIs: the Finance hub Overview segment (Money in/out/Net + counts) includes imported July history (≈52,349.88 in / 35,380.38 out) mixed with live figures — finance/admin decisions based on it overstate current-period cash flow; violates the FACT-016 rule on one surface | HIGH (decision-quality; no data corruption — display/aggregation only) | FACT-021, FACT-016 | TASK-027 (fix approach = owner decision; no code change made) | owner decides → agent | OPEN |

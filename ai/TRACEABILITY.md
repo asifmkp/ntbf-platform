@@ -43,7 +43,7 @@ Next free ID: **TRACE-002**
 - Objective: owner can trust dashboards — live figures mean live business, history is deliberate, not accidental
 - Requirement: Overview KPIs reflect only live operations; imported history visible only in labeled, separate views
 - Rule: FACT-016
-- Evidence: owner directive message 2026-07-21 (USER CONFIRMED); technical baseline DEC-008/FACT-008 (VERIFIED)
+- Evidence: owner directive message 2026-07-21 (USER CONFIRMED); technical baseline DEC-008/FACT-008 (VERIFIED); live-audit + code-trace evidence FACT-018/019/020/021 (VERIFIED 2026-07-21 — one compliance gap found on the finance summary surface → TASK-027)
 - System(s): SYS-01
 - Data Owner: Asif
 - Implementation: TASK-026 — pending (build gated on separate owner approval)

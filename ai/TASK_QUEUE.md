@@ -9,7 +9,7 @@
 > **Finishing**: move the block OUT of this file; record completion in STATUS.md + AGENT_LOG.md (same PR as the work). DONE tasks do not live here.
 > Owner (Asif) inputs are tasks too — marked `Owner: owner`.
 
-**Next free ID: TASK-027**
+**Next free ID: TASK-028**
 
 ---
 
@@ -143,3 +143,9 @@ Status: BLOCKED · Owner: owner (approval to build) · Priority: P3 · Created: 
 Context: implements FACT-016 rule per ai/UX_AUDIT.md UXF-001 spec; Overview KPIs are already live-only by construction (DEC-008, FACT-008) — this adds the labeling, Historical Imported Data card, and view switcher. Trace: TRACE-001
 Blocker: separate owner approval required before build (owner directive 2026-07-21)
 Done-when: period labeled "Live Operations / Since Go-Live"; Historical card shows imported period, record count, revenue, collections, import date; Live/Historical/Combined views with no KPI mixing unless Combined selected; sw.js CACHE bumped (DEC-012); TRACE-001 links completed through Business Validation.
+
+### TASK-027 · Fix FACT-016 compliance gap: finance summary KPIs include imported history
+Status: BLOCKED · Owner: owner (decision on fix approach) · Priority: P2 · Created: 2026-07-21T07:45+04:00
+Context: FACT-021/RISK-009 — GET /api/finance/summary (Money in/out/Net + counts, finance+admin Overview segment) has no origin:'july-import' filter; imported statuses (CONFIRMED/APPROVED) are exactly what it sums. Candidate fix: apply the same notImported filter EOD already uses (finance.module.ts:467) to summary(); alternatively fold into TASK-026's Live/Historical/Combined views. UXF-002
+Blocker: owner decision — quick filter fix now vs bundle with TASK-026 (reported per protocol before any code change)
+Done-when: chosen approach implemented; summary reconciles to live-only figures; hostile check: imported refs absent from Money in/out; sw.js bump if any frontend change; FACT-021/RISK-009/UXF-002 updated with change history; TRACE record links complete.
