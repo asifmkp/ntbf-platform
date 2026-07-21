@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-21T07:45+04:00 · main @ `5ab1d38` · updated by: claude-muhammed**
+**As of: 2026-07-21T08:30+04:00 · main @ `45bc04a` · updated by: claude-muhammed**
 
 ## Systems
 
@@ -32,6 +32,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 ## Recently completed
 
+- 2026-07-21 · Ops-surface audit: sales rule FACT-023 confirmed; salesman Completed(255) + driver Delivered(255) mixing live-observed & code-confirmed (FACT-022/024/025, RISK-010); TASK-026 now platform-wide standard, P2
 - 2026-07-21 · KPI-surface trace: UNK-011 resolved, 351-vs-606 reconciled exactly; **finance summary KPI compliance gap found** (FACT-021, RISK-009, TASK-027 awaiting owner)
 - 2026-07-21 · Traceability standard (DEC-016) + Overview live-vs-historical rule (FACT-016, UXF-001, TASK-026 queued)
 - 2026-07-21 · Evidence protocol scaffolding (DEC-015): 5 registers seeded from /ai docs, 15 facts / 10 unknowns / 3 assumptions / 8 risks

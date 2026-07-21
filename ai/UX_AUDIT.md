@@ -1,7 +1,7 @@
 # UX_AUDIT.md — owner-facing UX findings & rulings
 
 > **Scope note (honest):** the full new-staff live UX audit the owner once commissioned was superseded before execution and has NOT been performed — this file does not pretend otherwise. It records owner-observed UX findings and their rulings, one entry per finding, under the DEC-015 evidence protocol.
-> IDs `UXF-###` stable. Next free ID: **UXF-003**
+> IDs `UXF-###` stable. Next free ID: **UXF-005**
 
 ---
 
@@ -23,6 +23,21 @@
 - **What:** `GET /api/finance/summary` (Finance hub → Receipts tab → "Overview" segment; finance + admin roles) sums ALL CONFIRMED receipts and APPROVED payments with no `origin:'july-import'` filter — and imported records carry exactly those statuses. Money in / Money out / Net / Receipts / Payments counts therefore include July history (≈52,349.88 in / 35,380.38 out, 216 + 45 records) mixed with live figures.
 - **Contrast (clean surfaces, code-verified):** owner home KPIs and Muhammed assistant (client appstate — structurally clean), driver/staff EOD and attention badges (explicit origin filters).
 - **Status:** reported to owner per protocol BEFORE any fix; fix approach is an owner decision — TASK-027 (BLOCKED). No production code changed by this audit.
+
+---
+
+## UXF-003 · Salesman Online → "Completed (255)" filled by imported history — RULE CONFIRMED (FACT-022/023)
+
+- **Observed (owner, live, 2026-07-21 — FACT-022):** Salesman role: Sales Home today-KPIs zero (clean ✓); Sales → Online: Incoming (0), **Completed (255)** — populated by July imports (e.g. ORD-1277, "Delivered", "1× July 2026 sale — INV…").
+- **Ruling (FACT-023, USER CONFIRMED):** Completed defaults to Live Operations only; imported orders never in the default operational list; accessible via a dedicated "Historical Import" filter/view; optional clearly labelled Combined View. Rationale: history serves audit/reconciliation/migration-validation/reporting, not day-to-day workload.
+- **Mechanism (FACT-025):** client buckets the unfiltered `/api/portal/orders/all` feed by status; imports are all DELIVERED → they own the Completed bucket.
+- **Status:** evidence toward the platform-wide standard (TASK-026, scope extended). No code changed.
+
+## UXF-004 · Driver landing dashboard reports "Delivered 255" from imported history (FACT-024, RISK-010)
+
+- **Observed (owner, live, 2026-07-21 — FACT-024):** Delivery driver role: Stops left 0 ✓ · **Delivered 255** ✗ · Cash to collect AED 0.00 ✓ · Your stops (0) ✓.
+- **Mechanism (FACT-025):** the route view's Delivered KPI counts ALL DELIVERED orders in the same unfiltered feed (`app.js:276`) — the 255 imports are today the only DELIVERED records, so history reads as current delivery performance. The stops list and cash tiles are OUT_FOR_DELIVERY-scoped, hence correct zeros. Driver Collect/EOD tabs are safe via the server EOD override (origin-filtered), but the legacy unfiltered view functions remain as dead code (latent risk noted in FACT-025/RISK-010).
+- **Status:** evidence toward the platform-wide standard (TASK-026). No code changed.
 
 ### Approved-in-principle UX requirement (future feature — TASK-026, build gated on separate owner approval)
 
