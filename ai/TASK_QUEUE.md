@@ -9,7 +9,7 @@
 > **Finishing**: move the block OUT of this file; record completion in STATUS.md + AGENT_LOG.md (same PR as the work). DONE tasks do not live here.
 > Owner (Asif) inputs are tasks too — marked `Owner: owner`.
 
-**Next free ID: TASK-026**
+**Next free ID: TASK-027**
 
 ---
 
@@ -137,3 +137,9 @@ Status: BLOCKED · Owner: — · Priority: P4 · Created: 2026-07-21T04:30+04:00
 Blocker: gates G1–G5 in ROADMAP.md §3 (DEC-014) — do not build until ALL fire
 Depends-on: TASK-014, TASK-015, TASK-012 (gates G2–G4)
 Done-when: gates verified true in AGENT_LOG evidence; then scope per DEC-014 (queue-watcher over the SAME /ai files, read-only over production, all writes via PRs + owner gates).
+
+### TASK-026 · Owner Overview: live/historical/combined data views (UX feature)
+Status: BLOCKED · Owner: owner (approval to build) · Priority: P3 · Created: 2026-07-21T06:45+04:00
+Context: implements FACT-016 rule per ai/UX_AUDIT.md UXF-001 spec; Overview KPIs are already live-only by construction (DEC-008, FACT-008) — this adds the labeling, Historical Imported Data card, and view switcher. Trace: TRACE-001
+Blocker: separate owner approval required before build (owner directive 2026-07-21)
+Done-when: period labeled "Live Operations / Since Go-Live"; Historical card shows imported period, record count, revenue, collections, import date; Live/Historical/Combined views with no KPI mixing unless Combined selected; sw.js CACHE bumped (DEC-012); TRACE-001 links completed through Business Validation.

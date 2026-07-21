@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-21T06:15+04:00 · main @ `86b1885` · updated by: claude-muhammed**
+**As of: 2026-07-21T06:45+04:00 · main @ `d861f5e` · updated by: claude-muhammed**
 
 ## Systems
 
@@ -32,6 +32,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 ## Recently completed
 
+- 2026-07-21 · Traceability standard (DEC-016) + Overview live-vs-historical rule (FACT-016, UXF-001, TASK-026 queued)
 - 2026-07-21 · Evidence protocol scaffolding (DEC-015): 5 registers seeded from /ai docs, 15 facts / 10 unknowns / 3 assumptions / 8 risks
 - 2026-07-21 · Claude account/workspace audit → /ai/CLAUDE_ACCOUNT_AUDIT.md (evidence-only; nothing enabled)
 - 2026-07-21 · Business-first roadmap (/ai/ROADMAP.md) + TASK-023/024/025 queued + DEC-013/014 (PR #24)

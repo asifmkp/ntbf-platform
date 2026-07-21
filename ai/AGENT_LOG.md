@@ -46,3 +46,8 @@ Notes: visibility limits documented (claude.ai UI Projects/Memory/settings not i
 What: owner-mandated enterprise-discovery evidence protocol; master-plan/architecture work paused.
 Result: created FACT_REGISTER (15 facts), UNKNOWNS (10), ASSUMPTIONS (3), RISKS (8), ENTERPRISE_SYSTEM_MAP (6 systems, 9 integrations); HANDOFF/TASK_QUEUE/DECISIONS/STATUS updated to enforce. Seeds cite /ai docs only; chat-only claims excluded (e.g. package.json start:prod quirk — not in docs, not seeded). Docs-only PR, [skip render].
 Notes: one known config-vs-decision conflict recorded, NOT a blocking contradiction: render.yaml/.env.example wrong Zoho org (FACT-004) vs DEC-003 — resolved by DEC-003 declaring configs wrong; cleanup tracked as TASK-023 + RISK-007. No CONTESTED facts at seed time.
+
+## 2026-07-21T06:45+04:00 · claude-muhammed · DEC-016 + FACT-016 owner standards
+What: recorded two owner directives (docs-only): (1) business rule — Owner Overview = live operations only, historical imports never mix into live KPIs except explicit Combined View; (2) permanent traceability standard — /ai KB single source of truth, full Objective→…→KB-Update chain per change.
+Result: FACT-016/017 registered (USER CONFIRMED, source = owner directive messages this date); UX_AUDIT.md created (UXF-001 discrepancy resolved-by-rule + future-feature spec); TRACEABILITY.md protocol + worked example TRACE-001; TASK-026 queued (BLOCKED on separate owner build approval); system map SYS-01 data-view semantics; DEC-016; HANDOFF DoD extended. No production code touched.
+Notes: honest scope kept — UX_AUDIT states the full staff UX audit was never performed; only the owner-confirmed finding is recorded.
