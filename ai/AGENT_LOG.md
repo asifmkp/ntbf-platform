@@ -90,3 +90,8 @@ Notes: merged only after full green per owner condition. Owner live re-check che
 ## 2026-07-21T12:10+04:00 · claude-muhammed · TASK-028 deployment certification
 What: merged PR #34 after full extended regression green (owner condition).
 Result: main @ 83966eb (Render auto-deploy, PWA v18 after one reload). TRACE-001 Deployment link updated. STOPPED per owner directive — live validation checklist reported to owner/Codex; Business Validation remains the only open link.
+
+## 2026-07-21T13:00+04:00 · claude-muhammed · incident (FACT-031) — role-switch contamination
+What: owner STOP #2 with exact 5-step reproduction; traced read-only.
+Result: root cause FACT-032 — shared onlineOrders/onlineView cache not reset by ACT.pick/switchRole (:1481-1482); load trigger (:120) skips refetch when onlineLoaded; driver route renders stale historical cache. Affected: Sales(hist/combined)→Driver Delivered tile (observed); warehouse structurally immune; collect/EOD safe; reverse paths clean. Severity LOW-MED, display-only, reload-resets. Coverage gap named: server-endpoint suite cannot catch client lifecycle — Playwright smoke proposed. TASK-029 queued (owner picks A / A+B / +Playwright). NO production change; PR #34/#35 preserved; TRACE-001 HELD.
+Notes: v18 server defaults verified clean BY the owner's own reproduction (fresh reload → 0) — backend standard holds; this is purely client state lifecycle.
