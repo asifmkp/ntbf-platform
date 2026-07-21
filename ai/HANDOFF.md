@@ -9,7 +9,7 @@
 2. **`/ai/STATUS.md`** — what's live, key figures, what's blocked (≈1 screen).
 3. **`/ai/ROADMAP.md`** — business-first execution order + phase gates (DEC-013): pick tasks in this order.
 4. **`/ai/TASK_QUEUE.md`** — pick work only from here (detail/state).
-   *Evidence layer (DEC-015):* **`FACT_REGISTER.md` · `UNKNOWNS.md` · `ASSUMPTIONS.md` · `RISKS.md` · `ENTERPRISE_SYSTEM_MAP.md`** — consult before relying on any business/system claim; see rule 8 below.
+   *Evidence layer (DEC-015/016):* **`FACT_REGISTER.md` · `UNKNOWNS.md` · `ASSUMPTIONS.md` · `RISKS.md` · `ENTERPRISE_SYSTEM_MAP.md` · `TRACEABILITY.md`** — consult before relying on any business/system claim; see rules 8–9 below.
 5. **`/ai/PROJECT_KNOWLEDGE.md`** — the section relevant to your task (skim the rest).
 6. **`/ai/DECISIONS.md`** — scan the index; never contradict an ACCEPTED decision without a new DEC approved by the owner.
 7. Repo-root `CLAUDE.md` — project hard rules (applies to every agent, not only Claude).
@@ -30,7 +30,8 @@
 5. **statusHistory is honest** — never fabricate a staff member's action.
 6. Verify before merge: `cd backend && npx nest build` (exit 0) and `node --check apps/mobile-app/app.js`. Frontend changes staff need immediately ⇒ bump `apps/sw.js` CACHE version (DEC-012).
 7. When unsure whether something needs the owner: it does. Add it to TASK_QUEUE as `Owner: owner` instead of acting.
-8. **Evidence protocol (DEC-015):** every durable statement carries exactly one level — VERIFIED (direct source+date) · USER CONFIRMED (response+date) · INFERRED (linked FACT ids) · ASSUMED (validation owner). New facts go to FACT_REGISTER.md; open questions to UNKNOWNS.md (never answered by guessing); assumptions to ASSUMPTIONS.md; risks to RISKS.md. Chat memory is never VERIFIED. **A contradiction between registered facts marks them CONTESTED and blocks every downstream conclusion citing them until resolved.** System-map fields you can't evidence stay literally `UNKNOWN`.
+8. **Traceability standard (DEC-016, permanent):** every feature/bug/audit/decision/AI recommendation/process change carries a `TRACE-###` record in `/ai/TRACEABILITY.md` linking Objective → Requirement → Rule → Evidence → System(s) → Data Owner → Implementation → Test Evidence → Deployment → Business Validation → KB Update. **A task is not complete until every applicable link is recorded** (`N/A (reason)` where genuinely inapplicable). Invalidated conclusions: correct the original record in place + append a change-history line citing old and new evidence — never leave conflicting documentation.
+9. **Evidence protocol (DEC-015):** every durable statement carries exactly one level — VERIFIED (direct source+date) · USER CONFIRMED (response+date) · INFERRED (linked FACT ids) · ASSUMED (validation owner). New facts go to FACT_REGISTER.md; open questions to UNKNOWNS.md (never answered by guessing); assumptions to ASSUMPTIONS.md; risks to RISKS.md. Chat memory is never VERIFIED. **A contradiction between registered facts marks them CONTESTED and blocks every downstream conclusion citing them until resolved.** System-map fields you can't evidence stay literally `UNKNOWN`.
 
 ## 3. Working protocol (the coordination loop)
 
@@ -44,6 +45,7 @@
 - [ ] AGENT_LOG.md entry appended (see its format)
 - [ ] New architecture/business choice? → DEC entry (owner-approved if it binds the owner)
 - [ ] PROJECT_KNOWLEDGE.md section updated + `Last verified` stamp if your change made it stale
+- [ ] TRACE record created/updated in TRACEABILITY.md — no applicable link left unrecorded (DEC-016)
 - [ ] Verification commands run and pasted in the PR body
 
 **CONFLICTS** → always `git pull --rebase` before pushing `/ai` changes. TASK_QUEUE/DECISIONS conflicts: re-apply YOUR block only, never rewrite others' blocks. AGENT_LOG conflicts: keep BOTH entries (append-only; order by timestamp). STATUS conflicts: newest `As of` wins; merge Recently-completed lines. Never resolve a conflict by deleting someone else's in-progress claim.

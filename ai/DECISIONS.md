@@ -5,7 +5,7 @@
 > A decision that isn't written here **does not exist** — chat history is not authority. Newest entries appended at the end.
 > Superseding: never edit an old decision's Decision text; add the new DEC and flip the old Status.
 
-**Next free ID: DEC-016**
+**Next free ID: DEC-017**
 
 ---
 
@@ -92,3 +92,9 @@ Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
 Context: master-plan/architecture work risks building on unverified claims; owner mandates an evidence discipline before strategic conclusions.
 Decision: five registers are canonical — FACT_REGISTER.md, UNKNOWNS.md, ASSUMPTIONS.md, RISKS.md, ENTERPRISE_SYSTEM_MAP.md. Every durable statement carries exactly one evidence level (VERIFIED / USER CONFIRMED / INFERRED with linked FACT ids / ASSUMED with validation owner), stable IDs and timestamps. Unknown fields stay explicitly UNKNOWN — never guessed. Contradictions mark facts CONTESTED and block all downstream conclusions citing them until resolved. Chat history is never a VERIFIED source. Strategic docs (BUSINESS_AI_MASTER_PLAN and architecture recommendations) are PAUSED until grounded in these registers.
 Consequences: HANDOFF §0/§2.8 + TASK_QUEUE header enforce the protocol; seed facts cite only repository /ai docs; register maintenance is part of every task's Definition of Done where facts change.
+
+### DEC-016 · Permanent traceability standard — /ai KB is the single source of truth, full chain per change
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
+Context: owner mandates a permanent operating standard so every change is auditable end-to-end and documentation never conflicts.
+Decision: every feature, bug, audit, decision, AI recommendation and process change records the chain Business Objective → Requirement → Rule → Evidence → System(s) → Data Owner → Implementation → Test Evidence → Deployment → Business Validation → KB Update, as a TRACE-### record per ai/TRACEABILITY.md (minimal fields, existing register IDs as link targets, `N/A (reason)` allowed, `pending` allowed only while in flight). A task is not complete until every applicable link is recorded. Invalidated conclusions are corrected in place with an appended change-history line citing old and new evidence; conflicting documentation is never left standing (AGENT_LOG stays append-only — corrections there are new entries).
+Consequences: HANDOFF Definition of Done extended; TASK_QUEUE completion gate extended; FACT-017 registers the standard; first worked example TRACE-001.
