@@ -12,7 +12,7 @@
 - **Failure recovery:** **NONE — no backup of /var/data (FACT-006, RISK-001).** Restore procedure: does not exist.
 - **Human owner:** Asif (business); agent maintainers via /ai protocol
 - **Monitoring/alerting:** UNKNOWN (none documented)
-- **Data-view semantics (FACT-016, USER CONFIRMED):** Owner Overview = current LIVE operational activity only. Records tagged `origin:'july-import'` (FACT-008) are historical: available for reporting/reconciliation/audit views, excluded from live KPIs, and may appear combined with live figures only when the owner explicitly selects a Combined View (future TASK-026; UX spec in ai/UX_AUDIT.md UXF-001)
+- **Data-view semantics (FACT-016, USER CONFIRMED):** Owner Overview = current LIVE operational activity only. Records tagged `origin:'july-import'` (FACT-008) are historical: available for reporting/reconciliation/audit views, excluded from live KPIs, and may appear combined with live figures only when the owner explicitly selects a Combined View (future TASK-026; UX spec in ai/UX_AUDIT.md UXF-001). Live-audit evidence (FACT-018, 2026-07-21): Owner → Documents observed showing 351 imported records / AED 159,692.26 across the five money categories with July references — historical availability confirmed; KPI non-mixing end-to-end verification still pending (UNK-011)
 
 ### SYS-02 · Zoho Books org 928751913 (.com)
 - **What:** ledger of record — SOURCE OF TRUTH for accounting/VAT (FACT-003); July 1–20 imported and reconciled (FACT-005)

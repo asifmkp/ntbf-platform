@@ -7,7 +7,7 @@
 > - **ASSUMED** — unvalidated; MUST also appear in ASSUMPTIONS.md with a validation owner.
 > IDs `FACT-###` are stable, never reused. `Status:` ACTIVE | CONTESTED | RETIRED(date). **A CONTESTED fact blocks every conclusion citing it until resolved** (log resolution in AGENT_LOG, retire or re-verify here).
 > Chat history is NOT a source: a claim only remembered from chat enters as ASSUMED or an UNKNOWN, never VERIFIED. Seeded 2026-07-21 exclusively from repository `/ai` docs, cited per row.
-> Next free ID: **FACT-018**
+> Next free ID: **FACT-019**
 
 | ID | Statement | Level | Source | Date | Status | Owner |
 |---|---|---|---|---|---|---|
@@ -28,3 +28,4 @@
 | FACT-015 | `PUT /api/appstate` is effectively open (whole shared dataset writable) when PUBLIC_API_TOKEN is unset; whether it IS set in prod is UNK-001 | VERIFIED | ai/PROJECT_KNOWLEDGE.md §10.5 (code behavior); prod state → ai/UNKNOWNS.md UNK-001 | 2026-07-21 | ACTIVE | claude-muhammed |
 | FACT-016 | Business rule: Owner Overview represents CURRENT LIVE operational activity only. Historical imports (incl. July) remain available for reporting, reconciliation and audit but must never make live KPIs appear active; imported history never mixes into live KPIs unless the owner explicitly selects a Combined View | USER CONFIRMED | Owner directive message, this session (recorded ai/AGENT_LOG.md 2026-07-21T06:45+04:00 entry); UX spec → ai/UX_AUDIT.md | 2026-07-21 | ACTIVE | owner |
 | FACT-017 | Permanent operating standard: /ai Enterprise Knowledge Base is the single source of truth, and every feature/bug/audit/decision/AI recommendation/process change must record the full traceability chain (DEC-016, ai/TRACEABILITY.md); a task is not complete until every applicable link is recorded | USER CONFIRMED | Owner directive message, this session (recorded ai/AGENT_LOG.md 2026-07-21T06:45+04:00 entry); ai/DECISIONS.md DEC-016 | 2026-07-21 | ACTIVE | owner |
+| FACT-018 | Live-audit evidence for FACT-016/DEC-008 (SYS-01): the live app's Owner → Documents screen displays 351 imported records totalling AED 159,692.26, categorised as expenses/receipts/payments/transfers/advances, with imported July references visible — i.e. historical records ARE available in Documents. Scope limits: this does NOT verify that imported records never affect any live KPI (→ UNK-011); the 351 count is a Documents-view figure whose relation to the 606-record server backfill (STATUS, PR #19) is unverified scope difference, not a contradiction | VERIFIED | Live owner session at app.ntbfllc.com/mobile-app/, Owner → Documents, observed first-hand by owner 2026-07-21 and reported same day (owner directive message) | 2026-07-21 | ACTIVE | owner |

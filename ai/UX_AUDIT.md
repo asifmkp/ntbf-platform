@@ -11,6 +11,7 @@
 - **Ruling that resolves it:** **FACT-016** — Owner Overview represents current live operational activity only; historical imports (including July) remain available for reporting, reconciliation and audit but must not make live KPIs appear active.
 - **Current technical state (context):** Overview KPI tiles are already live-only by construction — July history entered server stores only, tagged `origin:'july-import'`, excluded from client KPI dataset (DEC-008, FACT-008). The gap the rule addresses is *presentation*: nothing labels the period or surfaces the historical data deliberately.
 - **Status:** rule recorded and ACTIVE; UI implementation is a FUTURE, SEPARATELY APPROVED feature (below). No production code changed by this entry.
+- **Live-audit evidence (2026-07-21, FACT-018):** owner's live session (app.ntbfllc.com/mobile-app/, Owner → Documents) showed 351 imported records, AED 159,692.26 total, categorised expenses/receipts/payments/transfers/advances, with imported July references visible — confirming historical records are accessible in Documents as the rule requires. **Deliberately NOT asserted:** that imported records never affect any live KPI — that end-to-end check is pending (UNK-011).
 
 ### Approved-in-principle UX requirement (future feature — TASK-026, build gated on separate owner approval)
 
