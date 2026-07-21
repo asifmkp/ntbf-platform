@@ -1,7 +1,7 @@
 # UX_AUDIT.md — owner-facing UX findings & rulings
 
 > **Scope note (honest):** the full new-staff live UX audit the owner once commissioned was superseded before execution and has NOT been performed — this file does not pretend otherwise. It records owner-observed UX findings and their rulings, one entry per finding, under the DEC-015 evidence protocol.
-> IDs `UXF-###` stable. Next free ID: **UXF-005**
+> IDs `UXF-###` stable. Next free ID: **UXF-006**
 
 ---
 
@@ -48,3 +48,12 @@ USER CONFIRMED spec (owner directive message, 2026-07-21):
 4. Imported history NEVER mixes into live KPIs unless the owner actively selects Combined View.
 
 Traceability: TRACE-001 in ai/TRACEABILITY.md carries this finding's full chain (objective → rule → systems → implementation → validation).
+
+---
+
+## UXF-005 · Finance hub Receipts/Payments/Transfers lists show imported history by default — POST-DEPLOY CONTRADICTION (FACT-028/029, RISK-011)
+
+- **Observed (owner, live, 2026-07-21, post-PR-#31):** Finance tab opens Receipts segment: To approve 0 · To confirm 0 · **Done 40 / Recent (40)** filled with July imported receipts (Zahrat Al Reef 278.00/80.00, Al Karam 2,399.98, Rubel Grocery 1,559.88 …), no view control/labels. Landing KPIs zero ✓. Sales + Driver post-deploy regressions PASSED.
+- **Root cause (FACT-029):** the finance segment LIST endpoints (`/api/finance/receipts`, `/payments`, `/transfers/mine`) predate the view convention and were outside PR #31's scope AND its regression suite — the suite tested the summary KPIs and orders feed, not these lists. Client caps "Recent" at 40, exactly matching the observed counts. Actionable queues are structurally clean (imported records are terminal).
+- **Provenance:** the observed rows trace to backfill refs RCV2093/RCV2033/RCV2087/RCV2031 — "these are imported" upgraded from INFERRED to VERIFIED.
+- **Status:** reported under the owner's STOP; **no production change made**; fix options in TASK-028 (owner picks A/B). TRACE-001 Business Validation remains PENDING/held.
