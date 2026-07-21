@@ -71,3 +71,8 @@ Notes: no new contradiction beyond the pattern already reported (FACT-021 family
 What: owner declared the authoritative platform standard (FACT-026, subsumes FACT-016/023) and authorized "GO 026+027" — implemented both as one feature PR.
 Result: server view=live|historical|combined on /api/portal/orders/all + /api/finance/summary (live default); new GET /api/admin/july-history/summary; Owner Overview label + Historical Imported Data card + switcher; salesman Online + finance Overview labelled views; assistant tools declare live-only; sw.js v17. Regression suite backend/tools/test-live-standard.mjs 21/21 PASS twice (fresh state + idempotent re-run, local boot). RISK-009/010 closed; UNK-012 opened (AED 0.12 variance, per owner). No contradiction/security/data-integrity issue surfaced pre-merge.
 Notes: cross-role certification = code trace (all roles) + endpoint regression across admin/finance/salesman/driver-relevant feeds + Documents/EOD unchanged-correct checks. Business validation on live screens remains with owner (TRACE-001). Deployment sha recorded on merge.
+
+## 2026-07-21T10:20+04:00 · claude-muhammed · deployment certification (PR #31)
+What: merged the Live-vs-Historical standard after all 5 owner pre-merge checks passed.
+Result: main @ cdc3ef3 (Render auto-deploy). Certification: 21/21 regression checks x2, nest build exit 0, node --check clean, cross-role trace green. Remaining link in TRACE-001: owner Business Validation on live screens (Sales Completed live-only, driver Delivered no longer 255, Finance Overview live-only, Owner home historical card).
+Notes: staff get v17 after one reload (stale-while-revalidate, DEC-012).

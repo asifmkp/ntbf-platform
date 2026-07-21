@@ -48,6 +48,6 @@ Next free ID: **TRACE-002**
 - Data Owner: Asif
 - Implementation: TASK-026 + TASK-027, one feature PR (`feature/live-vs-historical-standard`) — server `view=live|historical|combined` convention on /api/portal/orders/all + /api/finance/summary, new /api/admin/july-history/summary, Owner Overview label + Historical Imported Data card + view switcher, salesman Online + finance Overview labelled views, assistant live-only declarations, sw.js v17 (FACT-027)
 - Test Evidence: backend/tools/test-live-standard.mjs — 21/21 PASS twice (fresh state + idempotent re-run), local boot 2026-07-21; output pasted in the PR body
-- Deployment: merged to main 2026-07-21 (auto-deploy, FACT-002) — sha in AGENT_LOG certification entry
+- Deployment: merged to main 2026-07-21 as `cdc3ef3` (PR #31, Render auto-deploy, FACT-002)
 - Business Validation: **pending owner** — re-check live screens after deploy: Sales → Online Completed shows live-only by default, driver Delivered no longer 255, Finance Overview live-only, Owner home shows the Historical Imported Data card
 - KB Update: FACT_REGISTER (FACT-026/027 + change histories) · DECISIONS (DEC-017) · UX_AUDIT (UXF-001..004 implemented) · ENTERPRISE_SYSTEM_MAP (compliance matrix) · RISKS (009/010 closed) · UNKNOWNS (UNK-012 opened) · TASK_QUEUE (026/027 done, removed) — PRs #27/#29/#30 + implementation PR
