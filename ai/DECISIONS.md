@@ -5,7 +5,7 @@
 > A decision that isn't written here **does not exist** — chat history is not authority. Newest entries appended at the end.
 > Superseding: never edit an old decision's Decision text; add the new DEC and flip the old Status.
 
-**Next free ID: DEC-017**
+**Next free ID: DEC-018**
 
 ---
 
@@ -98,3 +98,9 @@ Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
 Context: owner mandates a permanent operating standard so every change is auditable end-to-end and documentation never conflicts.
 Decision: every feature, bug, audit, decision, AI recommendation and process change records the chain Business Objective → Requirement → Rule → Evidence → System(s) → Data Owner → Implementation → Test Evidence → Deployment → Business Validation → KB Update, as a TRACE-### record per ai/TRACEABILITY.md (minimal fields, existing register IDs as link targets, `N/A (reason)` allowed, `pending` allowed only while in flight). A task is not complete until every applicable link is recorded. Invalidated conclusions are corrected in place with an appended change-history line citing old and new evidence; conflicting documentation is never left standing (AGENT_LOG stays append-only — corrections there are new entries).
 Consequences: HANDOFF Definition of Done extended; TASK_QUEUE completion gate extended; FACT-017 registers the standard; first worked example TRACE-001.
+
+### DEC-017 · Platform standard: Live Operations vs Historical Import (authoritative)
+Date: 2026-07-21 · Status: ACCEPTED · Decider: owner
+Context: imported July history leaked into operational query paths (finance summary, salesman Completed, driver Delivered — FACT-021/022/024/025); owner declared one enterprise rule instead of isolated fixes.
+Decision: every role, dashboard, KPI, queue, operational list, workflow, AI assistant response and default operational screen displays LIVE OPERATIONS ONLY. Historical imported data exists solely for audit, reconciliation, migration validation and historical reporting; reachable only via a Historical Import view/filter, an explicitly selected Combined View (never default), or audit/reporting modules. Registered as FACT-026 — the single authoritative rule; FACT-016/FACT-023 are subsumed into it. Implemented platform-wide as TASK-026+027 in one PR (server-side live-default `view=live|historical|combined` convention + labelled UI views + regression suite).
+Consequences: any new surface MUST default live-only and use the shared view convention; regression suite backend/tools/test-live-standard.mjs guards it; RISK-009/010 closed on merge (owner live validation pending in TRACE-001).

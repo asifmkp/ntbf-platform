@@ -27,6 +27,10 @@ const ROLES = {
 Object.keys(ROLES).forEach((r) => { if (r !== 'customer') ROLES[r].tabs.push({ id: 'muhammed', label: 'Muhammed', i: '✦' }); });
 let shopCart = {}; let shopMethod = 'CASH_ON_DELIVERY';
 let onlineOrders = []; let onlineLoaded = false;
+// Live Operations vs Historical Import standard (owner rule): the online-order feed
+// defaults to LIVE; 'historical' / 'combined' are explicit, labelled choices
+// (salesman Online tab only — driver/warehouse queues always stay live).
+let onlineView = 'live';
 // Which tabs, per role, show the real online-order queue (loaded from /api/portal/orders/all).
 const ONLINE_TABS = { salesman: ['online'], warehouse: ['dispatch'], driver: ['route', 'collect'] };
 let capDraft = {};
@@ -256,12 +260,22 @@ const views = {
     const review = onlineOrders.filter((o) => o.needsReview);
     const active = onlineOrders.filter((o) => !o.needsReview && o.status !== 'DELIVERED' && o.status !== 'CANCELLED');
     const done = onlineOrders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED');
+    // Live Operations vs Historical Import standard: default is live-only; the other
+    // two views are explicit and clearly labelled (audit/reference, never the default).
+    const viewSeg = `<div class="seg" style="margin-bottom:12px;overflow-x:auto">${[['live', 'Live Operations'], ['historical', 'Historical Import'], ['combined', 'Combined View']].map(([id, l]) => `<button class="${onlineView === id ? 'on' : ''}" data-act="onlineView" data-id="${id}">${l}</button>`).join('')}</div>`;
+    const viewBanner = onlineView === 'historical'
+      ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">📦 Historical Import — July 2026</b><div class="muted" style="font-size:12px;margin-top:3px">Imported records for audit, reconciliation and reference only. Not today's workload.</div></div>`
+      : onlineView === 'combined'
+        ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">Combined View — live + historical</b><div class="muted" style="font-size:12px;margin-top:3px">Includes imported July 2026 history. Switch back to Live Operations for day-to-day work.</div></div>`
+        : '';
+    const doneLabel = onlineView === 'live' ? 'Completed — Live Operations' : onlineView === 'historical' ? 'Completed — Historical Import' : 'Completed — Combined';
     return `
       <div class="card pad" style="margin-bottom:13px"><b style="font-size:13.5px">🌐 Online orders</b><div class="muted" style="font-size:12px;margin:4px 0 10px">Website &amp; WhatsApp orders. Tap any order for full details. Customers see the status live.</div><button class="btn sm" data-act="refreshOnline">↻ Refresh</button></div>
+      ${viewSeg}${viewBanner}
       ${review.length ? `<div class="sect">⚠ Needs review (${review.length})</div>${review.map((o) => orderCard(o, 'online')).join('')}` : ''}
       <div class="sect">Incoming (${active.length})</div>
       ${active.length ? active.map((o) => orderCard(o, 'online')).join('') : emptyRow('No open online orders. New website & WhatsApp orders land here.')}
-      ${done.length ? `<div class="sect">Completed (${done.length})</div>${done.map((o) => orderCard(o, 'online')).join('')}` : ''}`;
+      ${done.length ? `<div class="sect">${doneLabel} (${done.length})</div>${done.map((o) => orderCard(o, 'online')).join('')}` : onlineView === 'live' ? `<div class="sect">${doneLabel} (0)</div>${emptyRow('No live completed orders yet. July history is under Historical Import.')}` : ''}`;
   },
   visits() {
     return `<div class="sect">Visit log</div>
@@ -656,6 +670,7 @@ const views = {
         ${kpi('Outstanding A/R', aed(ar))}
         ${kpi('Orders in pipeline', inPipe)}
       </div>
+      ${ownerHistoricalBlock()}
       <div class="sect">Needs attention</div>
       <div class="card">
         ${row('✓', pend ? 'a' : 'g', pend + ' pending approvals', 'across all departments', pend ? '<button class="btn primary sm" data-act="tab" data-id="approvals">Review</button>' : '<span class="tag green">Clear</span>')}
@@ -750,12 +765,64 @@ const ORDER_NEXT_ACTION = { PLACED: 'Confirm order', CONFIRMED: 'Mark preparing'
 function nextOrderStatus(s) { const i = ORDER_FLOW.indexOf(s); return i >= 0 && i < ORDER_FLOW.length - 1 ? ORDER_FLOW[i + 1] : null; }
 async function loadOnlineOrders() {
   try {
-    const r = await fetch(API + '/api/portal/orders/all', { headers: staffHeaders(), cache: 'no-store' });
+    // Server defaults to live-only; historical/combined only when explicitly selected.
+    const r = await fetch(API + '/api/portal/orders/all?view=' + encodeURIComponent(onlineView), { headers: staffHeaders(), cache: 'no-store' });
     onlineOrders = r.ok ? await r.json() : [];
   } catch (e) { onlineOrders = []; }
   onlineLoaded = true;
   if ((ONLINE_TABS[role] || []).indexOf(tab) >= 0) render();
 }
+// ---- Owner Overview: Live Operations vs Historical Import (owner rule) ----
+// The KPI grid on the admin home is always LIVE (client dataset — July history never
+// entered it). This block adds the explicit labelling, the Historical Imported Data
+// card, and the optional Historical / Combined views. Nothing here changes live KPIs.
+let julyHist = null; let julyHistLoaded = false; let ownerView = 'live';
+async function loadJulyHist() {
+  try { julyHist = await staffApi('/api/admin/july-history/summary', 'GET'); }
+  catch (e) { julyHist = { error: e.message || 'Could not load' }; }
+  julyHistLoaded = true; render();
+}
+function ownerHistoricalBlock() {
+  const seg = `<div class="seg" style="margin:10px 0 12px;overflow-x:auto">${[['live', 'Live Operations'], ['historical', 'Historical Import'], ['combined', 'Combined View']].map(([id, l]) => `<button class="${ownerView === id ? 'on' : ''}" data-act="ownerView" data-id="${id}">${l}</button>`).join('')}</div>`;
+  const label = `<div class="muted" style="font-size:11.5px;margin:6px 2px 0">Figures above: <b>Live Operations · since go-live</b> — imported July history is never included.</div>`;
+  if (!julyHistLoaded) { setTimeout(loadJulyHist, 0); return label + seg + `<div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">Loading historical import summary…</div></div>`; }
+  if (!julyHist || julyHist.error) return label + seg + `<div class="card pad" style="margin-bottom:12px"><div class="muted" style="font-size:12px">Historical summary unavailable: ${esc((julyHist && julyHist.error) || 'unknown')} <button class="btn sm" data-act="julyHistRetry">↻ Retry</button></div></div>`;
+  const h = julyHist; const c = h.counts || {}; const t = h.totals || {};
+  const histCard = `
+    <div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)">
+      <b style="font-size:13.5px">📦 Historical Imported Data — July 2026</b>
+      <div class="muted" style="font-size:12px;margin:4px 0 8px">Kept for audit, reconciliation and reporting only. Never counted in live KPIs.</div>
+      <div class="li"><div class="m"><b>Imported period</b></div><div class="end">${h.period ? esc(h.period.from) + ' → ' + esc(h.period.to) : '—'}</div></div>
+      <div class="li"><div class="m"><b>Records</b></div><div class="end">${c.total || 0} (${c.orders || 0} sales + ${c.documents || 0} documents)</div></div>
+      <div class="li"><div class="m"><b>Revenue (imported sales)</b></div><div class="end">${aed(t.revenue || 0)}</div></div>
+      <div class="li"><div class="m"><b>Collections (imported receipts)</b></div><div class="end">${aed(t.collections || 0)}</div></div>
+      <div class="li"><div class="m"><b>Imported on</b></div><div class="end">${esc(h.importDate || '—')}</div></div>
+    </div>`;
+  if (ownerView === 'historical') {
+    return label + seg + `
+      <div class="card pad" style="margin-bottom:10px;border-left:3px solid var(--amber)"><b style="font-size:13px">Historical Import view</b><div class="muted" style="font-size:12px;margin-top:3px">July 2026 imported figures only — not current activity.</div></div>
+      <div class="mkpis">
+        ${kpi('Hist. revenue', aed(t.revenue || 0))}
+        ${kpi('Hist. collections', aed(t.collections || 0))}
+        ${kpi('Hist. expenses', aed(t.expenses || 0))}
+        ${kpi('Hist. records', c.total || 0)}
+      </div>` + histCard;
+  }
+  if (ownerView === 'combined') {
+    const liveRev = S.state.orders.filter((o) => o.status !== 'CANCELLED').reduce((s, o) => s + o.total, 0);
+    const liveCol = S.state.payments.reduce((s, p) => s + p.amount, 0);
+    return label + seg + `
+      <div class="card pad" style="margin-bottom:10px;border-left:3px solid var(--amber)"><b style="font-size:13px">Combined View — live + historical</b><div class="muted" style="font-size:12px;margin-top:3px">Deliberately combined totals. Not the default operational picture.</div></div>
+      <div class="mkpis">
+        ${kpi('Revenue (combined)', aed(liveRev + (t.revenue || 0)))}
+        ${kpi('Collections (combined)', aed(liveCol + (t.collections || 0)))}
+        ${kpi('Live share', aed(liveRev))}
+        ${kpi('Historical share', aed(t.revenue || 0))}
+      </div>` + histCard;
+  }
+  return label + seg + histCard;
+}
+
 // ---- shared helpers for the real online-order queue (app + WhatsApp) ----
 function srcBadge(o) { return o && o.source === 'whatsapp' ? '<span class="tag green">WhatsApp</span>' : '<span class="tag blue">App</span>'; }
 function reviewNote(o) {
@@ -1461,6 +1528,9 @@ const ACT = {
     catch (e) { toast(e.message); }
   },
   refreshOnline: () => { onlineLoaded = false; loadOnlineOrders(); toast('Refreshing…'); },
+  onlineView: (d) => { onlineView = d.id === 'historical' || d.id === 'combined' ? d.id : 'live'; onlineLoaded = false; loadOnlineOrders(); render(); },
+  ownerView: (d) => { ownerView = d.id === 'historical' || d.id === 'combined' ? d.id : 'live'; render(); },
+  julyHistRetry: () => { julyHistLoaded = false; julyHist = null; loadJulyHist(); },
   openOrder: (d) => { const o = onlineById(d.id); if (o) openSheet('Order ' + d.id, orderDetailsHtml(o)); },
   setOrderStatus: async (d) => {
     try {
@@ -2136,7 +2206,10 @@ async function adminSuggestions() {
   async function loadAllPay() { try { allPayData = await staffApi('/api/finance/payments', 'GET'); } catch (e) { allPayData = []; toast(e.message); } render(); }
   async function loadCheques() { try { chqData = await staffApi('/api/finance/cheques', 'GET'); } catch (e) { chqData = []; toast(e.message); } render(); }
   async function loadMyTrf() { try { myTrfData = await staffApi('/api/finance/transfers/mine', 'GET'); } catch (e) { myTrfData = []; toast(e.message); } render(); }
-  async function loadSummary() { try { sumData = await staffApi('/api/finance/summary', 'GET'); } catch (e) { sumData = {}; toast(e.message); } render(); }
+  // Live Operations vs Historical Import standard: summary defaults to live-only
+  // server-side; historical/combined are explicit, labelled choices here.
+  let finView = 'live';
+  async function loadSummary() { try { sumData = await staffApi('/api/finance/summary?view=' + encodeURIComponent(finView), 'GET'); } catch (e) { sumData = {}; toast(e.message); } render(); }
   async function ensureCats() { if (payCats) return payCats; try { payCats = (await staffApi('/api/finance/payments/categories', 'GET')).categories; } catch (e) { payCats = []; } return payCats; }
   const isFinanceView = () => role === 'finance' || role === 'admin';
   const refreshFin = () => { myRcptData = allRcptData = allPayData = chqData = myTrfData = sumData = null; };
@@ -2207,7 +2280,13 @@ async function adminSuggestions() {
   }
   function overviewBody(s) {
     s = s || {};
-    return `<div class="mkpis">
+    const seg = `<div class="seg" style="margin-bottom:12px;overflow-x:auto">${[['live', 'Live Operations'], ['historical', 'Historical Import'], ['combined', 'Combined View']].map(([id, l]) => `<button class="${finView === id ? 'on' : ''}" data-act="finView" data-id="${id}">${l}</button>`).join('')}</div>`;
+    const banner = finView === 'historical'
+      ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">📦 Historical Import — July 2026</b><div class="muted" style="font-size:12px;margin-top:3px">Imported money records only — audit/reconciliation reference, not current cash flow.</div></div>`
+      : finView === 'combined'
+        ? `<div class="card pad" style="margin-bottom:12px;border-left:3px solid var(--amber)"><b style="font-size:13px">Combined View — live + historical</b><div class="muted" style="font-size:12px;margin-top:3px">Includes imported July history. Switch to Live Operations for today's position.</div></div>`
+        : `<div class="muted" style="font-size:11.5px;margin:0 2px 10px">Live Operations only — imported July history excluded (see Documents for history).</div>`;
+    return seg + banner + `<div class="mkpis">
         ${kpi('Money in', aed(s.moneyIn || 0), 'green')}
         ${kpi('Money out', aed(s.moneyOut || 0), 'red')}
         ${kpi('Net', aed(s.net || 0), (s.net || 0) < 0 ? 'red' : 'green')}
@@ -2442,6 +2521,7 @@ async function adminSuggestions() {
 
   // ---- segment switch ----
   ACT.finSeg = (d) => { finSeg = d.id; localStorage.setItem('ntbf_finseg', d.id); render(); };
+  ACT.finView = (d) => { finView = d.id === 'historical' || d.id === 'combined' ? d.id : 'live'; sumData = null; render(); };
 
   // ---- payments ----
   ACT.payAdd = () => paymentForm();

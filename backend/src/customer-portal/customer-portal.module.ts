@@ -1,6 +1,6 @@
 import {
   BadRequestException, Body, CanActivate, Controller, ExecutionContext, ForbiddenException, Get, Injectable, Module, Post,
-  Req, UnauthorizedException, UseGuards,
+  Query, Req, UnauthorizedException, UseGuards,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
@@ -220,10 +220,16 @@ export class CustomerStore {
     o.statusHistory.push({ from: o.status, to: o.status, by: entry.by, role: entry.role, at: entry.at, note: 'review resolved', override: false });
     this.save(); return o;
   }
-  allOrders() {
+  allOrders(view?: string) {
+    // Live Operations vs Historical Import standard (FACT-026): the DEFAULT feed is
+    // live-only — origin:'july-import' records (DEC-007/DEC-008) are history and must
+    // never reach operational screens unless a historical/combined view is explicit.
+    const v = view === 'historical' || view === 'combined' ? view : 'live';
+    const rows = this.data.orders.filter((o) =>
+      v === 'combined' ? true : v === 'historical' ? o.origin === 'july-import' : o.origin !== 'july-import');
     // Fall back to a name/phone stored ON the order (imported July history carries the
     // customer name directly instead of force-creating customer accounts).
-    return this.data.orders.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : (o.customerName || '—'), customerPhone: c ? c.phone : (o.customerPhone || '') }; });
+    return rows.map((o) => { const c = this.data.customers.find((x) => x.id === o.customerId); return { ...o, customerName: c ? c.name : (o.customerName || '—'), customerPhone: c ? c.phone : (o.customerPhone || '') }; });
   }
   /** Admin "clear test data": drop every order (app + WhatsApp-ingested). Customer accounts and
    *  seq are preserved — accounts are not transactional records, and new order IDs never reuse
@@ -314,7 +320,7 @@ export class CustomerPortalService {
     return this.store.addOrder(customerId, resolved, dto.method || 'CASH_ON_DELIVERY', dto.address, dto.note);
   }
   myOrders(customerId: string) { return this.store.ordersFor(customerId); }
-  allOrders() { return this.store.allOrders(); }
+  allOrders(view?: string) { return this.store.allOrders(view); }
   updateStatus(dto: StatusDto, staff: { id: string; roles: string[]; name: string }) {
     const to = dto.status;
     if (ORDER_STATUSES.indexOf(to) < 0) throw new BadRequestException('Invalid status');
@@ -432,8 +438,9 @@ export class CustomerPortalController {
   mine(@Req() req: any) { return this.svc.myOrders(req.customerId); }
 
   // Staff-only (logged-in staff): incoming customer orders + status updates.
+  // ?view=live (default) | historical | combined — Live-vs-Historical standard (FACT-026).
   @Public() @UseGuards(StaffAuthGuard) @Get('orders/all')
-  all() { return this.svc.allOrders(); }
+  all(@Query('view') view?: string) { return this.svc.allOrders(view); }
 
   @Public() @UseGuards(StaffAuthGuard) @Post('orders/status')
   setStatus(@Body() dto: StatusDto, @Req() req: any) { return this.svc.updateStatus(dto, req.staff); }
