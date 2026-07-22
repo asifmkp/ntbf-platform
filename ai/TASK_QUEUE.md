@@ -80,9 +80,9 @@ Context: 0/1,490 Zoho items have barcodes; blocks image/enrichment workstream (o
 Done-when: staff can scan a product barcode against a catalog item; export path for enrichment exists. Needs owner go.
 
 ### TASK-014 · Backups for /var/data → Supabase Storage (DEC-019)
-Status: REVIEW · Owner: claude-openclaw · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T05:33+04:00
-Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design doc complete: `ai/BACKUP_DESIGN.md` — architecture (in-process nightly cron, tar+AES-256-GCM encrypt, upload via Supabase Storage REST), retention (14 daily/8 weekly/6 monthly), restore procedure, DR drill plan, growth estimate (ASSUMED, ASM-004 — real figure needs UNK-013 resolved), verification method (Supabase MCP list). **Open owner decisions before build** (§8 of the design doc): reuse WhatsApp-bot Supabase project vs isolated project; where the `BACKUP_ENCRYPTION_KEY` is escrowed outside Render; confirm nightly schedule time.
-Blocker: owner review of `ai/BACKUP_DESIGN.md` — approve/adjust the design, answer §8 open questions, before any build/cron code is written.
+Status: IN_PROGRESS · Owner: claude-openclaw · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T06:15+04:00
+Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design doc complete and owner-approved: `ai/BACKUP_DESIGN.md` — architecture (in-process nightly cron, tar+AES-256-GCM encrypt, upload via Supabase Storage REST, reuse WhatsApp-bot Supabase project with a dedicated bucket), retention (14 daily/8 weekly/6 monthly), restore procedure, DR drill plan. Growth estimate: current usage VERIFIED negligible (FACT-034 — 716K/973M, 0%), annual-rate assumption (ASM-004) still open but de-risked, re-measure in 1-2 months. All 3 owner decisions from §8 resolved 2026-07-22 (bucket reuse, key escrow via Render env + password manager, 02:00 Asia/Dubai schedule). Build unblocked.
+Depends-on: — (no remaining blocker)
 Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated (logged in `ai/BACKUP_DESIGN.md` §9) — not before.
 
 ### TASK-015 · Activate CI (build + tests + /ai docs check)

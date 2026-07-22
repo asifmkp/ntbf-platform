@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-22T05:33+04:00 · main @ `61a9e7c` · updated by: claude-openclaw**
+**As of: 2026-07-22T06:15+04:00 · main @ `61a9e7c` · updated by: claude-openclaw**
 
 ## Systems
 
@@ -24,15 +24,17 @@ Staff cash floats (Zoho): Vansale-Haris 11,095 · Musthafa 4,812.50 · Asif 3,19
 ## In-flight
 
 - **Enterprise discovery (DEC-015):** evidence registers live (FACT_REGISTER / UNKNOWNS / ASSUMPTIONS / RISKS / ENTERPRISE_SYSTEM_MAP). BUSINESS_AI_MASTER_PLAN + architecture recommendations PAUSED until grounded in them; next step is resolving UNKNOWNS (mostly owner interviews).
-- Feature work paused by owner. Execution order lives in /ai/ROADMAP.md (DEC-013); orchestrator postponed behind gates (DEC-014). Awaiting owner: TASK-014 design review (ai/BACKUP_DESIGN.md, PR #40) + input batch.
+- Feature work paused by owner (exception: TASK-014, owner-approved Phase 0 first-mover, now building). Execution order lives in /ai/ROADMAP.md (DEC-013); orchestrator postponed behind gates (DEC-014). Awaiting owner: input batch (floats etc.) + TASK-012 sync design go.
+- TASK-014 build in progress: design approved, all 3 owner decisions resolved (bucket reuse, key escrow, schedule), disk-usage check confirms no near-term capacity concern (FACT-034). Next: BackupService implementation, then the restore drill that defines "done" (DEC-019).
 
 ## Blocked on owner (see TASK_QUEUE for details)
 
-TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-004 item-wise report · TASK-005/006/007/009 small accounting calls · TASK-008 CA loan figures · TASK-014 design review (ai/BACKUP_DESIGN.md §8) · gos for TASK-012 sync design, TASK-013 barcodes.
+TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-004 item-wise report · TASK-005/006/007/009 small accounting calls · TASK-008 CA loan figures · gos for TASK-012 sync design, TASK-013 barcodes.
 
 ## Recently completed
 
-- 2026-07-22 · **TASK-014 backup design submitted for owner review**: `ai/BACKUP_DESIGN.md` — nightly in-process cron, tar+AES-256-GCM, Supabase Storage upload/retention (14d/8w/6m), documented restore procedure + DR drill plan; growth estimate ASSUMED (ASM-004, real figure needs UNK-013 — no Render disk access this session); 3 open owner decisions flagged (§8: bucket reuse, key escrow, schedule time). Docs-only PR #40. TASK-014 moved OPEN→REVIEW; not built yet, no restore drill run yet.
+- 2026-07-22 · **TASK-014 design approved, build unblocked**: owner resolved all 3 open decisions in `ai/BACKUP_DESIGN.md` §8 (reuse WhatsApp-bot Supabase project + dedicated bucket; key escrow = Render env + password manager; nightly 02:00 Asia/Dubai). Owner ran the disk-usage check via Render Shell: live `/var/data` at 0% utilization (716K/973M, FACT-034) — no near-term capacity concern; UNK-013 resolved, ASM-004 de-risked (rate still unconfirmed, re-measure in 1-2 months). TASK-014 REVIEW→IN_PROGRESS; still not built, restore drill still the finish line.
+- 2026-07-22 · TASK-014 backup design submitted for owner review: `ai/BACKUP_DESIGN.md` (PR #40) — nightly in-process cron, tar+AES-256-GCM, Supabase Storage upload/retention (14d/8w/6m), documented restore procedure + DR drill plan.
 - 2026-07-21 · Section-3 owner decisions: backups→Supabase (DEC-019, design-first), System B delete (DEC-018), weekly Monday owner review approved, Playwright→TASK-015, training program queued (TASK-031)
 - 2026-07-21 · **Role-switch fix SHIPPED (GO 029 A+B)**: guard + reset + defense filter, v19 (FACT-033) — owner 5-step re-check pending; Playwright deferred to TASK-015
 - 2026-07-21 · **STOP #2**: role-switch view-state contamination found by owner (Sales Historical → Driver shows Delivered 255 until reload) — FACT-031/032, RISK-012, TASK-029 awaits owner option; TRACE-001 still HELD

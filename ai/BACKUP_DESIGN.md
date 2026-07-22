@@ -65,19 +65,20 @@ TASK-014 is explicitly **not done** until this drill has run successfully and is
 
 ## 7. Storage growth estimate
 
-**Known, VERIFIED inputs:** Render disk capacity 1 GB (`render.yaml`); `STATE_DIR/data/` holds JSON stores (small — text, typically single-digit MB even at thousands of records) plus two photo directories (`finance-bills/`, `expense-bills/`) whose growth tracks document-capture and expense-claim volume.
+**VERIFIED (FACT-034, 2026-07-22, owner-run Render Shell):** the live `/var/data` mount (`/dev/nvme15n1`, 973.4M capacity) is at **0% utilization — 716.0K used, 956.7M available.** This is ~3 weeks post-restart (business restarted 1 Jul 2026), so it's an early-curve reading, not a full-year trend — but it settles the operationally important question: **current usage poses no near-term capacity concern**, against either the 1 GB disk or Supabase Storage's free tier holding ~28 retained archive copies.
 
-**Not currently measurable from this session** — no MCP/shell access to the live Render disk in this session (unlike the "claude-muhammed" long-running session, which may have it). This is recorded as an open unknown (§8) rather than guessed.
+Per-subdirectory breakdown (`finance-bills/` vs `expense-bills/`) was not captured — the measurement commands were run from `/app/backend` (the app code directory: 165.2M, mostly `node_modules`) instead of `/var/data/data`, so `du`/`find` there measured the wrong tree. At 716K total, this breakdown is low-value right now (there's very little to break down) — not worth a second round trip before build, but worth a precise pass once volume grows (see re-measure note below).
 
-**Reasoned estimate (ASSUMED, ASM — needs promotion to VERIFIED before the growth curve is trusted for capacity planning):** JSON stores are unlikely to exceed tens of MB even at a full year of order/expense volume for a 4–6-person team (each order/expense record is a few hundred bytes to ~1 KB of JSON). Photo directories are the real driver — if bill/expense photos average ~200–500 KB each (typical phone-camera JPEG, possibly pre-compressed client-side) and the business captures on the order of a few dozen documents/week, that's roughly 5–15 MB/week, or **~250 MB–750 MB/year** — within the 1 GB disk itself, and well within Supabase Storage's free tier even holding ~28 retained archive copies, *provided archives compress reasonably* (JSON compresses well; JPEGs don't compress much further, so archive size ≈ live disk size, not smaller).
-**Action before build:** capture a real `du -sh /var/data/data` (and a breakdown of `finance-bills/` + `expense-bills/` specifically) via Render shell or MCP as the first step of implementation, to replace this estimate with a VERIFIED figure and confirm the free-tier ceiling isn't already close.
+**Original reasoned estimate (ASM-004, still open as a rate — not disproven, just not yet trend-confirmed):** JSON stores stay small (single-digit MB even at scale); photo directories (`finance-bills/`, `expense-bills/`) are the real long-term driver — reasoned at ~250–750 MB/year once the business is at steady-state document volume. The 716K reading is consistent with "very early on this curve," not with the estimate being wrong.
+**Action:** re-measure `/var/data/data` (correct path this time) in 1–2 months once more order/expense volume has accumulated, to fit an actual growth rate instead of a single point-in-time reading. Not a blocker for starting the build.
 
-## 8. Open questions for owner sign-off (before build starts)
+## 8. Owner decisions (2026-07-22 — RESOLVED, build unblocked)
 
-1. **Bucket/project choice** (§2): reuse the WhatsApp-bot Supabase project (`wvsgeumafnqelspcqivo`), or provision an isolated project for backups? (Recommendation: reuse.)
-2. **Key escrow** (§3): `BACKUP_ENCRYPTION_KEY` lives in Render env. If Render itself is lost (the disaster this whole task defends against), where does the owner keep a second copy of that key so backups remain decryptable? (Recommendation: owner stores it in a password manager or equivalent outside Render — needs an explicit owner answer, this is the one place where losing a secret means losing everything.)
-3. **Nightly schedule time** (§2): 02:00 Asia/Dubai proposed (after EOD/cash handover) — confirm no conflicting nightly job (e.g. the existing Supabase `pg_cron` WhatsApp reminder job runs 04:00 UTC / 08:00 UAE — different system, no conflict, noted for awareness).
-4. **Real disk-usage figure** (§7) — needs MCP/shell access this session doesn't have; flag for whichever agent/owner can run `du -sh` against the live disk before implementation starts.
+1. **Bucket/project choice:** ✅ reuse the existing WhatsApp-bot Supabase project (`wvsgeumafnqelspcqivo`) with a dedicated backup bucket, per the recommendation in §2.
+2. **Key escrow:** ✅ `BACKUP_ENCRYPTION_KEY` stored as (a) a Render environment variable, and (b) an offline copy in the team's password manager (1Password, or Bitwarden if that's the standard) — so a Render-loss disaster doesn't also make backups undecryptable.
+3. **Nightly schedule time:** ✅ 02:00 Asia/Dubai, as proposed in §2.
+
+All three open questions are resolved — nothing further blocks starting the build (BackupService, cron, encryption, upload/retention, admin trigger endpoint) per §2–§6 of this doc.
 
 ## 9. Drill log (append after each restore drill — empty until the first drill runs)
 
