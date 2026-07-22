@@ -16,7 +16,7 @@
 | Zoho Books 928751913 (.com) | July 1–20 fully imported & reconciled (grand recon PASS) · writes env-locked |
 | Audit trail | Recording (hash-chained) · off-box export OFF (env not set) |
 
-## Key figures (July 1–20, reconciled 2026-07-21)
+## Key figures (July 1–20, reconciled 2026-07-21 · re-verified live 2026-07-22, no drift)
 
 Sales 63,519.63 · collected 52,349.88 (1,510.87 unapplied old-dues credits) · open receivable **11,193.05** (hybrid general trading 9,399.60 = 84%) · purchases 36,288.09 · supplier payables 907.71 · expenses 10,572.00 · staff cash transfers 61,390.00 · Shanu Capital ~1,004,062 Cr (vehicle-loan journals pending, TASK-008).
 Staff cash floats (Zoho): Vansale-Haris 11,095 · Musthafa 4,812.50 · Asif 3,190 · Rashid 330 · Dhanish −1,700 · Office −11,330 (negatives resolve with TASK-001).
