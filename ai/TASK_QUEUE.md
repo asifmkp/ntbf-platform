@@ -80,9 +80,10 @@ Context: 0/1,490 Zoho items have barcodes; blocks image/enrichment workstream (o
 Done-when: staff can scan a product barcode against a catalog item; export path for enrichment exists. Needs owner go.
 
 ### TASK-014 · Backups for /var/data → Supabase Storage (DEC-019)
-Status: CLAIMED · Owner: claude-openclaw · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T05:33+04:00
-Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design-first: architecture, retention, encryption, restore procedure, DR test plan, growth estimate, verification method — presented to owner before build.
-Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated — not before.
+Status: REVIEW · Owner: claude-openclaw · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T05:33+04:00
+Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design doc complete: `ai/BACKUP_DESIGN.md` — architecture (in-process nightly cron, tar+AES-256-GCM encrypt, upload via Supabase Storage REST), retention (14 daily/8 weekly/6 monthly), restore procedure, DR drill plan, growth estimate (ASSUMED, ASM-004 — real figure needs UNK-013 resolved), verification method (Supabase MCP list). **Open owner decisions before build** (§8 of the design doc): reuse WhatsApp-bot Supabase project vs isolated project; where the `BACKUP_ENCRYPTION_KEY` is escrowed outside Render; confirm nightly schedule time.
+Blocker: owner review of `ai/BACKUP_DESIGN.md` — approve/adjust the design, answer §8 open questions, before any build/cron code is written.
+Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated (logged in `ai/BACKUP_DESIGN.md` §9) — not before.
 
 ### TASK-015 · Activate CI (build + tests + /ai docs check)
 Status: OPEN · Owner: — · Priority: P2 · Created: 2026-07-21T02:00+04:00
