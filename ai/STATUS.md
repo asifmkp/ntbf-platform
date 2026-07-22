@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-22T06:15+04:00 · main @ `61a9e7c` · updated by: claude-openclaw**
+**As of: 2026-07-22T07:00+04:00 · main @ `40f5fc0` (TASK-014 build on feature/task-014-backup-build, PR pending) · updated by: claude-openclaw**
 
 ## Systems
 
@@ -24,16 +24,17 @@ Staff cash floats (Zoho): Vansale-Haris 11,095 · Musthafa 4,812.50 · Asif 3,19
 ## In-flight
 
 - **Enterprise discovery (DEC-015):** evidence registers live (FACT_REGISTER / UNKNOWNS / ASSUMPTIONS / RISKS / ENTERPRISE_SYSTEM_MAP). BUSINESS_AI_MASTER_PLAN + architecture recommendations PAUSED until grounded in them; next step is resolving UNKNOWNS (mostly owner interviews).
-- Feature work paused by owner (exception: TASK-014, owner-approved Phase 0 first-mover, now building). Execution order lives in /ai/ROADMAP.md (DEC-013); orchestrator postponed behind gates (DEC-014). Awaiting owner: input batch (floats etc.) + TASK-012 sync design go.
-- TASK-014 build in progress: design approved, all 3 owner decisions resolved (bucket reuse, key escrow, schedule), disk-usage check confirms no near-term capacity concern (FACT-034). Next: BackupService implementation, then the restore drill that defines "done" (DEC-019).
+- Feature work paused by owner (exception: TASK-014, owner-approved Phase 0 first-mover). Execution order lives in /ai/ROADMAP.md (DEC-013); orchestrator postponed behind gates (DEC-014). Awaiting owner: input batch (floats etc.) + TASK-012 sync design go.
+- TASK-014 code built + tested (nest build clean, 9/9 Jest green), PR pending merge. Now BLOCKED on owner: provision a Supabase Storage bucket + service key (`ai/BACKUP_DESIGN.md` §8a), then the restore drill that actually closes DEC-019/TASK-014.
 
 ## Blocked on owner (see TASK_QUEUE for details)
 
-TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-004 item-wise report · TASK-005/006/007/009 small accounting calls · TASK-008 CA loan figures · gos for TASK-012 sync design, TASK-013 barcodes.
+TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-004 item-wise report · TASK-005/006/007/009 small accounting calls · TASK-008 CA loan figures · TASK-014 Supabase bucket/key provisioning (ai/BACKUP_DESIGN.md §8a) · gos for TASK-012 sync design, TASK-013 barcodes.
 
 ## Recently completed
 
-- 2026-07-22 · **TASK-014 design approved, build unblocked**: owner resolved all 3 open decisions in `ai/BACKUP_DESIGN.md` §8 (reuse WhatsApp-bot Supabase project + dedicated bucket; key escrow = Render env + password manager; nightly 02:00 Asia/Dubai). Owner ran the disk-usage check via Render Shell: live `/var/data` at 0% utilization (716K/973M, FACT-034) — no near-term capacity concern; UNK-013 resolved, ASM-004 de-risked (rate still unconfirmed, re-measure in 1-2 months). TASK-014 REVIEW→IN_PROGRESS; still not built, restore drill still the finish line.
+- 2026-07-22 · **TASK-014 backup code built**: `backend/src/backup/*` (nightly `@Cron` 02:00 Asia/Dubai, tar+AES-256-GCM, Supabase Storage upload/retention, admin manual-trigger + status endpoints), wired into app.module.ts. `nest build` exit 0, 9/9 Jest green — incl. a Dubai-local-vs-UTC day-boundary bug in the weekly/monthly promotion logic caught and fixed before merge. Ships fail-safe (no-ops if unconfigured). TASK-014 now BLOCKED on owner provisioning Supabase bucket/service key — code alone doesn't close the task, the restore drill does.
+- 2026-07-22 · TASK-014 design approved, build unblocked: owner resolved all 3 open decisions in `ai/BACKUP_DESIGN.md` §8 (reuse WhatsApp-bot Supabase project + dedicated bucket; key escrow = Render env + password manager; nightly 02:00 Asia/Dubai). Disk-usage check: live `/var/data` at 0% utilization (716K/973M, FACT-034); UNK-013 resolved, ASM-004 de-risked.
 - 2026-07-22 · TASK-014 backup design submitted for owner review: `ai/BACKUP_DESIGN.md` (PR #40) — nightly in-process cron, tar+AES-256-GCM, Supabase Storage upload/retention (14d/8w/6m), documented restore procedure + DR drill plan.
 - 2026-07-21 · Section-3 owner decisions: backups→Supabase (DEC-019, design-first), System B delete (DEC-018), weekly Monday owner review approved, Playwright→TASK-015, training program queued (TASK-031)
 - 2026-07-21 · **Role-switch fix SHIPPED (GO 029 A+B)**: guard + reset + defense filter, v19 (FACT-033) — owner 5-step re-check pending; Playwright deferred to TASK-015
@@ -41,10 +42,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 - 2026-07-21 · **Finance-list gap CLOSED (GO 028 A)**: all 5 finance list endpoints live-default + hub view controls, suite 32/32 ×2, v18 (FACT-030) — owner live re-check + Codex audit pending
 - 2026-07-21 · **Post-deploy contradiction found by owner (STOP)**: finance Receipts/Payments/Transfers LISTS still show imported history (FACT-028/029, RISK-011) — fix TASK-028 awaits owner option A/B; TRACE-001 validation HELD
 - 2026-07-21 · **Live Operations vs Historical Import standard SHIPPED** (DEC-017/FACT-026/027): TASK-026+027 in one PR, 21/21 regression checks ×2, v17. Owner live validation pending
-- 2026-07-21 · Ops-surface audit: sales rule FACT-023 confirmed; salesman Completed(255) + driver Delivered(255) mixing live-observed & code-confirmed (FACT-022/024/025, RISK-010); TASK-026 now platform-wide standard, P2
-- 2026-07-21 · KPI-surface trace: UNK-011 resolved, 351-vs-606 reconciled exactly; **finance summary KPI compliance gap found** (FACT-021, RISK-009, TASK-027 awaiting owner)
-- 2026-07-21 · Traceability standard (DEC-016) + Overview live-vs-historical rule (FACT-016, UXF-001, TASK-026 queued)
 
 ## Standing cautions
 
-main auto-deploys (merge = ship) · no backups of /var/data yet (TASK-014) · seeded passwords unrotated (TASK-016) · daily 9AM-UAE owner ping runs from the Claude "muhammed" session.
+main auto-deploys (merge = ship) · no backups of /var/data yet — code built, awaiting Supabase provisioning + restore drill (TASK-014) · seeded passwords unrotated (TASK-016) · daily 9AM-UAE owner ping runs from the Claude "muhammed" session.

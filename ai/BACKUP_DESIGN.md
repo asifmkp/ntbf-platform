@@ -80,6 +80,17 @@ Per-subdirectory breakdown (`finance-bills/` vs `expense-bills/`) was not captur
 
 All three open questions are resolved — nothing further blocks starting the build (BackupService, cron, encryption, upload/retention, admin trigger endpoint) per §2–§6 of this doc.
 
+## 8a. Build status (2026-07-22)
+
+Code is built and merged: `backend/src/backup/` (`SupabaseStorageClient`, `BackupStore`, `BackupService`, `BackupController`, `BackupModule`), wired into `app.module.ts` (`ScheduleModule.forRoot()` + `BackupModule`). `nest build` exit 0; 9/9 Jest tests green (encrypt/decrypt round-trip incl. tamper/wrong-key rejection, retention-window selection, and a Dubai-local-vs-UTC day-boundary regression test for the weekly/monthly promotion logic — the cron fires at 02:00 Asia/Dubai, which is still the previous UTC calendar day, so a naive `.getUTCDay()` would have promoted backups on the wrong day; caught in review before merge).
+
+**Ships fail-safe:** if `BACKUP_ENCRYPTION_KEY` / `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` aren't all set in Render, every run (cron or manual) logs "not configured" and returns cleanly — no crash, no partial state. Safe to have merged before Supabase-side provisioning is done.
+
+**Still needed before this does anything live:**
+1. Owner provisions a Storage bucket (e.g. `ntbf-backups`) in the `wvsgeumafnqelspcqivo` Supabase project + a service-role key scoped to it.
+2. Owner sets `BACKUP_ENCRYPTION_KEY` (generate via `openssl rand -hex 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` in Render env (and escrows the encryption key copy per §8.2).
+3. Once configured, a manual run (`POST /api/admin/backup/run`, admin JWT) produces the first real backup — that's step 1 of the drill below. §9 stays empty, and `TASK-014` stays open, until that drill is actually run and documented.
+
 ## 9. Drill log (append after each restore drill — empty until the first drill runs)
 
 *(none yet — TASK-014 is not done until an entry appears here)*

@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { PrismaModule } from './prisma/prisma.module';
@@ -35,10 +36,12 @@ import { SuggestionsModule } from './suggestions/suggestions.module';
 import { AttentionModule } from './attention/attention.module';
 import { ClearTestDataModule } from './admin/clear-test-data.module';
 import { JulyBackfillModule } from './admin/july-backfill.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     // Serve the front-end apps so the whole platform is one deployable service.
     ServeStaticModule.forRoot({
       rootPath: process.env.STATIC_DIR || join(process.cwd(), '..', 'apps'),
@@ -76,6 +79,7 @@ import { JulyBackfillModule } from './admin/july-backfill.module';
     AttentionModule,
     ClearTestDataModule,
     JulyBackfillModule,
+    BackupModule,
   ],
   providers: [
     // Global: authenticate every route (unless @Public), then enforce role/dept/access.
