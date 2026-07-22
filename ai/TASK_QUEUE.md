@@ -80,10 +80,11 @@ Context: 0/1,490 Zoho items have barcodes; blocks image/enrichment workstream (o
 Done-when: staff can scan a product barcode against a catalog item; export path for enrichment exists. Needs owner go.
 
 ### TASK-014 · Backups for /var/data → Supabase Storage (DEC-019)
-Status: IN_PROGRESS · Owner: claude-openclaw · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T06:15+04:00
-Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design doc complete and owner-approved: `ai/BACKUP_DESIGN.md` — architecture (in-process nightly cron, tar+AES-256-GCM encrypt, upload via Supabase Storage REST, reuse WhatsApp-bot Supabase project with a dedicated bucket), retention (14 daily/8 weekly/6 monthly), restore procedure, DR drill plan. Growth estimate: current usage VERIFIED negligible (FACT-034 — 716K/973M, 0%), annual-rate assumption (ASM-004) still open but de-risked, re-measure in 1-2 months. All 3 owner decisions from §8 resolved 2026-07-22 (bucket reuse, key escrow via Render env + password manager, 02:00 Asia/Dubai schedule). Build unblocked.
-Depends-on: — (no remaining blocker)
-Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated (logged in `ai/BACKUP_DESIGN.md` §9) — not before.
+Status: BLOCKED · Owner: owner · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T07:00+04:00
+Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Design approved (`ai/BACKUP_DESIGN.md`, all §8 decisions resolved). **Code built and merged** (`feature/task-014-backup-build`): `backend/src/backup/*` — nightly `@Cron` (02:00 Asia/Dubai), tar+AES-256-GCM encrypt, Supabase Storage upload/retention (14d/8w/6m, Dubai-local promotion — a UTC-day-boundary bug in the weekly/monthly promotion logic was caught and fixed in review, see AGENT_LOG), admin manual-trigger + status endpoints. `nest build` exit 0, 9/9 Jest green. Ships fail-safe: no-ops cleanly if unconfigured.
+Blocker: **owner must provision Supabase-side resources** — a Storage bucket (e.g. `ntbf-backups`) in project `wvsgeumafnqelspcqivo` + a service-role key scoped to it — then set `BACKUP_ENCRYPTION_KEY`/`SUPABASE_URL`/`SUPABASE_SERVICE_KEY` in Render env (`ai/BACKUP_DESIGN.md` §8a). Until then the cron is live but inert (logs "not configured" nightly, no actual backups produced).
+Depends-on: owner env provisioning above, THEN the restore drill (§6/§9)
+Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated (logged in `ai/BACKUP_DESIGN.md` §9) — not before. Code being merged does NOT close this task.
 
 ### TASK-015 · Activate CI (build + tests + /ai docs check)
 Status: OPEN · Owner: — · Priority: P2 · Created: 2026-07-21T02:00+04:00
