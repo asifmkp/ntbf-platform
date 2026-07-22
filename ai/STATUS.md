@@ -4,7 +4,7 @@
 > Update it in the SAME PR as any completed task: refresh `As of`, move your task from In-flight, add one line to Recently completed (keep ≤10; older lines drop — the log keeps them).
 > Keep it under ~80 lines so any agent can load it first and cheaply.
 
-**As of: 2026-07-22T07:00+04:00 · main @ `40f5fc0` (TASK-014 build on feature/task-014-backup-build, PR pending) · updated by: claude-openclaw**
+**As of: 2026-07-22T07:33+04:00 · main @ `9081231` · updated by: claude-openclaw**
 
 ## Systems
 
@@ -33,7 +33,7 @@ TASK-001 floats · TASK-002 hybrid 9,399.60 · TASK-003 voice key check · TASK-
 
 ## Recently completed
 
-- 2026-07-22 · **TASK-014 backup code built**: `backend/src/backup/*` (nightly `@Cron` 02:00 Asia/Dubai, tar+AES-256-GCM, Supabase Storage upload/retention, admin manual-trigger + status endpoints), wired into app.module.ts. `nest build` exit 0, 9/9 Jest green — incl. a Dubai-local-vs-UTC day-boundary bug in the weekly/monthly promotion logic caught and fixed before merge. Ships fail-safe (no-ops if unconfigured). TASK-014 now BLOCKED on owner provisioning Supabase bucket/service key — code alone doesn't close the task, the restore drill does.
+- 2026-07-22 · **TASK-014 backup code MERGED** (PR #41, `main@9081231`, owner-approved): `backend/src/backup/*` (nightly `@Cron` 02:00 Asia/Dubai, tar+AES-256-GCM, Supabase Storage upload/retention, admin manual-trigger + status endpoints), wired into app.module.ts. `nest build` exit 0, 9/9 Jest green — incl. a Dubai-local-vs-UTC day-boundary bug in the weekly/monthly promotion logic caught and fixed before merge. Ships fail-safe (no-ops if unconfigured) — live in production now but inert until Supabase env vars are set. TASK-014 stays BLOCKED on owner provisioning Supabase bucket/service key, then the restore drill — code being live does NOT close the task.
 - 2026-07-22 · TASK-014 design approved, build unblocked: owner resolved all 3 open decisions in `ai/BACKUP_DESIGN.md` §8 (reuse WhatsApp-bot Supabase project + dedicated bucket; key escrow = Render env + password manager; nightly 02:00 Asia/Dubai). Disk-usage check: live `/var/data` at 0% utilization (716K/973M, FACT-034); UNK-013 resolved, ASM-004 de-risked.
 - 2026-07-22 · TASK-014 backup design submitted for owner review: `ai/BACKUP_DESIGN.md` (PR #40) — nightly in-process cron, tar+AES-256-GCM, Supabase Storage upload/retention (14d/8w/6m), documented restore procedure + DR drill plan.
 - 2026-07-21 · Section-3 owner decisions: backups→Supabase (DEC-019, design-first), System B delete (DEC-018), weekly Monday owner review approved, Playwright→TASK-015, training program queued (TASK-031)
