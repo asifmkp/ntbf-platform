@@ -80,7 +80,7 @@ Context: 0/1,490 Zoho items have barcodes; blocks image/enrichment workstream (o
 Done-when: staff can scan a product barcode against a catalog item; export path for enrichment exists. Needs owner go.
 
 ### TASK-014 · Backups for /var/data → Supabase Storage (DEC-019)
-Status: OPEN · Owner: — · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-21T15:00+04:00
+Status: CLAIMED · Owner: claude-openclaw · Priority: **P1 (risk)** · Created: 2026-07-21T02:00+04:00 · Updated: 2026-07-22T05:33+04:00
 Context: single 1 GB Render disk = only copy of all business data + photos (RISK-001). Destination decided: Supabase Storage (DEC-019). Design-first: architecture, retention, encryption, restore procedure, DR test plan, growth estimate, verification method — presented to owner before build.
 Done-when: nightly encrypted backup landing in Supabase Storage (MCP-verified), retention active, and a SUCCESSFUL DOCUMENTED RESTORE DRILL demonstrated — not before.
 
