@@ -5,8 +5,8 @@
 | Field | Value |
 |---|---|
 | Document ID | `ai/ARCHITECTURE_BIBLE.md` |
-| Status | **DRAFT - Sessions 1-2 of 4** (S0-S7, S20, S21 complete) |
-| Version | 0.2 |
+| Status | **DRAFT — Session 1 of 4** (§0, §1, §2, §20, §21 complete) |
+| Version | 0.1 |
 | Date | 2026-07-22 |
 | Author | Claude (Opus 4.8), acting as enterprise architect |
 | Owner | Asif (asifmkp82@gmail.com) |
@@ -878,6 +878,1164 @@ code to authoring capability contracts — not outward into runtime.
 **END OF SESSION 2** · §3, §4, §5, §6, §7 complete.
 Session 3: §8 ERP · §9 Capability Layer · §10 AI Organization · §11 Knowledge · §12 Data.
 Open [I] statements to resolve: W7 (split identity, unobserved), AI-debt item "telemetry unread".
+# §8 · THE ERP
+
+## 8.1 Two systems, one decision
+
+| | System A — LIVE | System B — DORMANT |
+|---|---|---|
+| Storage | File-backed JSON, `STATE_DIR/data/*.json` | Prisma / Postgres schema |
+| Status | All live features [V: DEC-002] | Never operationalised; no `DATABASE_URL` in prod [V: DEC-002] |
+| Fate | Evolve | **Retire and remove** [V: DEC-018] |
+
+**A clarification the Bible must make explicit** [R], because it is the single most
+misreadable decision in the register:
+
+> **DEC-018 retires System B's *unmaintained code*. It does not commit NTBF to JSON files
+> forever.**
+
+DEC-018's own context states the owner's 1–3 year vision as "an AI-first enterprise OS built by
+evolving System A's patterns (**multi-warehouse/branch/company-ready**, commercialization-possible)"
+[V]. Multi-warehouse, multi-branch and multi-company are **not achievable on a single-instance
+last-write-wins JSON blob** — for reasons proven at source in §8.3. Removing a dead skeleton and
+later adopting a properly-designed relational store behind a stable contract are entirely
+compatible acts. Conflating them would freeze the architecture at its current ceiling.
+
+## 8.2 Current design
+
+**Stack** [V]: NestJS + TypeScript backend; vanilla-JS PWA/TWA frontend; Docker on Render
+(Starter, single instance); persistent disk at `/var/data`.
+
+**Persistence pattern** [V], applied consistently across `StaffStore`, `AppStateService`,
+`MuhammedLog`, and the money stores:
+
+- One JSON file per domain under `STATE_DIR/data/`
+- Atomic write: serialise → `.tmp` → `fs.renameSync`
+- Monotonic `seq` for ID allocation; `statusHistory[]` on business records
+- Errors on persist are **swallowed** with a memory-only fallback
+  [V: `appstate.module.ts:54`, `muhammed.log.ts:43`]
+
+**Assessment** [R]: the atomic-rename pattern is correct and consistently applied — genuinely
+good practice. The **silent persist failure is not**. A disk-full or permission error degrades the
+system to memory-only with no alarm, and the next restart loses everything written since. This
+belongs in the Operational debt ledger (§4.5) and is a candidate for the first alerting rule the
+company ever writes.
+
+## 8.3 The appstate architecture — traced at source
+
+This subsection is the most consequential technical content in the document, because it explains
+FACT-019 and constrains every scaling ambition.
+
+```
+   Devices (staff PWA, customer portal)
+        │  PUT /api/appstate   { state: <ENTIRE dataset> }
+        ▼
+   AppStateService.put(state)
+        mem = { rev: mem.rev + 1, state }     ← FULL REPLACE, no merge
+        persist() → tmp → rename              ← errors swallowed
+        │
+        ├────────────▶ data/appstate.json     ← what Muhammed reads
+        │
+   (separate, unrelated)
+   Server money/order stores  ────────────────▶ data/*.json   ← FACT-001 source of truth
+```
+
+**Verified properties** [V: `appstate.module.ts`]:
+
+1. **Initial state is `{ rev: 0, state: null }`** (line 24)
+2. **`put()` replaces the entire blob** — `this.mem = { rev: this.mem.rev + 1, state }` (line 35).
+   There is no merge, no field-level update, no conflict detection. The header comment names it:
+   *"Pragmatic last-write-wins with client re-sync — right-sized for a small team."*
+3. **`clear()` resets to `{ rev: 0, state: null }`** (line 43) — the admin clear-test-data path
+4. **The authors documented the ceiling themselves** (line 19):
+   *"(For heavier concurrency, migrate to the relational Prisma models.)"*
+
+### 8.3.1 Root cause of Muhammed's zeros — closed
+
+The chain, fully traced [V]:
+
+| Step | Evidence |
+|---|---|
+| `appstate.state` initialises to **`null`** | `appstate.module.ts:24` |
+| DEC-008 wrote July history to **server stores only** — "the client KPI dataset (appstate/S) is untouched" | DEC-008 |
+| Muhammed reads `this.appstate.get()?.state` | `muhammed.service.ts:105` |
+| Tools degrade defensively: `arr(state,'orders')` returns `[]` when state is null | `muhammed.tools.ts:33` |
+| ⇒ every admin figure computes to **zero**, reported confidently | FACT-019 |
+
+**This closes the root-cause question raised in §1.3.** It is an implementation defect exactly as
+the owner characterised it — and the remedy is a read-binding change, not a redesign. But note
+what the defensive coding does: `arr()` returning `[]` on null converts *"I have no data"* into
+*"the answer is zero."* **Defensive defaults that are indistinguishable from real answers are an
+anti-pattern in any system feeding a language model** [R]. The correct behaviour is to raise, so
+`note_gap` fires and the user is told the truth.
+
+### 8.3.2 Why last-write-wins caps the scaling vision
+
+Two devices syncing concurrently: device A reads rev 5, device B reads rev 5, A puts (rev 6), B
+puts (rev 7) — **A's changes are silently gone.** The `rev` counter increments but is never
+compared on write [V: line 35]; nothing rejects a stale base.
+
+At four staff on one warehouse this is tolerable and was a defensible choice. At **multi-warehouse
+or multi-company scale it is a guaranteed data-loss mechanism**, and no amount of client re-sync
+logic fixes a protocol that cannot detect conflict. This is the concrete, code-level reason the
+persistence layer must eventually change — and the reason §9 exists.
+
+## 8.4 Authentication and authorization
+
+**`ApiGateGuard`** [V: `api-gate.guard.ts`] — protects the public-facing endpoints:
+
+- If `PUBLIC_API_TOKEN` **is set**: require matching `x-api-key` **OR** a valid staff JWT
+- If **unset**: *the gate is open* (line 36 — the `if (token)` branch is simply skipped)
+- Per-IP rate limit, default 30 requests / 60 s
+
+**Two findings** [V]:
+
+**F1 — `@Public()` does not disable this guard.** `ApiGateGuard` has no `Reflector` and performs
+no `IS_PUBLIC_KEY` lookup. The `@Public()` decorators on the appstate routes affect some *other*
+(global) guard, not this one. So `PUT /api/appstate` **is** gated by `ApiGateGuard` — and its
+protection reduces entirely to whether `PUBLIC_API_TOKEN` is set in production. That is precisely
+**UNK-001**, still unresolved, and it is why **RISK-003 cannot be downgraded without an answer.**
+
+**F2 — the `dev-secret` fallback creates a second, independent bypass.**
+Line 69: `const secret = this.config.get('JWT_SECRET') || 'dev-secret';`
+
+If `JWT_SECRET` were unset in production, **anyone can mint a JWT signed with the literal string
+`dev-secret`, set `typ:'staff'`, and satisfy `hasValidStaffSession()`** — bypassing the API gate
+*even when `PUBLIC_API_TOKEN` is correctly set*. This is TASK-020 ("JWT fail-fast, kill the
+`dev-secret` fallback"), ranked Phase 0.3 [V: ROADMAP].
+
+**The chain that matters** [R]: full-dataset overwrite via `PUT /api/appstate` is protected by
+**two environment variables, neither of which has been verified in production.** Defence in depth
+requires the layers to be independent; here both layers fail to the same condition — an unset env
+var. TASK-020 and TASK-021 should be treated as **one change**, not two.
+
+## 8.5 Business rules and the approval system
+
+**Approvals** [V: CLAUDE.md]: department submit → approve, with Super Admin override. Order
+transitions are role-enforced server-side with 403s and hidden buttons: PLACED→CONFIRMED
+(Tahir/admin, blocked while `needsReview`), CONFIRMED→PACKED (Haris/admin), →OUT_FOR_DELIVERY
+(Haris/Musthafa/admin), →DELIVERED with real collected-cash (Musthafa/admin). Admin overrides are
+flagged. Every order carries a full `statusHistory[]`.
+
+**Expenses** [V]: SUBMITTED → APPROVED | REJECTED, auto-approve ≤ AED 50 (admin-editable),
+`statusHistory[]`, OCR prefill via `POST /api/bills/extract`.
+
+**Assessment** [R]: **this is the asset the entire AI programme should be built on.** A working,
+role-enforced, server-side, audit-trailed approval chain already exists. §9's most important
+design rule follows directly: the capability layer must **delegate to this**, never reimplement
+it. Building a parallel AI approval system beside a working human one is the single most likely
+architectural mistake available to this project.
+
+## 8.6 What the ERP lacks
+
+| Gap | Consequence | Priority [R] |
+|---|---|---|
+| **No time dimension on orders** [V] | No trends, comparisons, forecasting, anomalies — Priority 3 unreachable | **Critical** |
+| **No event system** | Every integration is a poll or a manual trigger; no reactive automation | High |
+| **No conflict detection on writes** [V: §8.3.2] | Silent data loss above single-warehouse scale | High |
+| **No monitoring/alerting** [V] | Failures found by humans; MTTD unknown | High |
+| **Silent persist failures** [V] | Degrades to memory-only with no alarm | Medium |
+| **No app→Zoho sync** [V: I-08, TASK-012] | Books lag operations; manual catch-up grows daily | High |
+
+**On the event system** [R]: NTBF currently has no way to say *"when an order is delivered, do
+X."* Every automation must poll or be manually invoked. An internal event bus — even a trivial
+in-process emitter persisted to disk — would unlock reactive automation across §13 at a fraction
+of the cost of the alternatives. This is a **strong candidate for the highest-leverage
+architectural addition after the capability layer**, and it should be designed *with* the
+capability layer, since capability invocations are the natural event source.
+
+---
+
+### §8 ERP — executive summary
+
+System A is a well-executed file-store ERP with a genuinely good approval chain, consistent atomic
+writes, and a documented, honest awareness of its own limits. Its ceiling is proven at source:
+last-write-wins with no conflict detection cannot support multi-warehouse or multi-company
+operation. Muhammed's zeros are fully explained — appstate initialises to `null` and DEC-008
+deliberately wrote history to server stores only. Two independent auth bypasses (unset
+`PUBLIC_API_TOKEN`, `dev-secret` JWT fallback) both gate a full-dataset overwrite endpoint and
+should be fixed as one change.
+
+---
+
+# §9 · THE CAPABILITY LAYER
+
+*The heart of the future architecture.*
+
+## 9.1 Why it exists
+
+Four forces converge on one solution [R]:
+
+1. **Multiple consumers, one truth.** Muhammed, OpenClaw, the WhatsApp bot, the PWA, and future
+   agents all need business operations. Without a shared layer, each re-implements them — and
+   they will diverge. This violates P-03 and is how architectures die.
+2. **Storage must change; consumers must not.** §8.3.2 proves the JSON store has a hard ceiling.
+   P-09 forbids a disruptive migration. **The only way to satisfy both is a stable contract
+   between consumers and storage.** That contract is the capability layer.
+3. **Authorization belongs in one place.** Muhammed's role→tool gating is excellent but
+   *hardcoded in Muhammed* [V: `muhammed.tools.ts:342`]. A second consumer would duplicate it.
+4. **Autonomy requires attribution.** Granting AI more authority is only safe if every invocation
+   is attributable and auditable (P-12).
+
+> **The capability layer is not "Muhammed's tools promoted." It is a separate tier that Muhammed
+> becomes a consumer of.**
+
+## 9.2 Ownership model
+
+**Principle: the system that owns the data owns the capability** (P-03).
+
+| Domain | Owner | Consumers |
+|---|---|---|
+| Orders, receipts, expenses, advances, staff | **NTBF backend** (FACT-001) | Muhammed, OpenClaw, PWA, agents |
+| Ledger, VAT, bills, POs | **Zoho** via NTBF's `ZohoService` | as above |
+| Customer chat history | **Supabase** (FACT-011) | Muhammed, OpenClaw |
+| Code, decisions, knowledge | **Repo `/ai`** (DEC-001) | all agents |
+
+**Neither Muhammed nor OpenClaw owns any business capability.** Both are pure consumers. This is
+what makes the OD-001 federation real rather than decorative, and it is why either can fail
+without stopping operations (P-06).
+
+## 9.3 Trust tiers
+
+Every capability is assigned exactly one tier at definition time. **The tier mechanically
+determines the approval requirement** — approval is never a per-capability judgment call.
+
+| Tier | Semantics | Approval | Reversible | Examples |
+|---|---|---|---|---|
+| **T0** | Public read | none | n/a | catalog lookup, price list |
+| **T1** | Scoped read | role grant | n/a | `collections`, `my_route`, `cash_in_hand` |
+| **T2** | **Draft / propose** | **none** | fully | draft PO, draft bill from OCR, draft quote, draft reply |
+| **T3** | Commit — business effect | async human approval | via audit trail | confirm order, approve expense, post GRN |
+| **T4** | Irreversible / external | synchronous explicit confirm | no | ledger post, payment, customer message, deletion |
+
+**The strategic significance of T2** [R]: it is the tier where AI creates most of its value at
+**zero business risk**, and it needs **no approval workflow at all**. A drafted PO that a human
+reviews removes the typing, the lookup, and the arithmetic — the actual labour — while the human
+retains the decision. Most programmes lump all writes into one frightening bucket and defer them
+together. **NTBF should ship T2 capabilities early and defer T3/T4 machinery.** This single
+insight can pull most of the roadmap's business value forward by months.
+
+## 9.4 Capability lifecycle
+
+```
+  DEFINE ──▶ AUTHORIZE ──▶ INVOKE ──▶ [T2 DRAFT] ──▶ [T3/T4 APPROVE] ──▶ EXECUTE ──▶ AUDIT
+     │           │            │            │                │               │          │
+  contract   principal    args valid   artifact         existing         effect    principal,
+  + tier     + grants     + rate       created,         NestJS           applied   capability,
+  + version               limited      no effect        approval                   version,
+                                                        chain (§8.5)               args hash,
+                                                                                   outcome,
+                                                        ROLLBACK ◀────────────────  correlation
+```
+
+**Rollback** [R]: T3 effects must be compensable — every T3 capability declares its inverse at
+definition time, or it is reclassified T4. This is stricter than typical practice and deliberately
+so: a capability whose author cannot describe how to undo it does not understand it well enough to
+let an AI invoke it.
+
+## 9.5 Authorization
+
+Grants are `(principal, capability, constraints)`. Principals are **service accounts, never shared
+secrets** — directly closing the D4 finding, where one `WHATSAPP_INGEST_TOKEN` currently permits
+role assertion [V: `muhammed.service.ts:72`].
+
+Muhammed's existing model is **re-based, not discarded**: `toolsForRoles()` becomes a projection
+over the layer's grants rather than a hardcoded map. The security property (the model only ever
+receives permitted capabilities) is preserved exactly — it simply becomes shared infrastructure
+instead of one application's private virtue.
+
+## 9.6 Versioning
+
+Capabilities are contracts. Additive changes are minor; breaking changes mint a new major with
+both served during migration. NTBF already demonstrates the discipline: the
+`/api/portal/orders/ingest` contract is **frozen and genuinely respected** [V: CLAUDE.md].
+
+**Time-awareness must be designed into v1** [R]. Freezing v1 contracts that can only return
+"current snapshot" would force either a breaking change or a permanent parallel family of
+`*_by_date` capabilities. This is why R4 (time dimension) must precede capability freeze, and it
+is the strongest argument for reordering the owner's roadmap (§17).
+
+## 9.7 Audit
+
+Every invocation records principal, capability, version, argument hash, outcome, timestamp,
+correlation ID. Two existing precedents [V]: the backend audit trail is **hash-chained**, and
+OpenClaw's audit is deliberately **metadata-only**. Adopt both properties — tamper-evidence from
+the first, content-minimisation from the second.
+
+## 9.8 The reference implementation already exists
+
+**`ZohoService.post()`** is the pattern every write capability should copy [V: CLAUDE.md Gate 2/3]:
+
+- A **single choke point** for all writes
+- **Fail-closed** org guard — verified 403 against a real second org
+- **Write-lock** via `ZOHO_WRITES_ENABLED`, default false
+- **Drafts-only** proven end-to-end (PO-00001 written, verified, then deleted)
+
+Choke point + fail-closed + kill switch + drafts-only is exactly the T2/T3/T4 discipline
+generalised. **NTBF does not need to invent its capability-write pattern — it needs to
+generalise the one it already proved.**
+
+## 9.9 MCP compatibility
+
+MCP is a **transport and description format**, not the capability layer itself [R]. Capabilities
+are defined once, in the backend; MCP is one projection of them for AI consumers. Muhammed's tool
+definitions are another; REST for the PWA is a third.
+
+This ordering matters. Defining capabilities *as* MCP tools would couple business logic to an AI
+protocol and make the PWA a second-class consumer. **The capability layer must be protocol-neutral
+at its core.** OpenClaw's per-server tool include/exclude filters [V] then become the safe way to
+expose a subset to owner-side tooling.
+
+---
+
+### §9 Capability Layer — executive summary
+
+The capability layer is the mechanism that makes the owner's two hardest constraints
+simultaneously satisfiable: design for ten-year multi-entity scale (P-10) while never performing a
+disruptive migration (P-09). It achieves this by placing a stable contract between consumers and
+storage, so persistence can change beneath it. Ownership follows the data; trust tiers
+mechanically determine approval; T2 drafts deliver most of the value at zero risk and need no
+approval machinery; and the write pattern is already proven in `ZohoService.post()`. MCP is a
+projection, never the definition.
+
+---
+
+# §10 · THE AI ORGANIZATION
+
+## 10.1 This section is subordinate to DEC-014
+
+The owner has already decided — correctly — to **postpone the orchestrator behind five gates**
+[V: DEC-014, ROADMAP §3]:
+
+| Gate | Condition |
+|---|---|
+| **G1** | ≥2 different agents completing queue tasks in the same week, sustained 2+ weeks |
+| **G2** | CI active (TASK-015) |
+| **G3** | Backups live **and drilled** (TASK-014) |
+| **G4** | App→Zoho sync stable ≥2 weeks (TASK-012) |
+| **G5** | Evidence the file protocol is the bottleneck — ≥2 claim collisions, or owner wants more parallel workstreams |
+
+**The Bible adopts these gates unchanged** and adds one [R]:
+
+> **G6 — the capability layer exists with ≥5 T1 capabilities in production.** Agents without a
+> shared capability layer must each implement business logic, violating P-03 permanently. Creating
+> agents before the layer bakes duplication into the organisation.
+
+The reasoning in DEC-014 is worth preserving verbatim as institutional wisdom: *"the /ai file
+protocol + PR template + CI is the orchestrator today — zero runtime to maintain and no new
+failure modes"* [V].
+
+## 10.2 Muhammed's position
+
+Muhammed sits at the top of the **human interface**, not the execution path (§1.7, P-06).
+
+```
+                     STAFF & OWNER
+                          │
+                     ┌────▼─────┐
+                     │ MUHAMMED │   interface · coordination · escalation
+                     └────┬─────┘
+                          │  consumes (never owns)
+              ┌───────────▼────────────┐
+              │   CAPABILITY LAYER     │ ◀── OpenClaw (owner cockpit, peer)
+              └───────────┬────────────┘
+                          │
+        ┌─────────────────┼──────────────────┐
+        ▼                 ▼                  ▼
+   NTBF backend        Zoho            Supabase
+   (orders, cash)      (ledger)        (chat)
+```
+
+Specialist agents, when they exist, are **peers of Muhammed at the consumer tier** — not children
+beneath him [R]. A hierarchy where every agent's traffic flows through Muhammed reintroduces the
+chokepoint P-06 exists to prevent. Muhammed *routes questions* and *escalates*; he does not
+proxy every call.
+
+## 10.3 When NOT to create an agent
+
+**The discipline is the deliverable here** [R]. Do not create an agent when:
+
+1. **A capability would suffice.** Most "agent" ideas are one capability plus a schedule.
+2. **No human bottleneck has been measured.** `team_unanswered` is the instrument [V] — and has
+   apparently never been read. Evidence first.
+3. **It would need its own copy of business logic** (P-03 violation).
+4. **Its work is bursty or rare.** A cron-triggered capability beats a standing agent.
+5. **DEC-014 gates have not fired.**
+6. **You cannot name the human whose time it returns.** If no one is freed, nothing was gained.
+
+**The default answer to "should we add an agent?" is no.** For a four-person company with 1,160
+unpriced items and an unfinished Zoho migration, coordination overhead is a larger threat than
+insufficient parallelism.
+
+## 10.4 The candidate roster — gated, not planned
+
+Not a plan. A **prioritised list of what to consider when gates fire** [F].
+
+| Agent | Purpose | Justified when | Tiers |
+|---|---|---|---|
+| **Ops Analyst** | Daily brief, anomaly detection, exception surfacing | First — directly serves P1/P3 | T1 read |
+| **Finance Reconciler** | App↔Zoho drift detection, variance flagging | After TASK-012 sync stable (G4) | T1 + T2 draft |
+| **Procurement Assistant** | Reorder proposals, supplier price comparison, draft POs | After stock data is time-aware | T2 draft |
+| **Document Processor** | OCR intake → draft bills/expenses at volume | When manual OCR volume is measured as a bottleneck | T2 draft |
+| **Dev Agent** | Already exists as Claude Code | now | build-time only |
+
+**Three agents in year one is an ambitious ceiling, not a target** [R]. The owner's original list
+of sixteen would produce more coordination cost than output at current scale — and DEC-014 already
+encodes the same judgment.
+
+## 10.5 Decision flow, escalation, coordination
+
+**Decision rights** [R]: agents decide *nothing* with business effect. They read, analyse, draft
+and recommend. T3/T4 decisions route to the **existing NestJS approval chain** (§8.5) with the
+agent recorded as proposer, never approver. This preserves segregation of duties (P-05) and means
+the audit trail already answers "who approved this."
+
+**Escalation ladder:** capability returns no data → `note_gap` → logged → `team_unanswered` →
+owner review → task or new capability. **This loop already exists and works** [V]; it needs to be
+*read*, not rebuilt.
+
+**Coordination:** the `/ai` file protocol under DEC-001/DEC-015/DEC-016 — claims, queue, log,
+traceability. Zero runtime. Replace it only when G5 produces evidence it is the bottleneck.
+
+---
+
+### §10 AI Organization — executive summary
+
+The organisation is deliberately small and gate-driven. DEC-014's five gates are adopted unchanged
+and a sixth added: no agents before the capability layer exists, or duplication becomes permanent.
+Muhammed is the interface tier, with future agents as his peers rather than his subordinates —
+a hierarchy routing all traffic through him would recreate the chokepoint P-06 forbids. The most
+valuable content here is the six-point test for **when not to create an agent**, and the default
+answer is no.
+
+---
+
+# §11 · KNOWLEDGE ARCHITECTURE
+
+## 11.1 What exists
+
+| Layer | Store | State |
+|---|---|---|
+| **Decisions** | `ai/DECISIONS.md` DEC-001…019 | ✅ Excellent — ADR-lite, supersede rules, "a decision not written here does not exist" [V] |
+| **Facts** | `ai/FACT_REGISTER.md` FACT-001…034+ | ✅ Excellent — evidence-graded, dated, CONTESTED blocks downstream [V] |
+| **Unknowns** | `ai/UNKNOWNS.md` | ✅ Excellent — `Blocks:` field makes cost of ignorance explicit [V] |
+| **Assumptions** | `ai/ASSUMPTIONS.md` | ✅ With invalidation criteria and validation owners [V] |
+| **Risks** | `ai/RISKS.md` | ✅ Evidence-linked; CONTESTED propagates [V] |
+| **Traceability** | `ai/TRACEABILITY.md` TRACE-### | ✅ Full chain per change (DEC-016) [V] |
+| **Conversations** | `muhammed-log.json`, 5000-row cap | ⚠️ **Written, never retrieved** [V] |
+| **Working memory** | in-process Map, 10 turns | ❌ Volatile, dies on redeploy [V] |
+| **Policies / SOPs** | — | ❌ **Absent** |
+| **Supplier terms, pricing history** | — | ❌ Absent (1,160 of 1,407 items unpriced) [V] |
+| **Retrieval / search** | — | ❌ No semantic search over any of it |
+
+## 11.2 The asymmetry
+
+**NTBF's *organisational* knowledge architecture is stronger than most enterprises. Its
+*operational* knowledge architecture barely exists.** [R]
+
+Decisions, facts, risks and traceability are rigorously governed. But the knowledge staff need
+daily — what are this supplier's terms, what did we charge this customer last time, what is the
+policy on credit holds — lives nowhere. Muhammed cannot answer those questions not because he
+lacks intelligence but because **the company has never written them down.**
+
+## 11.3 The cheapest high-value win in the estate
+
+`MuhammedLog` persists every question, answer, tools used, language and gap reason
+[V: `muhammed.log.ts`]. Nothing reads it back into context.
+
+**Retrieval over an existing store is dramatically cheaper than building memory** [R] — the data
+is captured, durable, structured and already on the backup path once TASK-014 is provisioned. The
+missing piece is a read path, not a new subsystem. Two capabilities — "what did this person ask
+recently" and "has this question been asked before" — would convert a write-only log into
+genuine institutional memory.
+
+## 11.4 Governance
+
+Extend DEC-015's discipline to operational knowledge [R]: policies and SOPs are versioned in the
+repo, carry an owner and a review date, and are retrieved by capability rather than pasted into
+prompts. **Prompts are not a knowledge store** — content embedded in a system prompt is unversioned,
+unauditable, and invisible to every other consumer.
+
+---
+
+### §11 Knowledge — executive summary
+
+The organisational knowledge layer is exemplary and should be left alone. The operational layer is
+absent: no policies, no supplier terms, no pricing history, no retrieval. The highest-value cheap
+win is wiring retrieval over the conversation log that is already being written and will shortly
+be backed up. Institutional memory that survives staff turnover is one of the three genuine
+competitive advantages identified in §21.7.
+
+---
+
+# §12 · DATA ARCHITECTURE
+
+## 12.1 Current state
+
+| Store | Role | Truth? | Problem |
+|---|---|---|---|
+| `/var/data/*.json` server stores | Live operational records | **YES** — FACT-001 | Unbacked (RISK-001, mitigation inert) |
+| `data/appstate.json` | Client-synced blob | **NO** | Last-write-wins; what Muhammed reads (§8.3) |
+| Zoho org 928751913 | Ledger, VAT | **YES** — FACT-003 | No automated sync (I-08) |
+| Supabase Postgres | Chat history | **YES** — FACT-011 | Source outside VCS |
+| Prisma / Postgres | — | Dormant | Being removed (DEC-018) |
+
+**Two server-side representations of the same business reality**, with the AI bound to the wrong
+one. That is the defining data problem (§8.3.1).
+
+## 12.2 The time dimension — the deepest gap
+
+*"Orders carry no date yet, so this is the current live snapshot, not a day/range total."*
+[V: `muhammed.tools.ts:147`]
+
+Consequences [V/R]: no "today's sales." No week-over-week. No forecasting beyond the crude
+velocity heuristic in `forecast()`. No anomaly detection — anomaly requires a baseline, and a
+baseline requires history. **Priority 3 is entirely blocked.**
+
+This is not a bug. Orders were never given a temporal dimension. **It is a schema decision, and it
+forces the persistence question** — append-only history with correct time semantics is precisely
+what relational stores do well and what a single mutable JSON blob does badly.
+
+## 12.3 Target data architecture
+
+```
+   WRITE PATH                          READ PATH
+   ┌──────────────┐
+   │  Capability  │  T2/T3/T4
+   │    Layer     │──────────┐
+   └──────────────┘          ▼
+                    ┌─────────────────┐      ┌──────────────────┐
+                    │ Operational     │─────▶│  Analytical      │
+                    │ store           │      │  view            │
+                    │ (transactional, │      │  (time-series,   │
+                    │  time-stamped,  │      │   aggregates,    │
+                    │  append-only    │      │   trends)        │
+                    │  history)       │      └────────┬─────────┘
+                    └────────┬────────┘               │
+                             │                        ▼
+                             ▼                  Muhammed · OpenClaw · BI
+                        Zoho sync
+                     (origin exclusion,
+                      DEC-007 enforced)
+```
+
+**Migration path honouring P-09 (no disruptive migration)** [R]:
+
+| Step | Action | Consumer impact |
+|---|---|---|
+| 1 | Capability layer over **existing JSON stores** | none |
+| 2 | Consumers migrate to capabilities (Muhammed first — fixes §8.3.1 en route) | none |
+| 3 | Add timestamps + append-only history **behind** capabilities | none |
+| 4 | Swap persistence to relational **behind** capabilities | **none** |
+| 5 | Analytical views over the relational store | additive |
+
+**Steps 1–2 alone resolve the trust problem.** Steps 3–5 become routine because no consumer is
+coupled to storage. This is the concrete demonstration that P-09 and P-10 are compatible — and it
+is why §9 must precede §12 in execution order, despite §12 containing the deeper problem.
+
+## 12.4 On Postgres and DEC-018
+
+Restating §8.1 because it will be misread otherwise [R]:
+
+- **DEC-018 removes System B's unmaintained code.** Correct — it is dead, routable, and a
+  liability.
+- **DEC-018 does not forbid a future relational store.** The owner's own stated vision within
+  DEC-018 is multi-warehouse/branch/company-ready, which §8.3.2 proves the current model cannot
+  deliver.
+
+When step 4 arrives it should be a **fresh, deliberately designed schema** built for the
+capabilities that exist by then — not a resurrection of the abandoned TRD skeleton. Removing
+System B now and designing a new store later are the same decision viewed at two moments.
+
+## 12.5 Reporting and BI
+
+Deliberately deferred [R]. BI over data with no time dimension produces attractive, confident
+falsehoods. Sequence: **time dimension → analytical views → BI**. Inverting this is the classic
+failure where a dashboard programme consumes a year and erodes trust in the numbers it displays.
+
+Interim: the reconciled July figures in `STATUS.md` [V] demonstrate that manual reporting is
+already achievable and reasonably accurate. That is sufficient until step 3.
+
+---
+
+### §12 Data — executive summary
+
+Two server-side representations exist and the AI is bound to the non-authoritative one. The
+absence of a time dimension is the deepest gap in the estate and blocks all trend, forecast and
+anomaly work regardless of AI capability. The migration path — capability layer first, then
+timestamps, then persistence swap, all behind a stable contract — satisfies both the ten-year
+scaling instruction and the no-disruptive-migration constraint. Steps 1–2 alone resolve the trust
+problem, which is why the capability layer outranks the data model in execution order even though
+the data model is the deeper defect.
+
+---
+
+**END OF SESSION 3** · §8, §9, §10, §11, §12 complete.
+Session 4: §13 Automation · §14 Security · §15 Infrastructure · §16 Development · §17 Roadmap ·
+§18 Decision Register · §19 Risk Register.
+New findings this session for register promotion: appstate `@Public()`/`ApiGateGuard` interaction
+(§8.4 F1), `dev-secret` JWT fallback bypass chain (§8.4 F2), appstate null→zeros root cause (§8.3.1).
+# §13 · AUTOMATION STRATEGY
+
+## 13.1 What automation exists today
+
+| Automation | State | Evidence |
+|---|---|---|
+| **WhatsApp customer bot** | LIVE — v41, Claude replies 24/7, catalog search, order capture → platform ingest | [V: STATUS.md, CLAUDE.md] |
+| **WhatsApp staff routing** | LIVE — roster pre-check → Muhammed | [V: MUHAMMED-HANDOFF] |
+| **Bill OCR** | LIVE — `POST /api/bills/extract`, reused by expense prefill | [V: CLAUDE.md] |
+| **Nightly backup cron** | **MERGED, INERT** — `@Cron` 02:00 Asia/Dubai, awaiting Supabase provisioning | [V: STATUS.md] |
+| **Daily owner ping** | LIVE — 09:00 UAE from the Claude "muhammed" session | [V: STATUS.md] |
+| **Reminder engine** | DORMANT — pg_cron 04:00 UTC, `reminders_enabled=false` pending Meta template approval | [V: CLAUDE.md] |
+| **Audit trail** | Recording, hash-chained; **off-box export OFF** | [V: STATUS.md, I-09] |
+| **App→Zoho sync** | **DOES NOT EXIST** (TASK-012) | [V: I-08] |
+| **Monitoring / alerting** | **DOES NOT EXIST** | [V: ENTERPRISE_SYSTEM_MAP] |
+
+**Observation** [R]: NTBF has more automation than most four-person companies and **no observability
+over any of it.** Every automation above fails silently. The reminder engine is dormant, the backup
+is inert, the audit export is off — three switched-off systems that would each report healthy by
+saying nothing.
+
+## 13.2 The automation gap that matters most
+
+**There is no event system** (§8.6). Every automation is either a poll, a cron, or a manual
+trigger. NTBF cannot express *"when an order is delivered, do X."*
+
+**Recommendation** [R]: design a minimal internal event bus **together with** the capability layer,
+because capability invocations are the natural event source. Emit `capability.invoked` /
+`capability.failed` with the audit payload already required by P-12; persist to disk; allow
+subscribers. This is a small amount of machinery that unlocks: delivery-triggered actions,
+approval-triggered notifications, threshold alerts, reconciliation triggers, and SLA nudges —
+none of which are individually worth building bespoke.
+
+## 13.3 Automation tiers
+
+Map automation to the §9 trust tiers, so "what may run unattended" is mechanical, not a judgment
+call each time [R]:
+
+| Tier | Unattended? | Examples |
+|---|---|---|
+| **Observe** (T0/T1 read) | ✅ Always | Daily brief, anomaly detection, drift alerts, health checks |
+| **Draft** (T2) | ✅ Always | Draft PO from reorder point, draft bill from OCR, draft reply |
+| **Commit** (T3) | ❌ Human approves | Confirm order, approve expense |
+| **External** (T4) | ❌ Explicit confirm | Ledger post, payment, customer message |
+
+**The Observe and Draft tiers are where NTBF's automation roadmap lives for the next 12 months**
+[R]. Both are unattended-safe, and together they address the owner's P1 (awareness) and P2
+(coordination cost) directly.
+
+## 13.4 Ranked automation opportunities
+
+| # | Automation | Serves | Tier | Effort | Precondition |
+|---|---|---|---|---|---|
+| A1 | **Daily operations brief** — cash, receivables, dispatch, exceptions | P1 | Observe | S | Read binding fixed (R2) |
+| A2 | **Health & failure alerts** — cron failures, backup landing, API errors | ops | Observe | S | none |
+| A3 | **App↔Zoho drift detection** | P1/P3 | Observe | M | TASK-012 sync |
+| A4 | **Reorder-point → draft PO** | P2 | Draft | M | Time-aware stock data |
+| A5 | **OCR → draft bill/expense at volume** | P2 | Draft | M | Capability layer |
+| A6 | **Anomaly detection** — cash variance, margin drift, credit exposure | P3 | Observe | M | **Time dimension (R4)** |
+| A7 | **Weekly management report** | P1/P3 | Observe | S | A1 + time dimension |
+| A8 | **WhatsApp SLA nudges** — order-to-fulfilment | P2 | Draft | M | Event system |
+
+**A2 should arguably be first** [R]. It is small, has no preconditions, and every other automation
+on this list is worth less without it — an unmonitored automation is a liability that presents as
+an asset. NTBF currently has eight automations and zero alerts.
+
+## 13.5 Where OpenClaw fits
+
+OpenClaw runs **owner-side** automation only (§6.5): research, briefing assembly, development
+orchestration, cross-system investigation, browser automation. Its `cron`, `tasks` and `hooks`
+[V] are appropriate for owner workflows and **must never carry staff-facing or customer-facing
+automation** — L1 (laptop-hosted) makes that a P-06 violation by construction.
+
+**Division of labour** [R]: automation that the business depends on runs **in the backend**
+(NestJS `@Cron`, as the backup module already demonstrates [V]). Automation that serves the owner's
+own thinking runs in OpenClaw. The backup module is the correct precedent and should be the
+template.
+
+---
+
+### §13 Automation — executive summary
+
+NTBF has substantial automation and zero observability over it — three of its automated systems
+are currently switched off and would each report healthy by staying silent. The missing primitive
+is an event system, which should be designed alongside the capability layer since invocations are
+the natural event source. Automation should be tiered to §9's trust model so "may this run
+unattended?" is mechanical. The Observe and Draft tiers cover the next twelve months, and failure
+alerting (A2) should precede everything because it has no preconditions and makes all other
+automation trustworthy.
+
+---
+
+# §14 · SECURITY ARCHITECTURE
+
+## 14.1 Threat model
+
+**Assets, ranked by loss consequence** [R]:
+
+| # | Asset | Loss consequence |
+|---|---|---|
+| 1 | `/var/data` operational record | Business cannot function; irrecoverable |
+| 2 | Zoho ledger integrity | VAT exposure, statutory risk |
+| 3 | Customer + staff PII (chat, phones, documents) | Regulatory and reputational |
+| 4 | Credentials (Anthropic, Zoho, Supabase, 360dialog) | Financial abuse, data access |
+| 5 | Code and AI coordination record | Recoverable via git |
+
+**Adversaries** [R]: opportunistic internet scanners (highest likelihood — the app is
+internet-facing); a compromised credential from the four burned ones; prompt injection via
+customer WhatsApp or supplier documents; and insider error, which at four people is far more
+likely than insider malice.
+
+**Prompt injection deserves naming as a first-class threat** [R]. Muhammed's capability gating
+means an injection cannot exfiltrate data the role never had — that is genuinely strong. But once
+T2/T3 capabilities exist, injection targets *actions*, not data. A supplier invoice containing
+instructions, processed by OCR, is a realistic vector. **Mitigation is architectural, not
+prompt-based:** T3/T4 require human approval (P-05), and drafts carry no authority.
+
+## 14.2 Current posture
+
+**Strong** [V]: capability-based tool gating · role-enforced transitions with server-side 403s ·
+Zoho org guard + write-lock, fail-closed · hash-chained audit trail · rate limiting (30/60s) ·
+`@openclaw/fs-safe` root-bounded file ops on the OpenClaw side · secrets referenced by allowlist ·
+gateway loopback-bound.
+
+**Weak** [V]:
+
+| # | Weakness | Reference |
+|---|---|---|
+| S1 | Four burned credentials, no rotation cadence | CLAUDE.md, MUHAMMED-HANDOFF, RISK-008 |
+| S2 | Seeded staff passwords in source control | RISK-002, TASK-016 |
+| S3 | `PUT /api/appstate` protection depends on unverified env var | RISK-003, UNK-001 |
+| S4 | `dev-secret` JWT fallback bypasses the gate | §8.4 F2, TASK-020 |
+| S5 | One shared token permits role assertion | `muhammed.service.ts:72` |
+| S6 | Stored XSS via unescaped names | RISK-006 |
+| S7 | Off-box audit export disabled | I-09 |
+| S8 | No backup ⇒ no recovery from destructive compromise | RISK-001 |
+
+## 14.3 The credential problem is systemic
+
+Four credentials burned by the same mechanism — pasted into a chat during troubleshooting
+[V: Anthropic, Zoho client secret + refresh token, admin password, Google OAuth secret]. The hard
+rule *"treat anything typed into a chat as burned"* exists in `CLAUDE.md` [V] and has been
+violated four times.
+
+**A rule violated four times is not a rule; it is an aspiration** [R]. The architectural fix is to
+remove the opportunity:
+
+1. **Secrets referenced by name only** in all agent-facing contexts — already the stated practice
+2. **Owner-only entry paths** — values typed into Render/Supabase dashboards, never into a terminal
+   or chat
+3. **Per-consumer service accounts** so a burn is scoped, not total (closes S5)
+4. **A rotation cadence with a calendar owner**, not event-driven panic
+5. **Fail-fast on missing secrets** (TASK-020) so misconfiguration is loud, not silently permissive
+
+## 14.4 Disaster recovery
+
+**Current RPO/RTO** [V]: RPO = ∞ (no backup exists in effect — code inert). RTO = ∞ (no restore
+procedure). *"Restore procedure: does not exist"* [V: ENTERPRISE_SYSTEM_MAP].
+
+**Target on TASK-014 completion** [V: DEC-019, BACKUP_DESIGN]: RPO ≤ 24 h (nightly 02:00 Dubai),
+RTO measured by an actual drill. **DEC-019 is explicit that "done" means a demonstrated restore** —
+and that criterion should never be relaxed. An untested backup is a belief, not a control.
+
+**Gap beyond TASK-014** [R]: backups cover `/var/data`. They do **not** cover the Supabase edge
+function source, which has no VCS at all [V: FACT-011]. That is a second, unaddressed
+single-point-of-loss.
+
+## 14.5 Least privilege and service accounts
+
+Target state [R]: every consumer — Muhammed, OpenClaw, the WhatsApp bot, the PWA, each future
+agent — holds its own service account with explicit capability grants. No shared secrets. No
+role assertion by any caller. Every invocation attributable to a principal (P-12).
+
+This is the precondition for ever granting AI more autonomy. **Autonomy without attribution is
+indistinguishable from an unaudited system**, and no amount of model quality compensates.
+
+---
+
+### §14 Security — executive summary
+
+The designed security is strong; the operational security is weak. Capability gating, org guards
+and role enforcement are enterprise-grade. Credential lifecycle, environment verification and
+recovery are absent. The credential problem is systemic rather than incidental — four burns by one
+mechanism, against an existing written rule — and the fix is architectural (remove the opportunity,
+scope the blast radius) rather than exhortative. Prompt injection becomes a first-class threat the
+moment T2/T3 capabilities ship, and the mitigation is P-05 approval, not prompt hardening.
+
+---
+
+# §15 · INFRASTRUCTURE
+
+## 15.1 Current
+
+| Component | State | Evidence |
+|---|---|---|
+| **Render** | Docker, Starter, always-on, auto-deploy from `main` | [V: render.yaml, FACT-002] |
+| **Disk** | 1 GB persistent at `/var/data`; **716 K used, 0%** | [V: FACT-034] |
+| **Instances** | 1 — single-instance by construction | [V: DEC-002, ASM-003] |
+| **Supabase** | Edge function + Postgres (chat), soon backup storage | [V] |
+| **Health check** | `/api/dashboard/health` | [V: render.yaml] |
+| **Monitoring** | **none documented** | [V] |
+| **Availability target** | **none defined** | [V] |
+
+## 15.2 Assessment
+
+**Right-sized, and honestly so** [R]. A four-person distributor does not need Kubernetes. Starter
+on Render with a persistent disk is a defensible, cheap, low-operations choice, and the disk is at
+0% utilisation with no near-term capacity concern [V: FACT-034].
+
+**But three properties are load-bearing and undocumented:**
+
+1. **Single instance is not a deployment choice — it is an architectural constraint.** In-process
+   session state (Muhammed), in-process dedupe (`waSeen`), in-process rate-limit counters
+   (`ApiGateGuard.hits`), and last-write-wins appstate all break on a second instance [V].
+   **Scaling Render's instance count would introduce silent bugs, not more capacity.** This must
+   be written where an operator will see it.
+2. **No availability target exists**, so there is no way to say whether current uptime is
+   acceptable.
+3. **`@Cron` in-process** means the nightly backup runs on the single app instance [V]. If that
+   instance is down at 02:00, the backup silently does not happen — and nothing reports it. A2
+   (alerting) covers this.
+
+## 15.3 Future migration path
+
+**Do not migrate infrastructure yet** [R]. The constraint is not compute; it is data architecture
+(§12). Migrating hosting before the capability layer exists moves the problem without solving it.
+
+Sequence, each step justified by a trigger rather than a date [R]:
+
+| Trigger | Step |
+|---|---|
+| Capability layer live | — (no infra change needed) |
+| Time dimension + relational store | Managed Postgres (Supabase or Render) |
+| Second warehouse / entity | Horizontal-ready backend — requires externalised session/dedupe state |
+| Sustained load or availability requirement | Multiple instances + shared cache |
+| Multi-country | Regional considerations, data residency |
+
+**Each step is unlocked by the previous, and none requires a big-bang migration** — which is the
+whole point of P-09.
+
+---
+
+### §15 Infrastructure — executive summary
+
+Infrastructure is appropriately sized and not the constraint. Its most important undocumented
+property is that single-instance operation is architectural, not incidental: raising the instance
+count would produce silent correctness bugs across session state, dedupe, rate limiting and
+appstate. No availability target exists, and the in-process nightly cron will silently skip if the
+instance is down. Migration should be trigger-driven and follows the data architecture, never
+leads it.
+
+---
+
+# §16 · DEVELOPMENT ARCHITECTURE
+
+## 16.1 Current
+
+| Aspect | State | Evidence |
+|---|---|---|
+| **Canonical repo** | `asifmkp/ntbf-platform` — owner-confirmed | 2026-07-22 |
+| **Other copies** | OpenClaw workspace (consumer), `foodstuffs-app` (legacy, archive after salvage) | owner |
+| **Branches** | `main` · `feature/*` · `muhammed/*` worktrees · `docs/*` convention | [V: git] |
+| **CI** | **NONE** — merge = production deploy | [V: FACT-002, RISK-004] |
+| **Testing** | Jest (9/9 on backup), `test-live-standard.mjs` (32 checks), no E2E | [V: STATUS.md] |
+| **Review** | Plan-first → owner approval → PR | [V: CLAUDE.md] |
+| **Release** | Merge to `main` auto-deploys; `[skip render]` for docs | [V: DEC-001] |
+| **Documentation** | `/ai` registers under DEC-015/016 | [V] |
+
+## 16.2 The clone-staleness finding
+
+**Observed 2026-07-22** [O]: the canonical clone's `main` is at `61a9e7c` (PR #39). `STATUS.md`
+records `main@9081231` (PR #41). Commit `9081231` is **not a valid object** in the canonical clone,
+and `backend/src/backup` is **absent from its `main`**.
+
+The canonical clone is **two PRs behind GitHub**, while the OpenClaw workspace copy — designated
+"never the source of truth" — is current.
+
+**This is a policy/practice divergence, not a tooling problem** [R]. The Q1 answer is correct; the
+clone simply hasn't caught up. But the failure mode is real: anyone opening the canonical clone and
+trusting it would read stale code while believing it authoritative. **Add a "fetch before you
+trust" step to the agent protocol**, or better, have CI publish a freshness marker.
+
+## 16.3 What is excellent
+
+**The plan-first workflow** [V]: plan → written owner approval → small staged change → test
+evidence → PR → register update. `CLAUDE.md` states it, DEC-016 makes it auditable, `STATUS.md`
+shows it working — including a Dubai-local-vs-UTC day-boundary bug caught *before* merge on the
+backup module.
+
+**This is the company's strongest process asset** (§7.3) and it is worth more than any individual
+system. It should tighten, not relax, as AI autonomy grows.
+
+## 16.4 Priority gaps
+
+| Gap | Consequence | Task |
+|---|---|---|
+| **No CI** | Bad merge ships to production ungated | TASK-015, Phase 0.5 |
+| **No E2E tests** | UI regressions found by the owner in production — observed repeatedly (RISK-010/011/012 were all owner-found) | Playwright, deferred to TASK-015 |
+| **No AI evaluation set** | AI behaviour has no regression suite, unlike the 32-check data standard | §4.5 AI debt |
+| **Edge function outside VCS** | Cannot review, roll back, or hand over | FACT-011 |
+
+**On E2E** [R]: RISK-009, 010, 011 and 012 were **all discovered by the owner on live screens
+after deploy** [V]. That is the strongest possible empirical argument for E2E coverage — the owner
+is currently the test suite, and the owner does not scale.
+
+---
+
+### §16 Development — executive summary
+
+The development process is the strongest asset in the company and the tooling around it is the
+weakest. Plan-first with owner approval and register updates produces auditable, high-quality
+change; the absence of CI means any of it can still ship broken. The owner has personally
+functioned as the E2E suite for four consecutive display-semantics defects. The canonical clone is
+two PRs stale, which is a practice gap rather than a policy one.
+
+---
+
+# §17 · ROADMAP
+
+## 17.1 This section is subordinate to DEC-013
+
+**`ai/ROADMAP.md` owns execution order** [V: DEC-013]. The Bible does not override it. This
+section (a) extends beyond ROADMAP's horizon, which ends at Phase 3, and (b) proposes **two
+amendments** for owner consideration.
+
+**Existing order** [V: ROADMAP §5]:
+`014 → 016 → 015 → 020/021 → [owner input batch] → 012 design → 012 build → 008/010/011 → 013 → 017/024 → 004 → 023 → 022 → Phase 3`
+
+### Proposed amendment A1 — merge TASK-020 and TASK-021
+
+Both protect `PUT /api/appstate`. Both fail to the same condition — an unset environment variable
+(§8.4 F1/F2). Shipping them separately leaves a window where one bypass is closed and the other is
+open, and creates the false impression of defence in depth. **Recommend: one change, one PR, one
+test.** [R]
+
+### Proposed amendment A2 — add "rebind Muhammed's read path" to Phase 0
+
+Not currently on the queue. Muhammed is live and reporting zeros to staff [V: FACT-019]. Every day
+it continues erodes trust (B-R01), and trust is not linearly recoverable. It is a small change —
+point tools at server stores instead of appstate — with disproportionate business impact. **Recommend:
+Phase 0, alongside 020/021.** [R]
+
+## 17.2 Immediate — this week
+
+| # | Action | Why now |
+|---|---|---|
+| 1 | **Provision Supabase bucket + service key; run the restore drill** | RISK-001 CRITICAL; code merged and inert; minutes of owner time; DEC-019 done = restore demonstrated |
+| 2 | **Rotate all four burned credentials** | Systemic; blast radius grows with every capability |
+| 3 | **Read `team_unanswered`** | Free evidence of what staff actually cannot get; re-ranks everything below |
+| 4 | **Answer UNK-001** (`PUBLIC_API_TOKEN` set in prod?) | Determines whether RISK-003 is HIGH or moot; one dashboard check |
+| 5 | **Fetch the canonical clone** | It is two PRs stale |
+
+**Every item is hours, not days, and items 1–2 protect against irrecoverable outcomes.**
+
+## 17.3 Thirty days
+
+`014 restore drill` → `016 passwords` → `015 CI` → `020+021 merged (A1)` → **`rebind read path (A2)`** →
+owner input batch → `012 sync design`.
+
+**Why this order:** continuity before capability. Every item is either irrecoverable-loss
+prevention or a gate that all later work depends on. CI before the surface area grows. The read
+rebind is added because trust decays daily.
+
+**Exit criteria** [V: ROADMAP Phase 0]: restore drill succeeded from a real backup; no default
+credentials work; CI green on a test PR; prod boots loudly without `JWT_SECRET`. **Plus** [R]:
+Muhammed returns non-zero, verified figures.
+
+## 17.4 Ninety days
+
+`012 sync build` (the single most valuable business item — closes the books loop) → capability
+layer v1, read-only and **time-aware** → daily brief (A1) → failure alerts (A2) → time dimension
+design.
+
+**Why:** the books loop is the largest recurring manual cost. The capability layer starts read-only
+because reads are safe and establish the contract; time-awareness is designed in from v1 so
+contracts are frozen once (§9.6).
+
+## 17.5 Six months
+
+T2 draft capabilities (draft PO, draft bill from OCR, draft quote) → durable memory retrieval over
+the existing log (§11.3) → anomaly detection → System B removal (DEC-018) → E2E test suite.
+
+**Why:** T2 is where AI value concentrates at zero business risk and needs no approval machinery
+(§9.3). Memory retrieval is cheap because the data is already captured.
+
+## 17.6 One year
+
+Time dimension shipped → analytical views → weekly management reporting → first specialist agent
+**if and only if DEC-014 gates G1–G5 plus G6 have fired** → app↔Zoho bidirectional and stable.
+
+**Target state:** the owner opens one interface and sees the true position of the business. That
+is the year-one goal from §2.2, and it is sufficient.
+
+## 17.7 Three years
+
+Capability layer as sole operations interface → 2–4 specialist agents, each justified by a
+measured bottleneck → T3 execution under approval → relational persistence swapped in behind the
+contract → second warehouse addable without architecture change.
+
+## 17.8 Five years
+
+Multi-entity with tenant isolation as a first-class concept → routine T3 under standing policy with
+humans on exceptions → institutional knowledge durable across staff turnover → optional
+productisation (§2.5), preserved as an option rather than funded as a plan.
+
+## 17.9 Why this ordering is optimal
+
+Three rules govern it [R]:
+
+1. **Protective before constructive.** Everything built on an unbacked, uncredentialed, untrusted
+   base must be revisited later at higher cost.
+2. **Contracts before implementations.** The capability layer precedes the persistence change, so
+   the change is invisible to consumers. This is the only way P-09 and P-10 hold simultaneously.
+3. **Evidence before expansion.** Gates (DEC-014, G6) and instruments (`team_unanswered`,
+   `note_gap`) decide when to grow. The scarce resource is not capability — it is the discipline
+   not to build.
+
+---
+
+### §17 Roadmap — executive summary
+
+Subordinate to DEC-013, extending beyond its Phase 3 horizon and proposing two amendments: merge
+TASK-020/021 into one change, and add the Muhammed read-rebind to Phase 0. The immediate week is
+five items, all hours-long, two of which protect against irrecoverable outcomes. Thirty days is
+continuity; ninety is the books loop and the capability layer; six months is T2 drafts; one year is
+trusted temporal awareness. Ordering follows three rules: protective before constructive, contracts
+before implementations, evidence before expansion.
+
+---
+
+# §18 · DECISION REGISTER (BIBLE-LEVEL)
+
+Decisions arising from this document. **These are proposals for `ai/DECISIONS.md`** (next free ID
+DEC-020) — they do not become decisions until the owner accepts them there, per DEC-015 and the
+rule that a decision not written in the register does not exist.
+
+### OD-001 · Federated architecture — **DECIDED 2026-07-22**
+**Problem:** Two AI systems with no defined relationship.
+**Options:** A Muhammed absorbs · B OpenClaw becomes brain · **C Federated**
+**Decision:** **C.** Muhammed = production AI for the company; OpenClaw = owner AI OS; both consume
+a shared capability layer; neither depends on the other.
+**Consequence:** neither system is discarded; the laptop never becomes production infrastructure
+(P-06); capability layer becomes mandatory rather than optional.
+
+### OD-002 · Bible is a synthesis layer — **DECIDED 2026-07-22**
+**Problem:** ~18 registers already exist under DEC-015; a narrative document risks forking truth.
+**Options:** A standalone narrative · **B synthesis citing register IDs** · C restructure all
+**Decision:** **B.**
+**Consequence:** the Bible holds judgment, registers hold facts; it stays accurate as registers
+update; it is subordinate to DEC-015 and amended when they disagree.
+
+### OD-003 · Capability layer is the architectural centre — **PROPOSED**
+**Problem:** P-09 (no disruptive migration) and P-10 (multi-entity scale) appear contradictory;
+§8.3.2 proves the current store cannot scale.
+**Recommendation:** adopt a protocol-neutral capability layer as the stable contract between
+consumers and storage; ownership follows data; trust tiers determine approval mechanically.
+**Consequence:** persistence becomes swappable without consumer changes — the only mechanism that
+satisfies both constraints. **Long-term:** this becomes the company's durable asset (§2.4).
+
+### OD-004 · Muhammed rebinds to the system of record — **PROPOSED**
+**Problem:** Muhammed reads a client-pushed mirror; observed zeros (FACT-019); root cause closed
+(§8.3.1).
+**Options:** A rebind tools to server stores · B populate appstate reliably · C wait for capability
+layer
+**Recommendation:** **A now, migrating to the capability layer later.** B preserves the wrong
+architecture (P-02 violation); C leaves staff receiving wrong numbers for months.
+**Consequence:** trust preserved; P-02 established as permanent.
+
+### OD-005 · Merge TASK-020 and TASK-021 — **PROPOSED**
+**Problem:** two bypasses on the same endpoint, both failing to an unset env var.
+**Recommendation:** one change, one PR, one test.
+**Consequence:** removes a window of false confidence.
+
+### OD-006 · Add gate G6 to DEC-014 — **PROPOSED**
+**Problem:** agents created before the capability layer must each implement business logic (P-03).
+**Recommendation:** add **G6 — capability layer live with ≥5 T1 capabilities in production.**
+**Consequence:** prevents permanent duplication.
+
+### OD-007 · Adopt an internal event system — **PROPOSED**
+**Problem:** no way to express "when X happens, do Y"; every automation polls or is manual.
+**Recommendation:** minimal event bus designed with the capability layer, sourced from invocations.
+**Consequence:** unlocks the reactive half of §13 cheaply.
+
+### OD-008 · Defensive defaults must not mimic real answers — **PROPOSED**
+**Problem:** `arr()` returns `[]` on null, converting "no data" into "zero" (§8.3.1).
+**Recommendation:** capability reads raise on absent data so `note_gap` fires.
+**Consequence:** the AI reports ignorance instead of fabricating confidence — a permanent property.
+
+---
+
+# §19 · RISK REGISTER (BIBLE-LEVEL)
+
+Consolidates `ai/RISKS.md` [V] with risks arising from this document [R]. Register risks retain
+their IDs and severities; Bible-level additions are `B-R##`.
+
+## Critical
+
+| ID | Risk | Status |
+|---|---|---|
+| **RISK-001** | Total loss of live business data — `/var/data` unbacked; **mitigation merged but INERT** pending owner provisioning; no restore ever demonstrated | OPEN |
+
+## High
+
+| ID | Risk | Note |
+|---|---|---|
+| **B-R01** | **AI trust collapse** — staff stop believing Muhammed after wrong numbers. Live, not hypothetical: zeros are being served now (FACT-019). Trust is not linearly recoverable | new |
+| **B-R02** | **Owner as single point of failure** — all credentials, decisions and system knowledge in one person; no continuity plan | new |
+| RISK-002 | Weak seeded staff passwords in source control | OPEN |
+| RISK-003 | Unauthorised full-dataset write via `PUT /api/appstate`; depends on unverified `PUBLIC_API_TOKEN` (UNK-001) | OPEN |
+| **B-R04** | **`dev-secret` JWT fallback** bypasses the API gate even when `PUBLIC_API_TOKEN` is set (§8.4 F2) | new — TASK-020 |
+| RISK-004 | Bad merge ships to production — no CI | OPEN |
+| RISK-005 | July double-posting if a future sync omits the `origin:'july-import'` exclusion | OPEN |
+| **B-R06** | **Edge function has no VCS** — production code that cannot be reviewed, rolled back, or handed over (FACT-011); outside backup scope | new |
+
+## Medium
+
+| ID | Risk | Note |
+|---|---|---|
+| RISK-006 | Stored XSS via unescaped names | OPEN |
+| RISK-007 | Wrong-Zoho-org config trap on env rebuild | OPEN |
+| RISK-008 | Review-token embedded in a stored Routine prompt | OPEN |
+| **B-R03** | **Laptop-as-infrastructure** — OpenClaw becoming load-bearing for operations | new |
+| **B-R05** | **Silent persist failure** — store writes swallow errors and degrade to memory-only with no alarm | new |
+| **B-R07** | **Unmonitored automation** — eight automations, zero alerts; three currently switched off would report healthy by staying silent | new |
+| **B-R08** | **Owner is the E2E test suite** — RISK-009/010/011/012 were all owner-found post-deploy; does not scale | new |
+| **B-R09** | **Canonical clone staleness** — two PRs behind; agents may act on stale code believing it authoritative | new |
+
+## Low
+
+| ID | Risk |
+|---|---|
+| **B-R10** | Complexity outrunning the maintainer — mitigated today by DEC-014 discipline; would become HIGH if gates were bypassed |
+
+## The concentration observation
+
+**Six of the ten highest risks are closable in under a week**, and four of those are closable in
+under a day [R]: provision the backup bucket, rotate credentials, answer UNK-001, merge
+TASK-020/021, rebind the read path, add failure alerting.
+
+**The risk profile is unusually front-loaded and unusually cheap to fix.** This is the single most
+actionable fact in the entire document, and it is why §21.9 assessed the probability distribution
+as shifting materially on ~a week of focused work.
+
+---
+
+### §§18–19 Registers — executive summary
+
+Two decisions are made (OD-001 federated, OD-002 synthesis layer) and six are proposed for owner
+acceptance into `ai/DECISIONS.md` as DEC-020+. The risk register consolidates twelve existing
+risks with ten Bible-level additions; one remains CRITICAL and its mitigation is merged but inert.
+The defining characteristic of NTBF's risk profile is concentration: most of the severe risk is
+removable in a week, and almost none of it requires architectural change.
+
+---
+
+**END OF SESSION 4 — DOCUMENT COMPLETE (v1.0)**
+
+All 21 sections written. Outstanding [I] statements for register promotion:
+W7 (split identity across channels, unobserved), §16.2 clone staleness (observed, needs FACT entry),
+§8.4 F1/F2 (verified at source, need FACT entries), §8.3.1 zeros root cause (verified, closes the
+FACT-019 open question).
 
 # §20 · ARCHITECTURE PRINCIPLES
 
