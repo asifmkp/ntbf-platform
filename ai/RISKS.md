@@ -5,7 +5,7 @@
 
 | ID | Risk | Severity | Basis | Mitigation | Owner | Status |
 |---|---|---|---|---|---|---|
-| RISK-001 | Total loss of live business data: /var/data is a single unbacked disk; any disk/platform failure is unrecoverable | CRITICAL | FACT-006 | TASK-014 backups (Phase 0 first mover; blocked on owner destination answer) | owner + agent | OPEN |
+| RISK-001 | Total loss of live business data: /var/data is a single unbacked disk; any disk/platform failure is unrecoverable | CRITICAL | FACT-006 | TASK-014 backups (Phase 0 first mover; destination decided DEC-019, design submitted ai/BACKUP_DESIGN.md — awaiting owner sign-off, then build + restore drill) | owner + agent | OPEN |
 | RISK-002 | Credential abuse: weak seeded staff passwords in source control could grant app access incl. finance actions | HIGH | FACT-007 | TASK-016 rotation + forced first-login change | agent build, owner rotates | OPEN |
 | RISK-003 | Unauthorized full-dataset write via open PUT /api/appstate if PUBLIC_API_TOKEN unset in prod | HIGH (severity confirmed/downgraded by UNK-001) | FACT-015, UNK-001 | TASK-021 lock-down; owner answers UNK-001 | agent + owner | OPEN |
 | RISK-004 | Bad merge ships straight to production: no CI, merge = deploy | HIGH | FACT-002 | TASK-015 activate CI (template exists) | agent wires, owner flips on | OPEN |

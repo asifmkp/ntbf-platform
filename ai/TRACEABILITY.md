@@ -35,7 +35,7 @@ When new evidence invalidates a recorded conclusion:
 ## 3. Where records live
 
 Trace records: in this file, §4, newest last. IDs `TRACE-###`, stable, never reused. Small changes may share one trace record per task; don't fragment.
-Next free ID: **TRACE-002**
+Next free ID: **TRACE-003**
 
 ## 4. Trace records
 
@@ -51,3 +51,16 @@ Next free ID: **TRACE-002**
 - Deployment: PR #31 `cdc3ef3` + correction PR #34 `83966eb` (2026-07-21, Render auto-deploy, FACT-002)
 - Business Validation: **PENDING — HELD (owner STOP #2, 2026-07-21)**: v18 fresh-load defaults verified clean by owner reproduction, but role-switch contamination found (FACT-031/032 → TASK-029). Previous hold note:  post-deploy live regression passed Sales + Driver but found the finance Receipts default list showing imported history (FACT-028) — contradiction traced (FACT-029), fix queued (TASK-028). Validation completes only after TASK-028 ships and the owner re-checks the Finance hub. *Change history: 2026-07-21 — was a simple pending-owner check; held on contradiction evidence (old: PR #31 checks green; new: FACT-028 live observation).*
 - KB Update: FACT_REGISTER (FACT-026/027 + change histories) · DECISIONS (DEC-017) · UX_AUDIT (UXF-001..004 implemented) · ENTERPRISE_SYSTEM_MAP (compliance matrix) · RISKS (009/010 closed) · UNKNOWNS (UNK-012 opened) · TASK_QUEUE (026/027 done, removed) — PRs #27/#29/#30 + implementation PR
+
+### TRACE-002 · Backup design for /var/data (TASK-014, Phase 0)
+- Objective: the business's only live data copy (/var/data) survives a disk/platform failure — RISK-001 closed
+- Requirement: nightly encrypted off-box backup with documented, drill-verified restore, retained on a defined schedule
+- Rule: DEC-019 (Supabase Storage destination; "done" = demonstrated restore)
+- Evidence: FACT-006 (VERIFIED — /var/data is the only copy, no backup exists); render.yaml (VERIFIED — 1 GB disk, STATE_DIR mount); 14 STATE_DIR call sites across backend/src (VERIFIED — defines backup scope); growth estimate ASSUMED (ASM-004, pending UNK-013)
+- System(s): SYS-01 (backend/Render), Supabase Storage (external, WhatsApp-bot project `wvsgeumafnqelspcqivo` — reuse proposed, owner confirmation pending)
+- Data Owner: Asif (owner)
+- Implementation: TASK-014 · design doc `ai/BACKUP_DESIGN.md` · PR #40 (docs-only, branch `docs/task-014-backup-design`) — build not started
+- Test Evidence: pending (no code yet; restore drill is the eventual test evidence per §6 of the design doc)
+- Deployment: pending (docs-only PR does not deploy backup functionality)
+- Business Validation: design approved 2026-07-22 (owner resolved all 3 §8 questions: bucket reuse, key escrow, schedule). Build itself still pending — restore drill (§6) is the remaining validation before TASK-014 can close. *Change history: 2026-07-22 — was "pending owner review"; owner reviewed and answered all open questions (evidence: this session's conversation, disk-usage check run by owner via Render Shell, FACT-034)*
+- KB Update: ai/BACKUP_DESIGN.md (new, §7/§8 updated with owner answers + FACT-034) · TASK_QUEUE (TASK-014 OPEN→REVIEW→IN_PROGRESS) · STATUS (As of, Recently completed ×2, In-flight, Blocked-on-owner) · RISKS (RISK-001 mitigation note corrected) · ASSUMPTIONS (ASM-004 added, de-risked) · UNKNOWNS (UNK-013 added, RESOLVED) · FACT_REGISTER (FACT-034 added) — PR #40
