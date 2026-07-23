@@ -3,7 +3,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import { ZohoService } from '../zoho/zoho.service';
 
-@Controller('api/health')
+@Controller('health')
 export class HealthController {
   private readonly bootedAt = Date.now();
 
