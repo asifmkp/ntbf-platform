@@ -17,6 +17,7 @@ Operations platform for **National Trading of Beverage & Foodstuff LLC** (NTBF, 
 
 ## Stack
 - **Backend:** NestJS + TypeScript, file-backed JSON stores at `STATE_DIR/data/*.json` (Prisma/Postgres schema exists but UNUSED — `Database unavailable` + `libssl` log lines are expected noise).
+- **Global route prefix:** `main.ts` calls `app.setGlobalPrefix('api')`. Declare controller paths BARE — `@Controller('health')` resolves to `/api/health`. Never bake `api/` into the path or it doubles to `/api/api/*`.
 - **Frontend:** vanilla JS PWA/TWA. Server-side prices in `backend/src/catalog.data.ts`.
 - **AI:** Anthropic API, model `claude-sonnet-4-6`.
 
