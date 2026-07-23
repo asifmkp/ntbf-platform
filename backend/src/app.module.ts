@@ -37,6 +37,7 @@ import { AttentionModule } from './attention/attention.module';
 import { ClearTestDataModule } from './admin/clear-test-data.module';
 import { JulyBackfillModule } from './admin/july-backfill.module';
 import { BackupModule } from './backup/backup.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { BackupModule } from './backup/backup.module';
     ClearTestDataModule,
     JulyBackfillModule,
     BackupModule,
+    HealthModule,
   ],
   providers: [
     // Global: authenticate every route (unless @Public), then enforce role/dept/access.
